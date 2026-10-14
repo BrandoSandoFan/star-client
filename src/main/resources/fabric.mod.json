@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "starclient",
+  "version": "${version}",
+  "name": "Star Client",
+  "description": "Client-side ESP, base finder and freecam.",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.starclient.StarClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
