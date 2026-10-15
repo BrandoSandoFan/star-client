@@ -61,6 +61,6 @@ public class StarClient implements ClientModInitializer {
 	}
 
 	private static void status(Minecraft mc, String name, boolean on) {
-		mc.player.displayClientMessage(Component.literal(name + ": " + (on ? "ON" : "OFF")), true);
+		mc.gui.setOverlayMessage(Component.literal(name + ": " + (on ? "ON" : "OFF")), false);
 	}
 }
