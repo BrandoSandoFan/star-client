@@ -8,5 +8,6 @@
   "key.starclient.autosprint": "Toggle Auto Sprint",
   "key.starclient.autowalk": "Toggle Auto Walk",
   "key.starclient.menu": "Open Menu",
-  "key.starclient.fly": "Toggle Fly"
+  "key.starclient.fly": "Toggle Fly",
+  "key.starclient.reach": "Toggle Reach"
 }
