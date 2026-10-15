@@ -13,13 +13,16 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
-/** Auto Eat, Anti AFK and the inventory Sorter. */
+/** Auto Eat, Anti AFK and the Sorter (player inventory, or an open chest, ender chest, barrel or shulker box). */
 public final class Utility {
 	/** Auto Eat starts when the food level is at or below this (20 is full). */
 	private static final int EAT_AT_OR_BELOW = 14;
@@ -31,8 +34,8 @@ public final class Utility {
 	private static final float AFK_NUDGE = 10f;
 
 	/** Sorter: main inventory slots in the player menu, and swaps/merges done per tick. */
-	private static final int SORT_FIRST = 9;
-	private static final int SORT_END = 36;
+	private static final int INV_FIRST = 9;
+	private static final int INV_END = 36;
 	private static final int OPS_PER_TICK = 2;
 
 	private static boolean eating;
@@ -45,6 +48,7 @@ public final class Utility {
 	private static boolean afkFlip;
 
 	private static final ArrayDeque<int[]> sortOps = new ArrayDeque<>();
+	private static int sortMenuId = -1;
 
 	private Utility() { }
 
@@ -135,15 +139,43 @@ public final class Utility {
 
 	/** Plans a merge-then-sort of the main inventory; {@link #sort} then replays it a few clicks per tick. */
 	public static void sorterStart(Minecraft mc) {
-		sortOps.clear();
 		var p = mc.player;
-		if (p == null || mc.gameMode == null || p.containerMenu != p.inventoryMenu || !p.inventoryMenu.getCarried().isEmpty()) {
+		if (p == null) {
 			StarClient.sorterOn = false;
 			return;
 		}
-		int n = SORT_END - SORT_FIRST;
+		plan(mc, p.inventoryMenu, INV_FIRST, INV_END);
+	}
+
+	/** True for chests, ender chests, barrels (all {@link ChestMenu}) and shulker boxes. */
+	public static boolean isSortableContainer(AbstractContainerMenu menu) {
+		return menu instanceof ChestMenu || menu instanceof ShulkerBoxMenu;
+	}
+
+	/** Slots in the container part of a chest-like menu; the 36 player slots follow. */
+	public static int containerSize(AbstractContainerMenu menu) {
+		return menu.slots.size() - 36;
+	}
+
+	/** Sorts the chest, ender chest, barrel or shulker box that is currently open. */
+	public static void sortOpenContainer(Minecraft mc) {
+		var p = mc.player;
+		if (p == null || !isSortableContainer(p.containerMenu)) return;
+		StarClient.sorterOn = true;
+		plan(mc, p.containerMenu, 0, containerSize(p.containerMenu));
+	}
+
+	private static void plan(Minecraft mc, AbstractContainerMenu menu, int first, int end) {
+		sortOps.clear();
+		var p = mc.player;
+		if (mc.gameMode == null || p.containerMenu != menu || !menu.getCarried().isEmpty()) {
+			StarClient.sorterOn = false;
+			return;
+		}
+		sortMenuId = menu.containerId;
+		int n = end - first;
 		ItemStack[] sim = new ItemStack[n];
-		for (int i = 0; i < n; i++) sim[i] = p.inventoryMenu.getSlot(SORT_FIRST + i).getItem().copy();
+		for (int i = 0; i < n; i++) sim[i] = menu.getSlot(first + i).getItem().copy();
 
 		// merge partial stacks of the same item into the earliest one
 		for (int i = 0; i < n; i++) {
@@ -152,7 +184,7 @@ public final class Utility {
 			for (int j = i + 1; j < n && sim[i].getCount() < max; j++) {
 				if (sim[j].isEmpty() || !ItemStack.isSameItemSameComponents(sim[i], sim[j])) continue;
 				int moved = Math.min(max - sim[i].getCount(), sim[j].getCount());
-				sortOps.add(new int[] { SORT_FIRST + j, SORT_FIRST + i, SORT_FIRST + j });
+				sortOps.add(new int[] { first + j, first + i, first + j });
 				sim[i].grow(moved);
 				sim[j].shrink(moved);
 				if (sim[j].isEmpty()) sim[j] = ItemStack.EMPTY;
@@ -171,7 +203,7 @@ public final class Utility {
 			if (sim[i] == target.get(i)) continue;
 			for (int k = i + 1; k < n; k++) {
 				if (sim[k] != target.get(i)) continue;
-				sortOps.add(new int[] { SORT_FIRST + i, SORT_FIRST + k, SORT_FIRST + i });
+				sortOps.add(new int[] { first + i, first + k, first + i });
 				ItemStack t = sim[i];
 				sim[i] = sim[k];
 				sim[k] = t;
@@ -186,13 +218,13 @@ public final class Utility {
 
 	private static void sort(Minecraft mc) {
 		var p = mc.player;
-		if (mc.gameMode == null || p.containerMenu != p.inventoryMenu) {
+		if (mc.gameMode == null || p.containerMenu.containerId != sortMenuId) {
 			sorterStop();
 			return;
 		}
 		for (int n = 0; n < OPS_PER_TICK && !sortOps.isEmpty(); n++) {
 			for (int slot : sortOps.poll()) {
-				mc.gameMode.handleInventoryMouseClick(p.inventoryMenu.containerId, slot, 0, ContainerInput.PICKUP, p);
+				mc.gameMode.handleInventoryMouseClick(sortMenuId, slot, 0, ContainerInput.PICKUP, p);
 			}
 		}
 		if (sortOps.isEmpty()) {

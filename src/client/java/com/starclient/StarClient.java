@@ -60,6 +60,7 @@ public class StarClient implements ClientModInitializer {
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();
 		Hud.init();
+		SortButton.init();
 	}
 
 	private void tick(Minecraft mc) {

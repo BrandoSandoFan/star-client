@@ -15,6 +15,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk, Jesus and the other movement modules
   - `Utility` - Auto Eat, Anti AFK, Sorter
   - `Hud` - enabled-module list overlay
+  - `SortButton` - "Sort" button on container screens (`ScreenEvents.AFTER_INIT`), calls `Utility.sortOpenContainer`
   - `ProfilesScreen` - 5 profile slots (`Config.Profile`: module on/off states plus ESP, Reach and Hitbox settings); Save/Load/Clear, opened from the "Profiles..." button in `ModulesScreen`; Load toggles modules to match the snapshot
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
@@ -53,7 +54,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Jesus | unbound | Movement tab; in water without sneak/jump, sets vertical velocity to hold you at the surface (0.2 b/t up when submerged, 0.1 below the fluid height, 0 on top). Water only; lava still burns |
 | Auto Eat | unbound | World tab; when food <= 14 and `needsFood`, picks the highest-nutrition hotbar food (not `Utility.NOT_FOOD`), selects it, `gameMode.useItem` and holds `keyUse` until finished, then restores the slot. Hit Bot/Kill Aura/Aim Bot pause while eating |
 | Anti AFK | unbound | World tab; after 400 idle ticks (no movement or view change, no screen) jumps for 2 ticks and nudges yaw +-10 alternately |
-| Sorter | unbound | World tab; one-shot: plans merges then a selection sort of main inventory slots 9-35 (item id, then count desc, empties last) as `PICKUP` click triples, replays 2 per tick via `gameMode.handleInventoryMouseClick` (`ContainerInput.PICKUP`), then switches itself off. Player inventory only |
+| Sorter | unbound | World tab; one-shot: plans merges then a selection sort of main inventory slots 9-35 (item id, then count desc, empties last) as `PICKUP` click triples, replays 2 per tick via `gameMode.handleInventoryMouseClick` (`ContainerInput.PICKUP`), then switches itself off. Toggling sorts the player inventory. Chests, ender chests, barrels and shulker boxes (`ChestMenu`/`ShulkerBoxMenu`) get a "Sort" button added by `SortButton` that sorts the container part (slots 0..size-36) |
 | HUD | unbound | Render tab; `Hud` registers a `HudElementRegistry` element before chat that draws enabled module names top-right (widest first, category colour) |
 | Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
 | Menu | Right Shift | Opens `ModulesScreen` |
