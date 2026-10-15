@@ -22,7 +22,7 @@ public final class SortButton {
 			int rows = Utility.containerSize(container.getMenu()) / 9;
 			int top = (height - (114 + rows * 18)) / 2;
 			int right = (width + GUI_WIDTH) / 2;
-			Screens.getButtons(screen).add(Button.builder(Component.literal("Sort"), b -> Utility.sortOpenContainer(client))
+			Screens.getWidgets(screen).add(Button.builder(Component.literal("Sort"), b -> Utility.sortOpenContainer(client))
 					.bounds(right - BUTTON_WIDTH, top - BUTTON_HEIGHT - 4, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 		});
 	}

@@ -224,7 +224,7 @@ public final class Utility {
 		}
 		for (int n = 0; n < OPS_PER_TICK && !sortOps.isEmpty(); n++) {
 			for (int slot : sortOps.poll()) {
-				mc.gameMode.handleInventoryMouseClick(sortMenuId, slot, 0, ContainerInput.PICKUP, p);
+				mc.gameMode.handleContainerInput(sortMenuId, slot, 0, ContainerInput.PICKUP, p);
 			}
 		}
 		if (sortOps.isEmpty()) {
