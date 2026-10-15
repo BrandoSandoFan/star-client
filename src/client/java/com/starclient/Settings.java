@@ -22,6 +22,13 @@ public final class Settings {
 		}
 	}
 
+	/**
+	 * Elytra Fly dive/climb cycle that gains altitude in a simulation of vanilla elytra physics (no rockets):
+	 * dive 35 deg until 2.2 b/t, climb 40 deg until 0.7 b/t. The cycle swings roughly 150 blocks vertically.
+	 */
+	private static final Map<String, Double> ELYTRA_INFINITE = Map.of(
+			"elytrafly.dive", 35.0, "elytrafly.climb", 40.0, "elytrafly.diveend", 2.2, "elytrafly.climbend", 0.7, "elytrafly.step", 6.0);
+
 	private static final Map<Integer, List<Def>> BY_MODULE = new HashMap<>();
 	private static final Map<String, Def> BY_KEY = new HashMap<>();
 
@@ -67,7 +74,10 @@ public final class Settings {
 				slider("elytrafly.climb", "Climb angle", 10, 70, 5, 45, "deg"),
 				slider("elytrafly.diveend", "Climb above speed", 1, 3, 0.1, 1.7, "b/t"),
 				slider("elytrafly.climbend", "Dive below speed", 0.5, 1.5, 0.1, 0.9, "b/t"),
-				slider("elytrafly.step", "Pitch change per tick", 1, 15, 1, 6, "deg"));
+				slider("elytrafly.step", "Pitch change per tick", 1, 15, 1, 6, "deg"),
+				toggle("elytrafly.rockets", "Auto use rockets", false),
+				slider("elytrafly.rocketspeed", "Rocket below speed", 0.3, 2, 0.1, 0.6, "b/t"),
+				slider("elytrafly.rocketdelay", "Min delay between rockets", 1, 15, 1, 3, "s"));
 		add(Module.KILL_AURA,
 				slider("killaura.range", "Range (0 = Reach)", 0, 12, 0.5, 0, "blocks"),
 				slider("killaura.charge", "Min attack charge", 0.5, 1, 0.05, 0.95, ""),
@@ -95,7 +105,22 @@ public final class Settings {
 		add(Module.PANIC, toggle("panic.close", "Close open screen", true));
 	}
 
+	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */
+	public static final Map<Integer, Map<String, Map<String, Double>>> PRESETS = new HashMap<>();
+
+	static {
+		PRESETS.put(Module.ELYTRA_FLY, new java.util.LinkedHashMap<>());
+		PRESETS.get(Module.ELYTRA_FLY).put("Infinite (no rockets)", ELYTRA_INFINITE);
+		PRESETS.get(Module.ELYTRA_FLY).put("Default", Map.of());
+	}
+
 	private Settings() { }
+
+	/** Applies a preset: resets the module, then writes the preset's values. */
+	public static void applyPreset(int module, Map<String, Double> values) {
+		reset(module);
+		Config.get().values.putAll(values);
+	}
 
 	public static List<Def> defs(int module) {
 		return BY_MODULE.getOrDefault(module, List.of());

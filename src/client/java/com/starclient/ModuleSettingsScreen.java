@@ -50,6 +50,7 @@ public final class ModuleSettingsScreen extends Screen {
 		}
 
 		if (module == Module.CHEST_ESP) y = addChestWidgets(left, y);
+		y = addPresets(left, y);
 
 		y += 6;
 		addRenderableWidget(Button.builder(Component.literal("Reset to defaults"), b -> {
@@ -58,6 +59,29 @@ public final class ModuleSettingsScreen extends Screen {
 		}).bounds(cx - 100, y, 200, 20).build());
 		y += 24;
 		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
+	}
+
+	/** One button per {@link Settings#PRESETS} entry for this module, three per row. */
+	private int addPresets(int left, int y) {
+		Map<String, Map<String, Double>> presets = Settings.PRESETS.get(module);
+		if (presets == null) return y;
+		y += 4;
+		Component label = Component.literal("Presets").withStyle(ChatFormatting.GRAY);
+		addRenderableWidget(new StringWidget(left, y, font.width(label), 9, label, font));
+		y += 12;
+		int col = 0;
+		for (Map.Entry<String, Map<String, Double>> preset : presets.entrySet()) {
+			Map<String, Double> values = preset.getValue();
+			addRenderableWidget(Button.builder(Component.literal(preset.getKey()), b -> {
+				Settings.applyPreset(module, values);
+				rebuildWidgets();
+			}).bounds(left + col * 152, y, 148, 20).build());
+			if (++col == 2) {
+				col = 0;
+				y += 22;
+			}
+		}
+		return col != 0 ? y + 22 : y;
 	}
 
 	private Component toggleLabel(Settings.Def d) {

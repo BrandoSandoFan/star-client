@@ -1,6 +1,8 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Items;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -15,6 +17,7 @@ import net.minecraft.world.effect.MobEffects;
 public final class Movement {
 	/** Tunable values (speeds, angles, thresholds) live in {@link Settings}. Elytra Fly pitch is negative = up. */
 
+	private static int rocketCooldown;
 	private static boolean wasOnGround;
 	private static boolean climbing;
 	private static boolean nightVisionApplied;
@@ -109,6 +112,7 @@ public final class Movement {
 
 		if (StarClient.elytraFlyOn && mc.screen == null && mc.player.isFallFlying()) {
 			double speed = mc.player.getDeltaMovement().length();
+			if (Settings.on("elytrafly.rockets")) autoRocket(mc, speed);
 			if (climbing && speed < Settings.get("elytrafly.climbend")) climbing = false;
 			else if (!climbing && speed > Settings.get("elytrafly.diveend")) climbing = true;
 			float target = climbing ? -Settings.getF("elytrafly.climb") : Settings.getF("elytrafly.dive");
@@ -121,6 +125,30 @@ public final class Movement {
 
 	public static void elytraReset() {
 		climbing = false;
+		rocketCooldown = 0;
+	}
+
+	/** Fires a firework rocket from the hotbar when gliding slower than the configured speed. */
+	private static void autoRocket(Minecraft mc, double speed) {
+		if (rocketCooldown > 0) {
+			rocketCooldown--;
+			return;
+		}
+		if (speed >= Settings.get("elytrafly.rocketspeed") || Utility.isEating()) return;
+		var inv = mc.player.getInventory();
+		int slot = -1;
+		for (int i = 0; i < 9; i++) {
+			if (inv.getItem(i).is(Items.FIREWORK_ROCKET)) {
+				slot = i;
+				if (i == inv.getSelectedSlot()) break;
+			}
+		}
+		if (slot < 0) return;
+		int prev = inv.getSelectedSlot();
+		inv.setSelectedSlot(slot);
+		mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+		inv.setSelectedSlot(prev);
+		rocketCooldown = Settings.getI("elytrafly.rocketdelay") * 20;
 	}
 
 	public static void fullbrightOff(Minecraft mc) {
