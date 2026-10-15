@@ -11,6 +11,14 @@ import net.minecraft.world.effect.MobEffects;
 public final class Movement {
 	private static final float FLY_SPEED = 0.1f;
 
+	/** Elytra Fly: dive to build speed, then climb until it bleeds off. Speeds in blocks/tick, angles in degrees (negative = up). */
+	private static final float DIVE_PITCH = 35f;
+	private static final float CLIMB_PITCH = -45f;
+	private static final float PITCH_STEP = 6f;
+	private static final double DIVE_END_SPEED = 1.7;
+	private static final double CLIMB_END_SPEED = 0.9;
+
+	private static boolean climbing;
 	private static boolean nightVisionApplied;
 	private static double origEntityRange = -1;
 	private static double origBlockRange = -1;
@@ -55,6 +63,20 @@ public final class Movement {
 				&& mc.player.getFoodData().getFoodLevel() > 6) {
 			mc.player.setSprinting(true);
 		}
+
+		if (StarClient.elytraFlyOn && mc.screen == null && mc.player.isFallFlying()) {
+			double speed = mc.player.getDeltaMovement().length();
+			if (climbing && speed < CLIMB_END_SPEED) climbing = false;
+			else if (!climbing && speed > DIVE_END_SPEED) climbing = true;
+			float target = climbing ? CLIMB_PITCH : DIVE_PITCH;
+			float pitch = mc.player.getXRot();
+			float step = Math.max(-PITCH_STEP, Math.min(PITCH_STEP, (target - pitch) * 0.5f));
+			mc.player.setXRot(pitch + step);
+		}
+	}
+
+	public static void elytraReset() {
+		climbing = false;
 	}
 
 	public static void fullbrightOff(Minecraft mc) {

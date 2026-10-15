@@ -38,10 +38,11 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
 | Aim Bot | unbound | Combat tab; eases toward target (20% of the remaining angle per tick, max 8°) toward target |
 | Hit Bot | unbound | Combat tab; auto attack via `gameMode.attack` |
+| Elytra Fly | unbound | Movement tab; while gliding, alternates dive (+35°) until speed > 1.7 b/t and climb (-45°) until speed < 0.9 b/t, easing pitch 6°/tick. Start gliding yourself (jump twice in air) |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
