@@ -47,7 +47,9 @@ public final class ChestEsp {
 			for (int dz = -radius; dz <= radius; dz++) {
 				ChunkAccess chunk = mc.level.getChunk(center.x() + dx, center.z() + dz, ChunkStatus.FULL, false);
 				if (chunk == null) continue;
-				for (BlockEntity be : chunk.getBlockEntities().values()) {
+				for (BlockPos pos : chunk.getBlockEntitiesPos()) {
+					BlockEntity be = chunk.getBlockEntity(pos);
+					if (be == null) continue;
 					Hit hit = classify(be);
 					if (hit != null) out.add(hit);
 				}
