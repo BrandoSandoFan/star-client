@@ -9,7 +9,8 @@ public record Module(String id, String name, String description, Category catego
 	public enum Category {
 		RENDER("Render", ChatFormatting.AQUA),
 		MOVEMENT("Movement", ChatFormatting.GREEN),
-		WORLD("World", ChatFormatting.LIGHT_PURPLE);
+		WORLD("World", ChatFormatting.LIGHT_PURPLE),
+		COMBAT("Combat", ChatFormatting.RED);
 
 		public final String label;
 		public final ChatFormatting colour;
@@ -29,6 +30,8 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AUTO_WALK = 6;
 	public static final int FLY = 7;
 	public static final int REACH = 8;
+	public static final int AIM_BOT = 9;
+	public static final int HIT_BOT = 10;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -39,5 +42,7 @@ public record Module(String id, String name, String description, Category catego
 			new Module("autosprint", "Auto Sprint", "Sprints whenever you walk forward.", Category.MOVEMENT, false),
 			new Module("autowalk", "Auto Walk", "Holds the forward key for you.", Category.MOVEMENT, false),
 			new Module("fly", "Fly", "Creative-style flight. Servers without flight permission will kick you.", Category.MOVEMENT, false),
-			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true));
+			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true),
+			new Module("aimbot", "Aim Bot", "Smoothly turns toward the nearest player or hostile mob within 6 blocks.", Category.COMBAT, false),
+			new Module("hitbot", "Hit Bot", "Attacks whatever your crosshair is on once your attack is fully charged.", Category.COMBAT, false));
 }

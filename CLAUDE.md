@@ -14,6 +14,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
+  - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `ReachScreen` - reach distance slider
@@ -35,10 +36,12 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Auto Walk | unbound | Holds the forward key |
 | Fly | unbound | Sets `mayfly`+`flying` abilities client-side; needs server permission |
 | Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
+| Aim Bot | unbound | Combat tab; eases toward target (20% of the remaining angle per tick, max 8°) toward target |
+| Hit Bot | unbound | Combat tab; auto attack via `gameMode.attack` |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
