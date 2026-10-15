@@ -6,6 +6,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import net.minecraft.client.Minecraft;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -30,6 +32,59 @@ public final class Config {
 
 	/** Blocks added to every side of an entity's hitbox while Hitboxes is on. */
 	public float hitboxExpand = 0.3f;
+
+	public static final int PROFILE_SLOTS = 5;
+	public Profile[] profiles = new Profile[PROFILE_SLOTS];
+
+	/** Snapshot of which modules are on plus the persisted module settings. */
+	public static final class Profile {
+		public boolean[] modules;
+		public boolean[] espEnabled;
+		public int[] espColor;
+		public float espAlpha;
+		public int espMaxDistance;
+		public float reachDistance;
+		public float hitboxExpand;
+
+		public static Profile capture(Config c) {
+			Profile p = new Profile();
+			p.modules = new boolean[Module.ALL.size()];
+			for (int i = 0; i < p.modules.length; i++) p.modules[i] = isSaved(i) && StarClient.isOn(i);
+			p.espEnabled = c.espEnabled.clone();
+			p.espColor = c.espColor.clone();
+			p.espAlpha = c.espAlpha;
+			p.espMaxDistance = c.espMaxDistance;
+			p.reachDistance = c.reachDistance;
+			p.hitboxExpand = c.hitboxExpand;
+			return p;
+		}
+
+		/** Copies the settings into {@code c}, then toggles modules until they match the snapshot. */
+		public void apply(Minecraft mc, Config c) {
+			if (espEnabled != null && espEnabled.length == ESP_NAMES.length) c.espEnabled = espEnabled.clone();
+			if (espColor != null && espColor.length == ESP_NAMES.length) c.espColor = espColor.clone();
+			c.espAlpha = espAlpha;
+			c.espMaxDistance = espMaxDistance;
+			c.reachDistance = reachDistance;
+			c.hitboxExpand = hitboxExpand;
+			if (mc.player == null || modules == null) return;
+			for (int i = 0; i < Module.ALL.size(); i++) {
+				boolean want = i < modules.length && modules[i];
+				if (isSaved(i) && StarClient.isOn(i) != want) StarClient.toggle(mc, i);
+			}
+		}
+
+		public int enabledCount() {
+			int n = 0;
+			if (modules != null) for (boolean b : modules) if (b) n++;
+			return n;
+		}
+
+		/** One-shot actions are not part of a profile. */
+		private static boolean isSaved(int module) {
+			return module != Module.SORTER && module != Module.PANIC;
+		}
+	}
 
 	private static Config instance = new Config();
 
@@ -61,6 +116,7 @@ public final class Config {
 
 	private boolean valid() {
 		return espEnabled != null && espEnabled.length == ESP_NAMES.length
-				&& espColor != null && espColor.length == ESP_NAMES.length;
+				&& espColor != null && espColor.length == ESP_NAMES.length
+				&& profiles != null && profiles.length == PROFILE_SLOTS;
 	}
 }

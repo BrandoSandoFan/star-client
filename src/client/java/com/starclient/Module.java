@@ -45,6 +45,8 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AUTO_EAT = 20;
 	public static final int ANTI_AFK = 21;
 	public static final int SORTER = 22;
+	public static final int HUD = 23;
+	public static final int PANIC = 24;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -69,5 +71,7 @@ public record Module(String id, String name, String description, Category catego
 				new Module("jesus", "Jesus", "Walk on water. Hold sneak to sink, jump to swim. Servers with movement checks will flag it.", Category.MOVEMENT, false),
 				new Module("autoeat", "Auto Eat", "Eats the best food in your hotbar when hunger drops to 7 bars, then switches back.", Category.WORLD, false),
 				new Module("antiafk", "Anti AFK", "Jumps and nudges your view every 20 seconds while you stand still.", Category.WORLD, false),
-				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, false));
+				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, false),
+				new Module("hud", "HUD", "Lists your enabled modules in the top-right corner.", Category.RENDER, false),
+				new Module("panic", "Panic", "Turns every module off at once and hides the HUD..", Category.WORLD, false));
 }

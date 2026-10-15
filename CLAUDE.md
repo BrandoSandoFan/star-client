@@ -14,6 +14,8 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk, Jesus and the other movement modules
   - `Utility` - Auto Eat, Anti AFK, Sorter
+  - `Hud` - enabled-module list overlay
+  - `ProfilesScreen` - 5 profile slots (`Config.Profile`: module on/off states plus ESP, Reach and Hitbox settings); Save/Load/Clear, opened from the "Profiles..." button in `ModulesScreen`; Load toggles modules to match the snapshot
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
@@ -52,10 +54,12 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Auto Eat | unbound | World tab; when food <= 14 and `needsFood`, picks the highest-nutrition hotbar food (not `Utility.NOT_FOOD`), selects it, `gameMode.useItem` and holds `keyUse` until finished, then restores the slot. Hit Bot/Kill Aura/Aim Bot pause while eating |
 | Anti AFK | unbound | World tab; after 400 idle ticks (no movement or view change, no screen) jumps for 2 ticks and nudges yaw +-10 alternately |
 | Sorter | unbound | World tab; one-shot: plans merges then a selection sort of main inventory slots 9-35 (item id, then count desc, empties last) as `PICKUP` click triples, replays 2 per tick via `gameMode.handleInventoryMouseClick`, then switches itself off. Player inventory only |
+| HUD | unbound | Render tab; `Hud` registers a `HudElementRegistry` element before chat that draws enabled module names top-right (widest first, category colour) |
+| Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)

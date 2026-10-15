@@ -88,6 +88,10 @@ public final class ModulesScreen extends Screen {
 			listening = menuKey;
 			rebuildWidgets();
 		}).bounds(left, y, PANEL_WIDTH, 20).build());
+		y += 24;
+
+		addRenderableWidget(Button.builder(Component.literal("Profiles..."), b -> minecraft.setScreen(new ProfilesScreen(this)))
+				.bounds(left, y, PANEL_WIDTH, 20).build());
 		y += 26;
 
 		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())

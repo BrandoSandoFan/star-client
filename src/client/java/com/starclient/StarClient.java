@@ -38,6 +38,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoEatOn;
 	public static boolean antiAfkOn;
 	public static boolean sorterOn;
+	public static boolean hudOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -58,6 +59,7 @@ public class StarClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();
+		Hud.init();
 	}
 
 	private void tick(Minecraft mc) {
@@ -77,7 +79,7 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < keys.length; i++) {
 			while (keys[i].consumeClick()) {
 				toggle(mc, i);
-				status(mc, Module.ALL.get(i).name(), isOn(i));
+				if (i != Module.PANIC) status(mc, Module.ALL.get(i).name(), isOn(i));
 			}
 		}
 
@@ -123,6 +125,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_EAT -> autoEatOn;
 			case Module.ANTI_AFK -> antiAfkOn;
 			case Module.SORTER -> sorterOn;
+			case Module.HUD -> hudOn;
 			default -> false;
 		};
 	}
@@ -179,12 +182,23 @@ public class StarClient implements ClientModInitializer {
 				if (sorterOn) Utility.sorterStart(mc);
 				else Utility.sorterStop();
 			}
+			case Module.HUD -> hudOn = !hudOn;
+			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();
 			}
 			default -> { }
 		}
+	}
+
+	/** Turns every module off (including the HUD) and closes any open screen. */
+	public static void panic(Minecraft mc) {
+		for (int i = 0; i < Module.ALL.size(); i++) {
+			if (i != Module.PANIC && isOn(i)) toggle(mc, i);
+		}
+		mc.setScreen(null);
+		mc.gui.setOverlayMessage(Component.literal("Panic: all modules off").withStyle(ChatFormatting.RED), false);
 	}
 
 	private static void status(Minecraft mc, String name, boolean on) {

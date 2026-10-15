@@ -23,5 +23,7 @@
   "key.starclient.jesus": "Toggle Jesus",
   "key.starclient.autoeat": "Toggle Auto Eat",
   "key.starclient.antiafk": "Toggle Anti AFK",
-  "key.starclient.sorter": "Toggle Sorter"
+  "key.starclient.sorter": "Toggle Sorter",
+  "key.starclient.hud": "Toggle HUD",
+  "key.starclient.panic": "Panic (all modules off)"
 }
