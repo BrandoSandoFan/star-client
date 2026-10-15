@@ -36,7 +36,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Auto Walk | unbound | Holds the forward key |
 | Fly | unbound | Sets `mayfly`+`flying` abilities client-side; needs server permission |
 | Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
-| Aim Bot | unbound | Combat tab; rotates up to 12°/tick toward target |
+| Aim Bot | unbound | Combat tab; eases toward target (20% of the remaining angle per tick, max 8°) toward target |
 | Hit Bot | unbound | Combat tab; auto attack via `gameMode.attack` |
 | Menu | Right Shift | Opens `ModulesScreen` |
 

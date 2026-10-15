@@ -13,7 +13,8 @@ import net.minecraft.world.phys.Vec3;
 /** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
 public final class Combat {
 	private static final double AIM_RANGE = 6.0;
-	private static final float MAX_TURN = 12.0f;
+	private static final float MAX_TURN = 8.0f;
+	private static final float EASE = 0.2f;
 	private static final float FOV = 90.0f;
 
 	private Combat() { }
@@ -69,8 +70,8 @@ public final class Combat {
 		double horiz = Math.sqrt(to.x * to.x + to.z * to.z);
 		float yaw = (float) (Mth.atan2(to.z, to.x) * (180.0 / Math.PI)) - 90.0f;
 		float pitch = (float) -(Mth.atan2(to.y, horiz) * (180.0 / Math.PI));
-		float dy = Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()), -MAX_TURN, MAX_TURN);
-		float dp = Mth.clamp(pitch - mc.player.getXRot(), -MAX_TURN, MAX_TURN);
+		float dy = Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * EASE, -MAX_TURN, MAX_TURN);
+		float dp = Mth.clamp((pitch - mc.player.getXRot()) * EASE, -MAX_TURN, MAX_TURN);
 		mc.player.setYRot(mc.player.getYRot() + dy);
 		mc.player.setXRot(Mth.clamp(mc.player.getXRot() + dp, -90.0f, 90.0f));
 	}
