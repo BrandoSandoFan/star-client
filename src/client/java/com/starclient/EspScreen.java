@@ -22,7 +22,7 @@ public final class EspScreen extends Screen {
 		int left = cx - 150;
 		int y = 40;
 
-		addRenderableWidget(new StringWidget(left, 20, 300, 9, title, font).alignCenter());
+		addRenderableWidget(new StringWidget(cx - font.width(title) / 2, 20, font.width(title), 9, title, font));
 
 		for (int i = 0; i < Config.ESP_NAMES.length; i++) {
 			final int idx = i;
