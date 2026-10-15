@@ -44,5 +44,5 @@ public record Module(String id, String name, String description, Category catego
 			new Module("fly", "Fly", "Creative-style flight. Servers without flight permission will kick you.", Category.MOVEMENT, false),
 			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true),
 			new Module("aimbot", "Aim Bot", "Smoothly turns toward the nearest player or hostile mob within 6 blocks.", Category.COMBAT, false),
-			new Module("hitbot", "Hit Bot", "Attacks the nearest target in reach whenever your attack is fully charged.", Category.COMBAT, false));
+			new Module("hitbot", "Hit Bot", "Attacks whatever your crosshair is on once your attack is fully charged.", Category.COMBAT, false));
 }

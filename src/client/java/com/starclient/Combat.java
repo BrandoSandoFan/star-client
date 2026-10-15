@@ -8,9 +8,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
-/** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (auto attack when the cooldown is ready). */
+/** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
 public final class Combat {
 	private static final double AIM_RANGE = 6.0;
 	private static final float MAX_TURN = 12.0f;
@@ -22,25 +23,30 @@ public final class Combat {
 		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null) return;
 		if (!StarClient.aimBotOn && !StarClient.hitBotOn) return;
 
-		LivingEntity target = nearest(mc, StarClient.aimBotOn ? AIM_RANGE : mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
-		if (target == null) return;
+		if (StarClient.aimBotOn) {
+			LivingEntity target = nearest(mc, AIM_RANGE);
+			if (target != null) aim(mc, target);
+		}
 
-		if (StarClient.aimBotOn) aim(mc, target);
-
-		if (StarClient.hitBotOn && mc.player.getAttackStrengthScale(0.0f) >= 0.95f
-				&& mc.player.distanceTo(target) <= mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) {
+		// Hit Bot only attacks what the crosshair is on, once the cooldown is ready
+		if (StarClient.hitBotOn && mc.hitResult instanceof EntityHitResult hit
+				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target)
+				&& mc.player.getAttackStrengthScale(0.0f) >= 0.95f) {
 			mc.gameMode.attack(mc.player, target);
 			mc.player.swing(InteractionHand.MAIN_HAND);
 		}
+	}
+
+	private static boolean isValid(Minecraft mc, LivingEntity e) {
+		return e != mc.player && (e instanceof Player || e instanceof Enemy)
+				&& e.isAlive() && !e.isInvulnerable() && !e.isSpectator();
 	}
 
 	private static LivingEntity nearest(Minecraft mc, double range) {
 		LivingEntity best = null;
 		double bestDist = range * range;
 		for (Entity e : mc.level.entitiesForRendering()) {
-			if (!(e instanceof LivingEntity le) || e == mc.player || e == mc.getCameraEntity()) continue;
-			if (!(e instanceof Player || e instanceof Enemy)) continue;
-			if (!le.isAlive() || le.isInvulnerable() || le.isSpectator() || le.isInvisible()) continue;
+			if (!(e instanceof LivingEntity le) || !isValid(mc, le) || le.isInvisible()) continue;
 			if (!mc.player.hasLineOfSight(le)) continue;
 			double d = mc.player.distanceToSqr(le);
 			if (d < bestDist && yawDelta(mc, le) <= FOV / 2) {

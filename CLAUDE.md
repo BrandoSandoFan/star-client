@@ -14,7 +14,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
-  - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks nearest in reach at >=95% attack charge)
+  - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `ReachScreen` - reach distance slider
