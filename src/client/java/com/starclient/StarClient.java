@@ -32,6 +32,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean hitboxesOn;
 	public static boolean speedOn;
 	public static boolean highJumpOn;
+	public static boolean noFallOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -109,6 +110,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.HITBOXES -> hitboxesOn;
 			case Module.SPEED -> speedOn;
 			case Module.HIGH_JUMP -> highJumpOn;
+			case Module.NO_FALL -> noFallOn;
 			default -> false;
 		};
 	}
@@ -149,6 +151,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.HITBOXES -> hitboxesOn = !hitboxesOn;
 			case Module.SPEED -> speedOn = !speedOn;
 			case Module.HIGH_JUMP -> highJumpOn = !highJumpOn;
+			case Module.NO_FALL -> noFallOn = !noFallOn;
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();

@@ -1,6 +1,7 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -65,6 +66,12 @@ public final class Movement {
 		boolean grounded = mc.player.onGround();
 		boolean controllable = mc.screen == null && !mc.player.isFallFlying() && !mc.player.getAbilities().flying
 				&& !mc.player.isInWater() && !mc.player.isInLava() && !mc.player.isPassenger();
+
+		// No Fall: once a fall is long enough to hurt, keep telling the server we are on the ground
+		if (StarClient.noFallOn && mc.player.fallDistance > 2.0 && !grounded && !mc.player.isFallFlying()
+				&& !mc.player.getAbilities().flying) {
+			mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, mc.player.horizontalCollision));
+		}
 
 		if (StarClient.highJumpOn && controllable && mc.options.keyJump.isDown() && wasOnGround && !grounded) {
 			Vec3 v = mc.player.getDeltaMovement();
