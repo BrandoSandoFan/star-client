@@ -18,6 +18,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `BaseFinder`, `Freecam` - feature logic
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `ReachScreen` - reach distance slider
+  - `HitboxScreen` - hitbox expansion slider
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 slider used by `EspScreen`
   - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
@@ -41,7 +42,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Elytra Fly | unbound | Movement tab; while gliding, alternates dive (+35°) until speed > 1.7 b/t and climb (-45°) until speed < 0.9 b/t, easing pitch 6°/tick. Start gliding yourself (jump twice in air) |
 | Kill Aura | unbound | Combat tab; attacks the nearest player/hostile within entity interaction range (Reach extends it) with line of sight, at >=95% charge; no rotation |
 | Crits | unbound | Combat tab; before Hit Bot/Kill Aura attacks (not manual clicks) sends two fake `ServerboundMovePlayerPacket.Pos` hops (+0.0625 y, off-ground) so the server counts a crit. Server ignores crits while you are sprinting |
-| Hitboxes | unbound | Render tab; filled boxes on living entities through walls, red inside reach, white outside |
+| Hitboxes | unbound | Combat tab; enlarges every entity hitbox by `Config.hitboxExpand` blocks per side (0-2, default 0.3, `HitboxScreen`). At the start of each tick `Combat.expandHitboxes` re-picks the crosshair entity against the inflated boxes (no mixin), so clicks, Hit Bot and Kill Aura use it; server still validates real reach |
 | Speed | unbound | Movement tab; sets horizontal velocity to 0.45 b/t along held WASD keys (skipped when gliding, flying, swimming or riding). Servers with movement checks rubber-band |
 | High Jump | unbound | Movement tab; on take-off with jump held, sets upward velocity to 0.9 b/t (vanilla 0.42) |
 | Menu | Right Shift | Opens `ModulesScreen` |

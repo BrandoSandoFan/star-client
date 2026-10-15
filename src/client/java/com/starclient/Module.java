@@ -55,7 +55,7 @@ public record Module(String id, String name, String description, Category catego
 				new Module("elytrafly", "Elytra Fly", "While gliding, alternates dive and climb angles to keep flying without fireworks.", Category.MOVEMENT, false),
 				new Module("killaura", "Kill Aura", "Attacks the nearest player or hostile mob in reach with line of sight, no aiming needed.", Category.COMBAT, false),
 				new Module("crits", "Crits", "Makes Hit Bot and Kill Aura hits critical by sending fake fall packets first. Anticheats flag this.", Category.COMBAT, false),
-				new Module("hitboxes", "Hitboxes", "Shows entity hitboxes through walls: red inside your reach, white outside.", Category.RENDER, false),
+				new Module("hitboxes", "Hitboxes", "Enlarges the area that counts as hitting an entity, for aiming, Hit Bot and Kill Aura. Servers still check real reach.", Category.COMBAT, true),
 				new Module("speed", "Speed", "Moves faster on the ground and in the air. Servers with movement checks will rubber-band you.", Category.MOVEMENT, false),
 				new Module("highjump", "High Jump", "Jumps much higher. Landing still hurts.", Category.MOVEMENT, false));
 }

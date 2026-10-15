@@ -48,6 +48,7 @@ public class StarClient implements ClientModInitializer {
 		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
 
 		Config.load();
+		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();

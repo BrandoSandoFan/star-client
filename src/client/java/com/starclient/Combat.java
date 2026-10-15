@@ -9,7 +9,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
@@ -55,6 +57,38 @@ public final class Combat {
 		}
 		mc.gameMode.attack(p, target);
 		p.swing(InteractionHand.MAIN_HAND);
+	}
+
+	/**
+	 * Hitboxes: runs at the start of the tick, before clicks are handled, and replaces the crosshair target with the
+	 * nearest entity whose inflated bounding box the view ray crosses (unless a block is closer).
+	 */
+	public static void expandHitboxes(Minecraft mc) {
+		if (!StarClient.hitboxesOn || mc.player == null || mc.level == null || mc.screen != null || Freecam.isOn()) return;
+		double reach = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+		float grow = Config.get().hitboxExpand;
+		Vec3 eye = mc.player.getEyePosition();
+		Vec3 end = eye.add(mc.player.getViewVector(1.0f).scale(reach));
+
+		double best = reach * reach;
+		if (mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
+			best = Math.min(best, mc.hitResult.getLocation().distanceToSqr(eye));
+		}
+		Entity bestEntity = null;
+		Vec3 bestPos = null;
+		for (Entity e : mc.level.entitiesForRendering()) {
+			if (e == mc.player || e.isSpectator() || !e.isPickable()) continue;
+			AABB box = e.getBoundingBox().inflate(grow);
+			Vec3 pos = box.contains(eye) ? eye : box.clip(eye, end).orElse(null);
+			if (pos == null) continue;
+			double d = pos.distanceToSqr(eye);
+			if (d < best) {
+				best = d;
+				bestEntity = e;
+				bestPos = pos;
+			}
+		}
+		if (bestEntity != null) mc.hitResult = new EntityHitResult(bestEntity, bestPos);
 	}
 
 	private static boolean isValid(Minecraft mc, LivingEntity e) {
