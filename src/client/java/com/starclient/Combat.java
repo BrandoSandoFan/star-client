@@ -1,10 +1,12 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
@@ -21,20 +23,38 @@ public final class Combat {
 
 	public static void tick(Minecraft mc) {
 		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null) return;
-		if (!StarClient.aimBotOn && !StarClient.hitBotOn) return;
+		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn) return;
 
 		if (StarClient.aimBotOn) {
-			LivingEntity target = nearest(mc, AIM_RANGE);
+			LivingEntity target = nearest(mc, AIM_RANGE, FOV);
 			if (target != null) aim(mc, target);
 		}
 
-		// Hit Bot only attacks what the crosshair is on, once the cooldown is ready
+		if (mc.player.getAttackStrengthScale(0.0f) < 0.95f) return;
+
+		// Hit Bot only attacks what the crosshair is on
 		if (StarClient.hitBotOn && mc.hitResult instanceof EntityHitResult hit
-				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target)
-				&& mc.player.getAttackStrengthScale(0.0f) >= 0.95f) {
-			mc.gameMode.attack(mc.player, target);
-			mc.player.swing(InteractionHand.MAIN_HAND);
+				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target)) {
+			attack(mc, target);
+			return;
 		}
+
+		// Kill Aura attacks the nearest valid target in reach, regardless of where you look
+		if (StarClient.killAuraOn) {
+			LivingEntity target = nearest(mc, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE), 360.0f);
+			if (target != null) attack(mc, target);
+		}
+	}
+
+	/** Attacks and swings; with Crits on, first reports a tiny hop so the server counts the hit as a critical. */
+	private static void attack(Minecraft mc, LivingEntity target) {
+		var p = mc.player;
+		if (StarClient.critsOn && p.onGround() && !p.isInWater() && !p.onClimbable() && !p.isPassenger()) {
+			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY() + 0.0625, p.getZ(), false, p.horizontalCollision));
+			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY(), p.getZ(), false, p.horizontalCollision));
+		}
+		mc.gameMode.attack(p, target);
+		p.swing(InteractionHand.MAIN_HAND);
 	}
 
 	private static boolean isValid(Minecraft mc, LivingEntity e) {
@@ -42,14 +62,14 @@ public final class Combat {
 				&& e.isAlive() && !e.isInvulnerable() && !e.isSpectator();
 	}
 
-	private static LivingEntity nearest(Minecraft mc, double range) {
+	private static LivingEntity nearest(Minecraft mc, double range, float fov) {
 		LivingEntity best = null;
 		double bestDist = range * range;
 		for (Entity e : mc.level.entitiesForRendering()) {
 			if (!(e instanceof LivingEntity le) || !isValid(mc, le) || le.isInvisible()) continue;
 			if (!mc.player.hasLineOfSight(le)) continue;
 			double d = mc.player.distanceToSqr(le);
-			if (d < bestDist && yawDelta(mc, le) <= FOV / 2) {
+			if (d < bestDist && yawDelta(mc, le) <= fov / 2) {
 				bestDist = d;
 				best = le;
 			}

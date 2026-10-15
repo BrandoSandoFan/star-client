@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
@@ -113,6 +114,17 @@ public final class StarRenderer {
 			for (ChestEsp.Hit hit : ChestEsp.hits()) {
 				BlockPos p = hit.pos();
 				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), 0.4f));
+			}
+		}
+
+		if (StarClient.hitboxesOn) {
+			double reach = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+			for (Entity e : mc.level.entitiesForRendering()) {
+				if (e == mc.player || e == Freecam.camera() || !(e instanceof LivingEntity)) continue;
+				AABB bb = e.getBoundingBox();
+				boolean inReach = mc.player.distanceTo(e) <= reach;
+				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ,
+						1f, inReach ? 0.2f : 1f, inReach ? 0.2f : 1f, 0.3f));
 			}
 		}
 

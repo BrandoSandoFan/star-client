@@ -12,5 +12,8 @@
   "key.starclient.reach": "Toggle Reach",
   "key.starclient.aimbot": "Toggle Aim Bot",
   "key.starclient.hitbot": "Toggle Hit Bot",
-  "key.starclient.elytrafly": "Toggle Elytra Fly"
+  "key.starclient.elytrafly": "Toggle Elytra Fly",
+  "key.starclient.killaura": "Toggle Kill Aura",
+  "key.starclient.crits": "Toggle Crits",
+  "key.starclient.hitboxes": "Toggle Hitboxes"
 }
