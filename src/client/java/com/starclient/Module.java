@@ -10,7 +10,8 @@ public record Module(String id, String name, String description, Category catego
 		RENDER("Render", ChatFormatting.AQUA),
 		MOVEMENT("Movement", ChatFormatting.GREEN),
 		WORLD("World", ChatFormatting.LIGHT_PURPLE),
-		COMBAT("Combat", ChatFormatting.RED);
+		COMBAT("Combat", ChatFormatting.RED),
+		BASE_FINDING("Bases", ChatFormatting.YELLOW);
 
 		public final String label;
 		public final ChatFormatting colour;
@@ -36,7 +37,7 @@ public record Module(String id, String name, String description, Category catego
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
-			new Module("basefinder", "Base Finder", "Marks chunks with many player-placed blocks.", Category.WORLD, false),
+			new Module("basefinder", "Base Finder", "Marks chunks with many player-placed blocks.", Category.BASE_FINDING, false),
 			new Module("freecam", "Freecam", "Detached camera. Your character stays in place.", Category.MOVEMENT, false),
 			new Module("chestesp", "Chest ESP", "Highlights chests, barrels, ender chests and shulker boxes.", Category.RENDER, false),
 			new Module("fullbright", "Fullbright", "Client-side night vision.", Category.RENDER, false),
