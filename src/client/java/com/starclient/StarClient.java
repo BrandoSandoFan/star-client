@@ -30,6 +30,8 @@ public class StarClient implements ClientModInitializer {
 	public static boolean killAuraOn;
 	public static boolean critsOn;
 	public static boolean hitboxesOn;
+	public static boolean speedOn;
+	public static boolean highJumpOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -104,6 +106,8 @@ public class StarClient implements ClientModInitializer {
 			case Module.KILL_AURA -> killAuraOn;
 			case Module.CRITS -> critsOn;
 			case Module.HITBOXES -> hitboxesOn;
+			case Module.SPEED -> speedOn;
+			case Module.HIGH_JUMP -> highJumpOn;
 			default -> false;
 		};
 	}
@@ -142,6 +146,8 @@ public class StarClient implements ClientModInitializer {
 			case Module.KILL_AURA -> killAuraOn = !killAuraOn;
 			case Module.CRITS -> critsOn = !critsOn;
 			case Module.HITBOXES -> hitboxesOn = !hitboxesOn;
+			case Module.SPEED -> speedOn = !speedOn;
+			case Module.HIGH_JUMP -> highJumpOn = !highJumpOn;
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();

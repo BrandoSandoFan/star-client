@@ -1,6 +1,7 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -18,6 +19,11 @@ public final class Movement {
 	private static final double DIVE_END_SPEED = 1.7;
 	private static final double CLIMB_END_SPEED = 0.9;
 
+	/** Speed: horizontal blocks/tick while moving (vanilla sprint is about 0.28). High Jump: upward blocks/tick on take-off (vanilla is 0.42). */
+	private static final double SPEED = 0.45;
+	private static final double HIGH_JUMP_VELOCITY = 0.9;
+
+	private static boolean wasOnGround;
 	private static boolean climbing;
 	private static boolean nightVisionApplied;
 	private static double origEntityRange = -1;
@@ -54,6 +60,31 @@ public final class Movement {
 			ab.mayfly = true;
 			ab.flying = true;
 			ab.setFlyingSpeed(FLY_SPEED * (mc.options.keySprint.isDown() ? 2.0f : 1.0f));
+		}
+
+		boolean grounded = mc.player.onGround();
+		boolean controllable = mc.screen == null && !mc.player.isFallFlying() && !mc.player.getAbilities().flying
+				&& !mc.player.isInWater() && !mc.player.isInLava() && !mc.player.isPassenger();
+
+		if (StarClient.highJumpOn && controllable && mc.options.keyJump.isDown() && wasOnGround && !grounded) {
+			Vec3 v = mc.player.getDeltaMovement();
+			if (v.y > 0) mc.player.setDeltaMovement(v.x, HIGH_JUMP_VELOCITY, v.z);
+		}
+		wasOnGround = grounded;
+
+		if (StarClient.speedOn && controllable) {
+			double fwd = (mc.options.keyUp.isDown() ? 1 : 0) - (mc.options.keyDown.isDown() ? 1 : 0);
+			double side = (mc.options.keyLeft.isDown() ? 1 : 0) - (mc.options.keyRight.isDown() ? 1 : 0);
+			if (fwd != 0 || side != 0) {
+				double len = Math.sqrt(fwd * fwd + side * side);
+				double yaw = Math.toRadians(mc.player.getYRot());
+				double sin = Math.sin(yaw);
+				double cos = Math.cos(yaw);
+				double x = (-sin * fwd + cos * side) / len * SPEED;
+				double z = (cos * fwd + sin * side) / len * SPEED;
+				Vec3 v = mc.player.getDeltaMovement();
+				mc.player.setDeltaMovement(x, v.y, z);
+			}
 		}
 
 		if (StarClient.autoWalkOn && mc.screen == null) {
@@ -113,5 +144,6 @@ public final class Movement {
 		origEntityRange = -1;
 		origBlockRange = -1;
 		nightVisionApplied = false;
+		wasOnGround = false;
 	}
 }

@@ -15,5 +15,7 @@
   "key.starclient.elytrafly": "Toggle Elytra Fly",
   "key.starclient.killaura": "Toggle Kill Aura",
   "key.starclient.crits": "Toggle Crits",
-  "key.starclient.hitboxes": "Toggle Hitboxes"
+  "key.starclient.hitboxes": "Toggle Hitboxes",
+  "key.starclient.speed": "Toggle Speed",
+  "key.starclient.highjump": "Toggle High Jump"
 }
