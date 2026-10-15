@@ -27,15 +27,16 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 |---|---|---|
 | ESP | R | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES` |
 | Base Finder | B | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
-| Freecam | F | Client-only armor stand camera, speed 0.5, sprint x2.5 |
+| Freecam | F | Client-only armor stand camera, 10 blocks/s moved per frame (not per tick), sprint x2.5, disables `smartCull` so terrain stays visible |
 | Chest ESP | C | Boxes on storage block entities within 8 chunks |
 | Fullbright | G | Applies a hidden client-side night vision effect |
 | Auto Sprint | V | Sets sprint while forward is held |
 | Auto Walk | N | Holds the forward key |
+| Fly | X | Sets `mayfly`+`flying` abilities client-side; needs server permission |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)

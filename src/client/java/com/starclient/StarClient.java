@@ -22,10 +22,11 @@ public class StarClient implements ClientModInitializer {
 	public static boolean fullbrightOn;
 	public static boolean autoSprintOn;
 	public static boolean autoWalkOn;
+	public static boolean flyOn;
 
 	private static final int[] DEFAULT_KEYS = {
 			InputConstants.KEY_R, InputConstants.KEY_B, InputConstants.KEY_F,
-			InputConstants.KEY_C, InputConstants.KEY_G, InputConstants.KEY_V, InputConstants.KEY_N};
+			InputConstants.KEY_C, InputConstants.KEY_G, InputConstants.KEY_V, InputConstants.KEY_N, InputConstants.KEY_X};
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -91,6 +92,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.FULLBRIGHT -> fullbrightOn;
 			case Module.AUTO_SPRINT -> autoSprintOn;
 			case Module.AUTO_WALK -> autoWalkOn;
+			case Module.FLY -> flyOn;
 			default -> false;
 		};
 	}
@@ -115,6 +117,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_WALK -> {
 				autoWalkOn = !autoWalkOn;
 				if (!autoWalkOn) Movement.autoWalkOff(mc);
+			}
+			case Module.FLY -> {
+				flyOn = !flyOn;
+				if (!flyOn) Movement.flyOff(mc);
 			}
 			default -> { }
 		}

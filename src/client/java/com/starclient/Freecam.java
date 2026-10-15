@@ -10,10 +10,12 @@ import net.minecraft.world.entity.player.Player;
  * movement packets, so the real player stays put (same mechanism as spectating).
  */
 public final class Freecam {
-	private static final double SPEED = 0.5;
+	private static final double SPEED = 10.0; // blocks per second
 	private static final double SPRINT_MULT = 2.5;
 
 	private static ArmorStand cam;
+	private static boolean smartCull = true;
+	private static long lastNanos = System.nanoTime();
 
 	private Freecam() { }
 
@@ -39,10 +41,13 @@ public final class Freecam {
 		cam.setXRot(p.getXRot());
 		cam.setOldPosAndRot();
 		mc.setCameraEntity(cam);
+		smartCull = mc.smartCull;
+		mc.smartCull = false; // keep chunks visible while the camera is inside terrain
 	}
 
 	private static void disable(Minecraft mc) {
 		if (mc.player != null) mc.setCameraEntity(mc.player);
+		mc.smartCull = smartCull;
 		cam = null;
 	}
 
@@ -51,16 +56,22 @@ public final class Freecam {
 		cam = null;
 	}
 
+	/** Per-tick safety check: drop state if something else took the camera. */
 	public static void tick(Minecraft mc) {
-		if (cam == null) return;
-		if (mc.getCameraEntity() != cam) { // something else took the camera
-			cam = null;
-			return;
-		}
+		if (cam != null && mc.getCameraEntity() != cam) cam = null;
+	}
 
-		cam.setOldPosAndRot();
+	/**
+	 * Per-frame update (called from render extraction). Moving by frame time and
+	 * resetting the old position/rotation each frame avoids tick-rate stutter
+	 * because there is nothing left for the renderer to interpolate.
+	 */
+	public static void frame(Minecraft mc) {
+		long now = System.nanoTime();
+		double dt = Math.min((now - lastNanos) / 1.0e9, 0.1);
+		lastNanos = now;
+		if (cam == null || mc.player == null || mc.getCameraEntity() != cam) return;
 
-		// Mouse look still turns the real player, so mirror its rotation.
 		float yaw = mc.player.getYRot();
 		cam.setYRot(yaw);
 		cam.setXRot(mc.player.getXRot());
@@ -72,12 +83,12 @@ public final class Freecam {
 		double rad = Math.toRadians(yaw);
 		double dx = -Math.sin(rad) * fwd + Math.cos(rad) * side;
 		double dz = Math.cos(rad) * fwd + Math.sin(rad) * side;
-		double dy = vert;
 
-		double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+		double len = Math.sqrt(dx * dx + vert * vert + dz * dz);
 		if (len > 0) {
-			double speed = SPEED * (mc.options.keySprint.isDown() ? SPRINT_MULT : 1.0);
-			cam.setPos(cam.getX() + dx / len * speed, cam.getY() + dy / len * speed, cam.getZ() + dz / len * speed);
+			double speed = SPEED * (mc.options.keySprint.isDown() ? SPRINT_MULT : 1.0) * dt;
+			cam.setPos(cam.getX() + dx / len * speed, cam.getY() + vert / len * speed, cam.getZ() + dz / len * speed);
 		}
+		cam.setOldPosAndRot();
 	}
 }
