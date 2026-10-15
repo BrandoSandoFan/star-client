@@ -24,6 +24,8 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoWalkOn;
 	public static boolean flyOn;
 	public static boolean reachOn;
+	public static boolean aimBotOn;
+	public static boolean hitBotOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -69,6 +71,7 @@ public class StarClient implements ClientModInitializer {
 		if (baseFinderOn) BaseFinder.tick(mc);
 		if (chestEspOn) ChestEsp.tick(mc);
 		Movement.tick(mc);
+		Combat.tick(mc);
 	}
 
 	/** Module keybinds in {@link Module#ALL} order. */
@@ -91,6 +94,8 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_WALK -> autoWalkOn;
 			case Module.FLY -> flyOn;
 			case Module.REACH -> reachOn;
+			case Module.AIM_BOT -> aimBotOn;
+			case Module.HIT_BOT -> hitBotOn;
 			default -> false;
 		};
 	}
@@ -124,6 +129,8 @@ public class StarClient implements ClientModInitializer {
 				reachOn = !reachOn;
 				if (!reachOn) Movement.reachOff(mc);
 			}
+			case Module.AIM_BOT -> aimBotOn = !aimBotOn;
+			case Module.HIT_BOT -> hitBotOn = !hitBotOn;
 			default -> { }
 		}
 	}

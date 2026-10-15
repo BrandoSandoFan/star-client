@@ -9,5 +9,7 @@
   "key.starclient.autowalk": "Toggle Auto Walk",
   "key.starclient.menu": "Open Menu",
   "key.starclient.fly": "Toggle Fly",
-  "key.starclient.reach": "Toggle Reach"
+  "key.starclient.reach": "Toggle Reach",
+  "key.starclient.aimbot": "Toggle Aim Bot",
+  "key.starclient.hitbot": "Toggle Hit Bot"
 }
