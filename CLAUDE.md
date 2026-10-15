@@ -16,6 +16,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `BaseFinder`, `Freecam` - feature logic
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
+  - `ReachScreen` - reach distance slider
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 slider used by `EspScreen`
   - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
@@ -33,10 +34,11 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Auto Sprint | unbound | Sets sprint while forward is held |
 | Auto Walk | unbound | Holds the forward key |
 | Fly | unbound | Sets `mayfly`+`flying` abilities client-side; needs server permission |
+| Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)

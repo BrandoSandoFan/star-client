@@ -28,6 +28,7 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AUTO_SPRINT = 5;
 	public static final int AUTO_WALK = 6;
 	public static final int FLY = 7;
+	public static final int REACH = 8;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -37,5 +38,6 @@ public record Module(String id, String name, String description, Category catego
 			new Module("fullbright", "Fullbright", "Client-side night vision.", Category.RENDER, false),
 			new Module("autosprint", "Auto Sprint", "Sprints whenever you walk forward.", Category.MOVEMENT, false),
 			new Module("autowalk", "Auto Walk", "Holds the forward key for you.", Category.MOVEMENT, false),
-			new Module("fly", "Fly", "Creative-style flight. Servers without flight permission will kick you.", Category.MOVEMENT, false));
+			new Module("fly", "Fly", "Creative-style flight. Servers without flight permission will kick you.", Category.MOVEMENT, false),
+			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true));
 }

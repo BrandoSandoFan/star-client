@@ -2,14 +2,18 @@ package com.starclient;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.effect.MobEffects;
 
-/** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly. */
+/** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly, Reach. */
 public final class Movement {
 	private static final float FLY_SPEED = 0.1f;
 
 	private static boolean nightVisionApplied;
+	private static double origEntityRange = -1;
+	private static double origBlockRange = -1;
 
 	private Movement() { }
 
@@ -18,6 +22,20 @@ public final class Movement {
 			if (!mc.player.hasEffect(MobEffects.NIGHT_VISION)) {
 				mc.player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 1_000_000, 0, false, false, false));
 				nightVisionApplied = true;
+			}
+		}
+
+		if (StarClient.reachOn) {
+			AttributeInstance entity = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
+			AttributeInstance block = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+			if (entity != null && block != null) {
+				if (origEntityRange < 0) {
+					origEntityRange = entity.getBaseValue();
+					origBlockRange = block.getBaseValue();
+				}
+				double reach = Config.get().reachDistance;
+				entity.setBaseValue(reach);
+				block.setBaseValue(reach);
 			}
 		}
 
@@ -58,7 +76,20 @@ public final class Movement {
 		mc.options.keyUp.setDown(false);
 	}
 
+	public static void reachOff(Minecraft mc) {
+		if (mc.player != null && origEntityRange >= 0) {
+			AttributeInstance entity = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
+			AttributeInstance block = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+			if (entity != null) entity.setBaseValue(origEntityRange);
+			if (block != null) block.setBaseValue(origBlockRange);
+		}
+		origEntityRange = -1;
+		origBlockRange = -1;
+	}
+
 	public static void reset() {
+		origEntityRange = -1;
+		origBlockRange = -1;
 		nightVisionApplied = false;
 	}
 }

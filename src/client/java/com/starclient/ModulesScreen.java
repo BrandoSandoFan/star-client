@@ -105,7 +105,7 @@ public final class ModulesScreen extends Screen {
 		addRenderableWidget(keyButton);
 
 		if (hasGear) {
-			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(new EspScreen(this)))
+			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.REACH ? new ReachScreen(this) : new EspScreen(this)))
 					.bounds(left + PANEL_WIDTH - gearWidth, y, gearWidth, 20).build();
 			gear.setTooltip(Tooltip.create(Component.literal("Module settings")));
 			addRenderableWidget(gear);

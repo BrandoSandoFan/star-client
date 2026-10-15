@@ -23,6 +23,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoSprintOn;
 	public static boolean autoWalkOn;
 	public static boolean flyOn;
+	public static boolean reachOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -89,6 +90,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_SPRINT -> autoSprintOn;
 			case Module.AUTO_WALK -> autoWalkOn;
 			case Module.FLY -> flyOn;
+			case Module.REACH -> reachOn;
 			default -> false;
 		};
 	}
@@ -117,6 +119,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.FLY -> {
 				flyOn = !flyOn;
 				if (!flyOn) Movement.flyOff(mc);
+			}
+			case Module.REACH -> {
+				reachOn = !reachOn;
+				if (!reachOn) Movement.reachOff(mc);
 			}
 			default -> { }
 		}
