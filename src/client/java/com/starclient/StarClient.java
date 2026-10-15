@@ -27,6 +27,9 @@ public class StarClient implements ClientModInitializer {
 	public static boolean aimBotOn;
 	public static boolean hitBotOn;
 	public static boolean elytraFlyOn;
+	public static boolean killAuraOn;
+	public static boolean critsOn;
+	public static boolean hitboxesOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -98,6 +101,9 @@ public class StarClient implements ClientModInitializer {
 			case Module.AIM_BOT -> aimBotOn;
 			case Module.HIT_BOT -> hitBotOn;
 			case Module.ELYTRA_FLY -> elytraFlyOn;
+			case Module.KILL_AURA -> killAuraOn;
+			case Module.CRITS -> critsOn;
+			case Module.HITBOXES -> hitboxesOn;
 			default -> false;
 		};
 	}
@@ -133,6 +139,9 @@ public class StarClient implements ClientModInitializer {
 			}
 			case Module.AIM_BOT -> aimBotOn = !aimBotOn;
 			case Module.HIT_BOT -> hitBotOn = !hitBotOn;
+			case Module.KILL_AURA -> killAuraOn = !killAuraOn;
+			case Module.CRITS -> critsOn = !critsOn;
+			case Module.HITBOXES -> hitboxesOn = !hitboxesOn;
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();

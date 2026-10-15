@@ -34,6 +34,9 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AIM_BOT = 9;
 	public static final int HIT_BOT = 10;
 	public static final int ELYTRA_FLY = 11;
+	public static final int KILL_AURA = 12;
+	public static final int CRITS = 13;
+	public static final int HITBOXES = 14;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -47,5 +50,8 @@ public record Module(String id, String name, String description, Category catego
 			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true),
 			new Module("aimbot", "Aim Bot", "Smoothly turns toward the nearest player or hostile mob within 6 blocks.", Category.COMBAT, false),
 			new Module("hitbot", "Hit Bot", "Attacks whatever your crosshair is on once your attack is fully charged.", Category.COMBAT, false),
-				new Module("elytrafly", "Elytra Fly", "While gliding, alternates dive and climb angles to keep flying without fireworks.", Category.MOVEMENT, false));
+				new Module("elytrafly", "Elytra Fly", "While gliding, alternates dive and climb angles to keep flying without fireworks.", Category.MOVEMENT, false),
+				new Module("killaura", "Kill Aura", "Attacks the nearest player or hostile mob in reach with line of sight, no aiming needed.", Category.COMBAT, false),
+				new Module("crits", "Crits", "Makes Hit Bot and Kill Aura hits critical by sending fake fall packets first. Anticheats flag this.", Category.COMBAT, false),
+				new Module("hitboxes", "Hitboxes", "Shows entity hitboxes through walls: red inside your reach, white outside.", Category.RENDER, false));
 }
