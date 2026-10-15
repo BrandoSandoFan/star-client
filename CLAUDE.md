@@ -16,8 +16,9 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
-  - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
+  - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `ReachScreen` - reach distance slider
+  - `HitboxScreen` - hitbox expansion slider
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 slider used by `EspScreen`
   - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
@@ -38,10 +39,18 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
 | Aim Bot | unbound | Combat tab; eases toward target (20% of the remaining angle per tick, max 8°) toward target |
 | Hit Bot | unbound | Combat tab; auto attack via `gameMode.attack` |
+| Elytra Fly | unbound | Movement tab; while gliding, alternates dive (+35°) until speed > 1.7 b/t and climb (-45°) until speed < 0.9 b/t, easing pitch 6°/tick. Start gliding yourself (jump twice in air) |
+| Kill Aura | unbound | Combat tab; attacks the nearest player/hostile within entity interaction range (Reach extends it) with line of sight, at >=95% charge; no rotation |
+| Crits | unbound | Combat tab; before Hit Bot/Kill Aura attacks (not manual clicks) sends two fake `ServerboundMovePlayerPacket.Pos` hops (+0.0625 y, off-ground) so the server counts a crit. Server ignores crits while you are sprinting |
+| Hitboxes | unbound | Combat tab; enlarges every entity hitbox by `Config.hitboxExpand` blocks per side (0-2, default 0.3, `HitboxScreen`). At the start of each tick `Combat.expandHitboxes` re-picks the crosshair entity against the inflated boxes (no mixin), so clicks, Hit Bot and Kill Aura use it; server still validates real reach |
+| Speed | unbound | Movement tab; sets horizontal velocity to 0.45 b/t along held WASD keys (skipped when gliding, flying, swimming or riding). Servers with movement checks rubber-band |
+| High Jump | unbound | Movement tab; on take-off with jump held, sets upward velocity to 0.9 b/t (vanilla 0.42) |
+| Softfall | unbound | Movement tab; while `fallDistance` > 2 and airborne (not gliding/flying) sends `ServerboundMovePlayerPacket.StatusOnly(onGround=true)` each tick so the server resets fall damage |
+| Trajectories | unbound | Render tab; `Trajectories.compute` simulates the held bow (draw-scaled), crossbow, trident, pearl, snowball, egg or potion (gravity/drag per item, block clip each tick, 200 steps max); `StarRenderer` draws small boxes along the path and a red box at the impact |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)

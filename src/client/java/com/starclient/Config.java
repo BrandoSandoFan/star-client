@@ -28,6 +28,9 @@ public final class Config {
 	/** Interaction range in blocks while Reach is on. */
 	public float reachDistance = 6.0f;
 
+	/** Blocks added to every side of an entity's hitbox while Hitboxes is on. */
+	public float hitboxExpand = 0.3f;
+
 	private static Config instance = new Config();
 
 	public static Config get() {

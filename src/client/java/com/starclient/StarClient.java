@@ -26,6 +26,14 @@ public class StarClient implements ClientModInitializer {
 	public static boolean reachOn;
 	public static boolean aimBotOn;
 	public static boolean hitBotOn;
+	public static boolean elytraFlyOn;
+	public static boolean killAuraOn;
+	public static boolean critsOn;
+	public static boolean hitboxesOn;
+	public static boolean speedOn;
+	public static boolean highJumpOn;
+	public static boolean softFallOn;
+	public static boolean trajectoriesOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -42,6 +50,7 @@ public class StarClient implements ClientModInitializer {
 		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
 
 		Config.load();
+		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();
@@ -96,6 +105,14 @@ public class StarClient implements ClientModInitializer {
 			case Module.REACH -> reachOn;
 			case Module.AIM_BOT -> aimBotOn;
 			case Module.HIT_BOT -> hitBotOn;
+			case Module.ELYTRA_FLY -> elytraFlyOn;
+			case Module.KILL_AURA -> killAuraOn;
+			case Module.CRITS -> critsOn;
+			case Module.HITBOXES -> hitboxesOn;
+			case Module.SPEED -> speedOn;
+			case Module.HIGH_JUMP -> highJumpOn;
+			case Module.SOFT_FALL -> softFallOn;
+			case Module.TRAJECTORIES -> trajectoriesOn;
 			default -> false;
 		};
 	}
@@ -131,6 +148,17 @@ public class StarClient implements ClientModInitializer {
 			}
 			case Module.AIM_BOT -> aimBotOn = !aimBotOn;
 			case Module.HIT_BOT -> hitBotOn = !hitBotOn;
+			case Module.KILL_AURA -> killAuraOn = !killAuraOn;
+			case Module.CRITS -> critsOn = !critsOn;
+			case Module.HITBOXES -> hitboxesOn = !hitboxesOn;
+			case Module.SPEED -> speedOn = !speedOn;
+			case Module.HIGH_JUMP -> highJumpOn = !highJumpOn;
+			case Module.SOFT_FALL -> softFallOn = !softFallOn;
+			case Module.TRAJECTORIES -> trajectoriesOn = !trajectoriesOn;
+			case Module.ELYTRA_FLY -> {
+				elytraFlyOn = !elytraFlyOn;
+				Movement.elytraReset();
+			}
 			default -> { }
 		}
 	}

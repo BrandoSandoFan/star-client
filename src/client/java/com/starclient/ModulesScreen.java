@@ -14,7 +14,8 @@ import com.mojang.blaze3d.platform.InputConstants;
 /** Module menu: category tabs, per-module toggle and key rebind, ESP settings. */
 public final class ModulesScreen extends Screen {
 	private static final int PANEL_WIDTH = 320;
-	private static final int ROW_HEIGHT = 24;
+	private static final int ROW_HEIGHT = 22;
+	private static final int SECTION_HEIGHT = 12;
 
 	/** -1 shows every module, otherwise an index into {@link Module.Category#values()}. */
 	private static int tab = -1;
@@ -62,11 +63,22 @@ public final class ModulesScreen extends Screen {
 		y += 30;
 
 		// Module rows
-		for (int i = 0; i < Module.ALL.size(); i++) {
-			Module m = Module.ALL.get(i);
-			if (tab >= 0 && m.category() != cats[tab]) continue;
-			addRow(left, y, i, m);
-			y += ROW_HEIGHT;
+		// In the All view, modules are grouped under a heading per category.
+		for (Module.Category cat : cats) {
+			if (tab >= 0 && cat != cats[tab]) continue;
+			boolean header = tab < 0;
+			for (int i = 0; i < Module.ALL.size(); i++) {
+				Module m = Module.ALL.get(i);
+				if (m.category() != cat) continue;
+				if (header) {
+					Component title = Component.literal(cat.label).withStyle(cat.colour, ChatFormatting.BOLD);
+					addRenderableWidget(new StringWidget(left, y, font.width(title), 9, title, font));
+					y += SECTION_HEIGHT;
+					header = false;
+				}
+				addRow(left, y, i, m);
+				y += ROW_HEIGHT;
+			}
 		}
 
 		y += 8;
@@ -105,7 +117,11 @@ public final class ModulesScreen extends Screen {
 		addRenderableWidget(keyButton);
 
 		if (hasGear) {
-			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.REACH ? new ReachScreen(this) : new EspScreen(this)))
+			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(switch (idx) {
+					case Module.REACH -> new ReachScreen(this);
+					case Module.HITBOXES -> new HitboxScreen(this);
+					default -> new EspScreen(this);
+				}))
 					.bounds(left + PANEL_WIDTH - gearWidth, y, gearWidth, 20).build();
 			gear.setTooltip(Tooltip.create(Component.literal("Module settings")));
 			addRenderableWidget(gear);
