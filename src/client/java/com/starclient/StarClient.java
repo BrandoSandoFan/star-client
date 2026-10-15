@@ -2,6 +2,7 @@ package com.starclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -17,20 +18,27 @@ public class StarClient implements ClientModInitializer {
 
 	public static boolean espOn;
 	public static boolean baseFinderOn;
+	public static boolean chestEspOn;
+	public static boolean fullbrightOn;
+	public static boolean autoSprintOn;
+	public static boolean autoWalkOn;
 
-	private static KeyMapping espKey;
-	private static KeyMapping baseKey;
-	private static KeyMapping freecamKey;
+	private static final int[] DEFAULT_KEYS = {
+			InputConstants.KEY_R, InputConstants.KEY_B, InputConstants.KEY_F,
+			InputConstants.KEY_C, InputConstants.KEY_G, InputConstants.KEY_V, InputConstants.KEY_N};
+
+	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
 
 	@Override
 	public void onInitializeClient() {
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(ID, "main"));
 
-		espKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.esp", InputConstants.Type.KEYSYM, InputConstants.KEY_R, category));
-		baseKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.basefinder", InputConstants.Type.KEYSYM, InputConstants.KEY_B, category));
-		freecamKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.freecam", InputConstants.Type.KEYSYM, InputConstants.KEY_F, category));
-
+		moduleKeys = new KeyMapping[Module.ALL.size()];
+		for (int i = 0; i < moduleKeys.length; i++) {
+			moduleKeys[i] = KeyMappingHelper.registerKeyMapping(
+					new KeyMapping("key.starclient." + Module.ALL.get(i).id(), InputConstants.Type.KEYSYM, DEFAULT_KEYS[i], category));
+		}
 		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
 
 		Config.load();
@@ -43,6 +51,8 @@ public class StarClient implements ClientModInitializer {
 		if (mc.player == null || mc.level == null) {
 			Freecam.reset();
 			BaseFinder.clear();
+			ChestEsp.clear();
+			Movement.reset();
 			return;
 		}
 
@@ -53,19 +63,19 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < keys.length; i++) {
 			while (keys[i].consumeClick()) {
 				toggle(mc, i);
-				status(mc, NAMES[i], isOn(i));
+				status(mc, Module.ALL.get(i).name(), isOn(i));
 			}
 		}
 
 		Freecam.tick(mc);
 		if (baseFinderOn) BaseFinder.tick(mc);
+		if (chestEspOn) ChestEsp.tick(mc);
+		Movement.tick(mc);
 	}
 
-	private static final String[] NAMES = {"ESP", "Base Finder", "Freecam"};
-
-	/** Module keybinds in module index order: 0 = ESP, 1 = Base Finder, 2 = Freecam. */
+	/** Module keybinds in {@link Module#ALL} order. */
 	public static KeyMapping[] keys() {
-		return new KeyMapping[] {espKey, baseKey, freecamKey};
+		return moduleKeys;
 	}
 
 	public static KeyMapping menuKey() {
@@ -74,24 +84,44 @@ public class StarClient implements ClientModInitializer {
 
 	public static boolean isOn(int module) {
 		return switch (module) {
-			case 0 -> espOn;
-			case 1 -> baseFinderOn;
-			default -> Freecam.isOn();
+			case Module.ESP -> espOn;
+			case Module.BASE_FINDER -> baseFinderOn;
+			case Module.FREECAM -> Freecam.isOn();
+			case Module.CHEST_ESP -> chestEspOn;
+			case Module.FULLBRIGHT -> fullbrightOn;
+			case Module.AUTO_SPRINT -> autoSprintOn;
+			case Module.AUTO_WALK -> autoWalkOn;
+			default -> false;
 		};
 	}
 
 	public static void toggle(Minecraft mc, int module) {
 		switch (module) {
-			case 0 -> espOn = !espOn;
-			case 1 -> {
+			case Module.ESP -> espOn = !espOn;
+			case Module.BASE_FINDER -> {
 				baseFinderOn = !baseFinderOn;
 				if (!baseFinderOn) BaseFinder.clear();
 			}
-			default -> Freecam.toggle(mc);
+			case Module.FREECAM -> Freecam.toggle(mc);
+			case Module.CHEST_ESP -> {
+				chestEspOn = !chestEspOn;
+				if (!chestEspOn) ChestEsp.clear();
+			}
+			case Module.FULLBRIGHT -> {
+				fullbrightOn = !fullbrightOn;
+				if (!fullbrightOn) Movement.fullbrightOff(mc);
+			}
+			case Module.AUTO_SPRINT -> autoSprintOn = !autoSprintOn;
+			case Module.AUTO_WALK -> {
+				autoWalkOn = !autoWalkOn;
+				if (!autoWalkOn) Movement.autoWalkOff(mc);
+			}
+			default -> { }
 		}
 	}
 
 	private static void status(Minecraft mc, String name, boolean on) {
-		mc.gui.setOverlayMessage(Component.literal(name + ": " + (on ? "ON" : "OFF")), false);
+		Component state = Component.literal(on ? "ON" : "OFF").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED);
+		mc.gui.setOverlayMessage(Component.literal(name + ": ").withStyle(ChatFormatting.WHITE).append(state), false);
 	}
 }

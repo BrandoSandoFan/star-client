@@ -10,9 +10,12 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 ## Layout
 - `src/client/java/com/starclient/`
   - `StarClient` - entrypoint, keybinds, module toggle/state helpers (`keys()`, `isOn()`, `toggle()`), status overlay text
+  - `Module` - module metadata (id, name, description, category, has-settings) and index constants; single source for menu rows and keybind registration
+  - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
+  - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `BaseFinder`, `Freecam` - feature logic
-  - `ModulesScreen` - module menu: toggle each module, rebind its key, open ESP settings, rebind the menu key
+  - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 slider used by `EspScreen`
   - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
@@ -25,10 +28,14 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | ESP | R | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES` |
 | Base Finder | B | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
 | Freecam | F | Client-only armor stand camera, speed 0.5, sprint x2.5 |
+| Chest ESP | C | Boxes on storage block entities within 8 chunks |
+| Fullbright | G | Applies a hidden client-side night vision effect |
+| Auto Sprint | V | Sets sprint while forward is held |
+| Auto Walk | N | Holds the forward key |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed: 0 = ESP, 1 = Base Finder, 2 = Freecam (`StarClient.keys()`).
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
@@ -45,5 +52,5 @@ Module order is fixed: 0 = ESP, 1 = Base Finder, 2 = Freecam (`StarClient.keys()
 - Mojang-mapped names (Minecraft 26.1 is unobfuscated)
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
-- New module: add a key in `StarClient`, extend `isOn`/`toggle`/`keys`, add a lang entry, add a row in `ModulesScreen.NAMES`
+- New module: append to `Module.ALL` (+ index constant), add a default key to `StarClient.DEFAULT_KEYS`, extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`
 - Tabs for indentation, matching existing code

@@ -31,6 +31,10 @@ public final class Config {
 		return instance;
 	}
 
+	public static void reset() {
+		instance = new Config();
+	}
+
 	public static void load() {
 		if (!Files.exists(FILE)) return;
 		try (Reader r = Files.newBufferedReader(FILE)) {
