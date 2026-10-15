@@ -79,15 +79,21 @@ public final class StarRenderer {
 		List<Box> out = new ArrayList<>();
 
 		if (StarClient.espOn) {
+			Config cfg = Config.get();
+			double maxDist = cfg.espMaxDistance * (double) cfg.espMaxDistance;
+			Vec3 origin = context.levelState().cameraRenderState.pos;
 			for (Entity e : mc.level.entitiesForRendering()) {
 				if (e == Freecam.camera()) continue;
 				if (e == mc.player && !Freecam.isOn()) continue;
 
-				float[] c = colorFor(e);
-				if (c == null) continue;
+				int cat = categoryOf(e);
+				if (cat < 0 || !cfg.espEnabled[cat]) continue;
+				if (cfg.espMaxDistance > 0 && e.distanceToSqr(origin) > maxDist) continue;
 
+				int rgb = cfg.espColor[cat];
 				AABB bb = e.getBoundingBox();
-				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, c[0], c[1], c[2], 0.35f));
+				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ,
+						((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, cfg.espAlpha));
 			}
 		}
 
@@ -104,12 +110,13 @@ public final class StarRenderer {
 		boxes = out;
 	}
 
-	private static float[] colorFor(Entity e) {
-		if (e instanceof Player) return new float[] {1.0f, 0.15f, 0.15f};
-		if (e instanceof Enemy) return new float[] {1.0f, 0.6f, 0.0f};
-		if (e instanceof ItemEntity) return new float[] {0.2f, 0.9f, 1.0f};
-		if (e instanceof LivingEntity) return new float[] {0.3f, 1.0f, 0.3f};
-		return null;
+	/** Index into {@link Config#ESP_NAMES}, or -1 for entities ESP ignores. */
+	private static int categoryOf(Entity e) {
+		if (e instanceof Player) return 0;
+		if (e instanceof Enemy) return 1;
+		if (e instanceof ItemEntity) return 3;
+		if (e instanceof LivingEntity) return 2;
+		return -1;
 	}
 
 	// ---- drawing ----

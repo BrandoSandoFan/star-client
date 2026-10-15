@@ -9,9 +9,11 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder and freecam.
 
 ## Layout
 - `src/client/java/com/starclient/`
-  - `StarClient` - entrypoint, keybinds (R = ESP, B = base finder, F = freecam), status overlay text
+  - `StarClient` - entrypoint, keybinds (R = ESP, B = base finder, F = freecam, Right Shift = menu; all rebindable in the menu), status overlay text
   - `StarRenderer` - level render hooks and through-walls box pipeline
   - `BaseFinder`, `Freecam` - feature logic
+  - `ModulesScreen` (menu, default Right Shift), `EspScreen` (ESP customisation), `ValueSlider`
+  - `Config` - persisted settings (`config/starclient.json`)
 - `src/main/resources/fabric.mod.json` - mod id `starclient`
 - `src/main/resources/assets/starclient/lang/en_us.json` - keybind names
 
