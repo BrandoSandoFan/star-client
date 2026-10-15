@@ -37,7 +37,16 @@ public final class BaseFinder {
 			Blocks.HOPPER, Blocks.DISPENSER, Blocks.DROPPER, Blocks.OBSERVER,
 			Blocks.PISTON, Blocks.STICKY_PISTON, Blocks.REDSTONE_LAMP, Blocks.REPEATER, Blocks.COMPARATOR,
 			Blocks.GLASS, Blocks.GLASS_PANE, Blocks.SEA_LANTERN, Blocks.LANTERN,
-			Blocks.IRON_BLOCK, Blocks.GOLD_BLOCK, Blocks.DIAMOND_BLOCK, Blocks.EMERALD_BLOCK, Blocks.NETHERITE_BLOCK);
+			Blocks.IRON_BLOCK, Blocks.GOLD_BLOCK, Blocks.DIAMOND_BLOCK, Blocks.EMERALD_BLOCK, Blocks.NETHERITE_BLOCK,
+			// Amethyst farms
+			Blocks.BUDDING_AMETHYST, Blocks.AMETHYST_CLUSTER, Blocks.LARGE_AMETHYST_BUD,
+			Blocks.MEDIUM_AMETHYST_BUD, Blocks.SMALL_AMETHYST_BUD,
+			// Farm and redstone materials
+			Blocks.CRAFTER, Blocks.BREWING_STAND, Blocks.NOTE_BLOCK, Blocks.TNT, Blocks.TARGET,
+			Blocks.SLIME_BLOCK, Blocks.HONEY_BLOCK, Blocks.REDSTONE_BLOCK, Blocks.DAYLIGHT_DETECTOR,
+			Blocks.LEVER, Blocks.TRIPWIRE_HOOK, Blocks.POWERED_RAIL, Blocks.DETECTOR_RAIL, Blocks.ACTIVATOR_RAIL,
+			Blocks.SCAFFOLDING, Blocks.COMPOSTER, Blocks.LECTERN, Blocks.CARTOGRAPHY_TABLE,
+			Blocks.SMITHING_TABLE, Blocks.GRINDSTONE, Blocks.STONECUTTER);
 
 	private static final Map<Long, Hit> HITS = new HashMap<>();
 	private static final Map<Long, Integer> SCANNED = new HashMap<>();

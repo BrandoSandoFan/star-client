@@ -30,7 +30,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | ESP | unbound | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES` |
 | Base Finder | unbound | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
 | Freecam | unbound | Client-only armor stand camera, 10 blocks/s moved per frame (not per tick), sprint x2.5, disables `smartCull` so terrain stays visible |
-| Chest ESP | unbound | Boxes on storage block entities within 8 chunks |
+| Chest ESP | unbound | Boxes on storage/farm block entities (chests, hoppers, droppers, furnaces, crafters, brewing stands, beacons) and growing amethyst (budding block, buds, clusters) within 8 chunks |
 | Fullbright | unbound | Applies a hidden client-side night vision effect |
 | Auto Sprint | unbound | Sets sprint while forward is held |
 | Auto Walk | unbound | Holds the forward key |
