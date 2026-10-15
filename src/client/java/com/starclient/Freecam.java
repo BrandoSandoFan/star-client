@@ -12,10 +12,13 @@ import net.minecraft.world.entity.player.Player;
 public final class Freecam {
 	private static final double SPEED = 10.0; // blocks per second
 	private static final double SPRINT_MULT = 2.5;
+	private static final double ACCEL = 14.0; // velocity easing rate, 1/s
 
 	private static ArmorStand cam;
 	private static boolean smartCull = true;
 	private static long lastNanos = System.nanoTime();
+	private static double smoothDt = 1.0 / 60.0;
+	private static double velX, velY, velZ;
 
 	private Freecam() { }
 
@@ -42,6 +45,7 @@ public final class Freecam {
 		cam.setOldPosAndRot();
 		mc.setCameraEntity(cam);
 		smartCull = mc.smartCull;
+		velX = velY = velZ = 0;
 		mc.smartCull = false; // keep chunks visible while the camera is inside terrain
 	}
 
@@ -68,9 +72,13 @@ public final class Freecam {
 	 */
 	public static void frame(Minecraft mc) {
 		long now = System.nanoTime();
-		double dt = Math.min((now - lastNanos) / 1.0e9, 0.1);
+		double rawDt = Math.min((now - lastNanos) / 1.0e9, 0.1);
 		lastNanos = now;
 		if (cam == null || mc.player == null || mc.getCameraEntity() != cam) return;
+
+		// Frame times vary; low-pass them so spikes do not become visible position steps.
+		smoothDt += (rawDt - smoothDt) * 0.2;
+		double dt = smoothDt;
 
 		float yaw = mc.player.getYRot();
 		cam.setYRot(yaw);
@@ -85,10 +93,22 @@ public final class Freecam {
 		double dz = Math.cos(rad) * fwd + Math.sin(rad) * side;
 
 		double len = Math.sqrt(dx * dx + vert * vert + dz * dz);
+		double speed = SPEED * (mc.options.keySprint.isDown() ? SPRINT_MULT : 1.0);
+		double tx = 0, ty = 0, tz = 0;
 		if (len > 0) {
-			double speed = SPEED * (mc.options.keySprint.isDown() ? SPRINT_MULT : 1.0) * dt;
-			cam.setPos(cam.getX() + dx / len * speed, cam.getY() + vert / len * speed, cam.getZ() + dz / len * speed);
+			tx = dx / len * speed;
+			ty = vert / len * speed;
+			tz = dz / len * speed;
 		}
+
+		// Ease velocity toward the target so starting and stopping are not abrupt.
+		double k = 1.0 - Math.exp(-dt * ACCEL);
+		velX += (tx - velX) * k;
+		velY += (ty - velY) * k;
+		velZ += (tz - velZ) * k;
+		if (len == 0 && Math.abs(velX) + Math.abs(velY) + Math.abs(velZ) < 0.01) velX = velY = velZ = 0;
+
+		cam.setPos(cam.getX() + velX * dt, cam.getY() + velY * dt, cam.getZ() + velZ * dt);
 		cam.setOldPosAndRot();
 	}
 }
