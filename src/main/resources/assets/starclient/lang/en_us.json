@@ -3,5 +3,11 @@
   "key.starclient.esp": "Toggle ESP",
   "key.starclient.basefinder": "Toggle Base Finder",
   "key.starclient.freecam": "Toggle Freecam",
-  "key.starclient.menu": "Open Menu"
+  "key.starclient.chestesp": "Toggle Chest ESP",
+  "key.starclient.fullbright": "Toggle Fullbright",
+  "key.starclient.autosprint": "Toggle Auto Sprint",
+  "key.starclient.autowalk": "Toggle Auto Walk",
+  "key.starclient.menu": "Open Menu",
+  "key.starclient.fly": "Toggle Fly",
+  "key.starclient.reach": "Toggle Reach"
 }

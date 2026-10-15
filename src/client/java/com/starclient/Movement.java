@@ -1,0 +1,95 @@
+package com.starclient;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.effect.MobEffects;
+
+/** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly, Reach. */
+public final class Movement {
+	private static final float FLY_SPEED = 0.1f;
+
+	private static boolean nightVisionApplied;
+	private static double origEntityRange = -1;
+	private static double origBlockRange = -1;
+
+	private Movement() { }
+
+	public static void tick(Minecraft mc) {
+		if (StarClient.fullbrightOn) {
+			if (!mc.player.hasEffect(MobEffects.NIGHT_VISION)) {
+				mc.player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 1_000_000, 0, false, false, false));
+				nightVisionApplied = true;
+			}
+		}
+
+		if (StarClient.reachOn) {
+			AttributeInstance entity = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
+			AttributeInstance block = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+			if (entity != null && block != null) {
+				if (origEntityRange < 0) {
+					origEntityRange = entity.getBaseValue();
+					origBlockRange = block.getBaseValue();
+				}
+				double reach = Config.get().reachDistance;
+				entity.setBaseValue(reach);
+				block.setBaseValue(reach);
+			}
+		}
+
+		if (Freecam.isOn()) return;
+
+		if (StarClient.flyOn) {
+			Abilities ab = mc.player.getAbilities();
+			ab.mayfly = true;
+			ab.flying = true;
+			ab.setFlyingSpeed(FLY_SPEED * (mc.options.keySprint.isDown() ? 2.0f : 1.0f));
+		}
+
+		if (StarClient.autoWalkOn && mc.screen == null) {
+			mc.options.keyUp.setDown(true);
+		}
+		if (StarClient.autoSprintOn && mc.options.keyUp.isDown() && !mc.player.isShiftKeyDown()
+				&& mc.player.getFoodData().getFoodLevel() > 6) {
+			mc.player.setSprinting(true);
+		}
+	}
+
+	public static void fullbrightOff(Minecraft mc) {
+		if (nightVisionApplied && mc.player != null) mc.player.removeEffect(MobEffects.NIGHT_VISION);
+		nightVisionApplied = false;
+	}
+
+	public static void flyOff(Minecraft mc) {
+		if (mc.player == null) return;
+		Abilities ab = mc.player.getAbilities();
+		ab.setFlyingSpeed(0.05f);
+		if (!mc.player.isCreative() && !mc.player.isSpectator()) {
+			ab.mayfly = false;
+			ab.flying = false;
+		}
+	}
+
+	public static void autoWalkOff(Minecraft mc) {
+		mc.options.keyUp.setDown(false);
+	}
+
+	public static void reachOff(Minecraft mc) {
+		if (mc.player != null && origEntityRange >= 0) {
+			AttributeInstance entity = mc.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
+			AttributeInstance block = mc.player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+			if (entity != null) entity.setBaseValue(origEntityRange);
+			if (block != null) block.setBaseValue(origBlockRange);
+		}
+		origEntityRange = -1;
+		origBlockRange = -1;
+	}
+
+	public static void reset() {
+		origEntityRange = -1;
+		origBlockRange = -1;
+		nightVisionApplied = false;
+	}
+}

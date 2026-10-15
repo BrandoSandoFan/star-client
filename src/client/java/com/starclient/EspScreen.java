@@ -1,5 +1,6 @@
 package com.starclient;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
@@ -22,7 +23,8 @@ public final class EspScreen extends Screen {
 		int left = cx - 150;
 		int y = 40;
 
-		addRenderableWidget(new StringWidget(cx - font.width(title) / 2, 20, font.width(title), 9, title, font));
+		Component heading = Component.literal("\u25C6 ESP Settings").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+		addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, 20, font.width(heading), 9, heading, font));
 
 		for (int i = 0; i < Config.ESP_NAMES.length; i++) {
 			final int idx = i;
@@ -47,12 +49,18 @@ public final class EspScreen extends Screen {
 				v -> cfg.espMaxDistance = (int) Math.round(v * 256)));
 		y += 30;
 
+		addRenderableWidget(Button.builder(Component.literal("Reset to defaults"), b -> {
+			Config.reset();
+			rebuildWidgets();
+		}).bounds(cx - 100, y, 200, 20).build());
+		y += 24;
+
 		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
 	}
 
 	private Component categoryLabel(int idx) {
 		Config cfg = Config.get();
-		return Component.literal(Config.ESP_NAMES[idx] + (cfg.espEnabled[idx] ? ": ON" : ": OFF"))
+		return Component.literal((cfg.espEnabled[idx] ? "\u25CF " : "\u25CB ") + Config.ESP_NAMES[idx])
 				.withStyle(Style.EMPTY.withColor(cfg.espColor[idx]));
 	}
 

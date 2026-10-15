@@ -27,6 +27,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -71,6 +72,7 @@ public final class StarRenderer {
 
 	private static void extract(LevelExtractionContext context) {
 		Minecraft mc = Minecraft.getInstance();
+		Freecam.frame(mc);
 		if (mc.level == null || mc.player == null) {
 			boxes = List.of();
 			return;
@@ -104,6 +106,13 @@ public final class StarRenderer {
 				double z = hit.pos().getZ() + 0.5;
 				// Tall beacon-style column so it is visible from far away.
 				out.add(new Box(x - 1.5, y - 8, z - 1.5, x + 1.5, y + 40, z + 1.5, 0.7f, 0.2f, 1.0f, 0.4f));
+			}
+		}
+
+		if (StarClient.chestEspOn) {
+			for (ChestEsp.Hit hit : ChestEsp.hits()) {
+				BlockPos p = hit.pos();
+				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), 0.4f));
 			}
 		}
 

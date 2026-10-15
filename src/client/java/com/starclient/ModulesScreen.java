@@ -1,17 +1,23 @@
 package com.starclient;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-/** Module list: toggle each module, rebind its key, open ESP settings. */
+/** Module menu: category tabs, per-module toggle and key rebind, ESP settings. */
 public final class ModulesScreen extends Screen {
-	private static final String[] NAMES = {"ESP", "Base Finder", "Freecam"};
+	private static final int PANEL_WIDTH = 320;
+	private static final int ROW_HEIGHT = 24;
+
+	/** -1 shows every module, otherwise an index into {@link Module.Category#values()}. */
+	private static int tab = -1;
 
 	private KeyMapping listening;
 
@@ -22,48 +28,104 @@ public final class ModulesScreen extends Screen {
 	@Override
 	protected void init() {
 		int cx = width / 2;
-		int left = cx - 150;
-		int y = 40;
+		int left = cx - PANEL_WIDTH / 2;
+		int y = 18;
 
-		addRenderableWidget(new StringWidget(cx - font.width(title) / 2, 20, font.width(title), 9, title, font));
+		Component heading = Component.literal("★ Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+		addCentred(heading, cx, y);
+		y += 12;
 
-		for (int i = 0; i < NAMES.length; i++) {
-			final int idx = i;
-			addRenderableWidget(Button.builder(moduleLabel(idx), b -> {
-				StarClient.toggle(minecraft, idx);
-				b.setMessage(moduleLabel(idx));
-			}).bounds(left, y, 110, 20).build());
+		int enabled = 0;
+		for (int i = 0; i < Module.ALL.size(); i++) if (StarClient.isOn(i)) enabled++;
+		addCentred(Component.literal(enabled + " of " + Module.ALL.size() + " modules enabled").withStyle(ChatFormatting.GRAY), cx, y);
+		y += 18;
 
-			KeyMapping key = StarClient.keys()[idx];
-			Component keyLabel = listening == key
-					? Component.literal("> Press a key <")
-					: key.getTranslatedKeyMessage();
-			addRenderableWidget(Button.builder(keyLabel, b -> {
-				listening = key;
+		// Tabs
+		Module.Category[] cats = Module.Category.values();
+		int tabCount = cats.length + 1;
+		int gap = 4;
+		int tabWidth = (PANEL_WIDTH - gap * (tabCount - 1)) / tabCount;
+		for (int t = 0; t < tabCount; t++) {
+			final int target = t - 1;
+			boolean selected = tab == target;
+			String label = t == 0 ? "All" : cats[t - 1].label;
+			ChatFormatting colour = t == 0 ? ChatFormatting.WHITE : cats[t - 1].colour;
+			Component text = selected
+					? Component.literal(label).withStyle(colour, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
+					: Component.literal(label).withStyle(ChatFormatting.GRAY);
+			Button b = Button.builder(text, btn -> {
+				tab = target;
 				rebuildWidgets();
-			}).bounds(left + 115, y, 105, 20).build());
-
-			if (idx == 0) {
-				addRenderableWidget(Button.builder(Component.literal("Settings"), b -> minecraft.setScreen(new EspScreen(this)))
-						.bounds(left + 225, y, 75, 20).build());
-			}
-			y += 24;
+			}).bounds(left + t * (tabWidth + gap), y, tabWidth, 20).build();
+			addRenderableWidget(b);
 		}
-
-		y += 6;
-		KeyMapping menuKey = StarClient.menuKey();
-		addRenderableWidget(Button.builder(Component.literal("Menu key: ").append(
-				listening == menuKey ? Component.literal("> Press a key <") : menuKey.getTranslatedKeyMessage()), b -> {
-			listening = menuKey;
-			rebuildWidgets();
-		}).bounds(left, y, 300, 20).build());
 		y += 30;
 
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
+		// Module rows
+		for (int i = 0; i < Module.ALL.size(); i++) {
+			Module m = Module.ALL.get(i);
+			if (tab >= 0 && m.category() != cats[tab]) continue;
+			addRow(left, y, i, m);
+			y += ROW_HEIGHT;
+		}
+
+		y += 8;
+		KeyMapping menuKey = StarClient.menuKey();
+		Component menuKeyLabel = listening == menuKey ? listeningLabel() : menuKey.getTranslatedKeyMessage();
+		addRenderableWidget(Button.builder(Component.literal("Menu key: ").withStyle(ChatFormatting.GRAY).append(menuKeyLabel), b -> {
+			listening = menuKey;
+			rebuildWidgets();
+		}).bounds(left, y, PANEL_WIDTH, 20).build());
+		y += 26;
+
+		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
+				.bounds(cx - 100, y, 200, 20).build());
 	}
 
-	private Component moduleLabel(int idx) {
-		return Component.literal(NAMES[idx] + (StarClient.isOn(idx) ? ": ON" : ": OFF"));
+	private void addRow(int left, int y, int idx, Module m) {
+		boolean hasGear = m.hasSettings();
+		int toggleWidth = 150;
+		int gearWidth = 20;
+
+		Button toggle = Button.builder(moduleLabel(idx, m), b -> {
+			StarClient.toggle(minecraft, idx);
+			rebuildWidgets();
+		}).bounds(left, y, toggleWidth, 20).build();
+		toggle.setTooltip(Tooltip.create(Component.literal(m.description())));
+		addRenderableWidget(toggle);
+
+		KeyMapping key = StarClient.keys()[idx];
+		Component keyLabel = listening == key ? listeningLabel() : key.getTranslatedKeyMessage();
+		int keyWidth = PANEL_WIDTH - toggleWidth - 4 - (hasGear ? gearWidth + 4 : 0);
+		Button keyButton = Button.builder(keyLabel, b -> {
+			listening = key;
+			rebuildWidgets();
+		}).bounds(left + toggleWidth + 4, y, keyWidth, 20).build();
+		keyButton.setTooltip(Tooltip.create(Component.literal("Click, then press a key to rebind")));
+		addRenderableWidget(keyButton);
+
+		if (hasGear) {
+			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.REACH ? new ReachScreen(this) : new EspScreen(this)))
+					.bounds(left + PANEL_WIDTH - gearWidth, y, gearWidth, 20).build();
+			gear.setTooltip(Tooltip.create(Component.literal("Module settings")));
+			addRenderableWidget(gear);
+		}
+	}
+
+	private Component moduleLabel(int idx, Module m) {
+		boolean on = StarClient.isOn(idx);
+		Component dot = Component.literal(on ? "● " : "○ ").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.DARK_GRAY);
+		Component name = Component.literal(m.name()).withStyle(on ? ChatFormatting.WHITE : ChatFormatting.GRAY);
+		return Component.empty().append(dot).append(name);
+	}
+
+	private static Component listeningLabel() {
+		return Component.literal("> press a key <").withStyle(ChatFormatting.YELLOW);
+	}
+
+	private void addCentred(Component text, int cx, int y) {
+		int w = font.width(text);
+		addRenderableWidget(new StringWidget(cx - w / 2, y, w, 9, text, font));
 	}
 
 	@Override

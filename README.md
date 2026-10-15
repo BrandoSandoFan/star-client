@@ -1,6 +1,6 @@
 # Star Client
 
-Client-side Fabric mod for Minecraft 26.1 with ESP, base finder and freecam.
+Client-side Fabric mod for Minecraft 26.1 with ESP, chest ESP, base finder, freecam, fullbright, auto sprint and auto walk.
 
 ## Install
 1. Install Fabric Loader 0.19.3+ and Java 25.
@@ -10,7 +10,7 @@ Get the jar from the latest successful run in the Actions tab (artifact `star-cl
 
 ## Use
 - **Right Shift**: open the module menu (toggle modules, rebind keys, ESP settings)
-- **R**: ESP, **B**: Base Finder, **F**: Freecam
+- Module keys are unbound by default; bind them from the menu or Options > Controls
 
 ESP colours, categories, opacity and range are set in the menu and saved to `config/starclient.json`.
 

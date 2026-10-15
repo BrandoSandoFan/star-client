@@ -25,10 +25,17 @@ public final class Config {
 	/** Max distance in blocks; 0 means unlimited. */
 	public int espMaxDistance = 0;
 
+	/** Interaction range in blocks while Reach is on. */
+	public float reachDistance = 6.0f;
+
 	private static Config instance = new Config();
 
 	public static Config get() {
 		return instance;
+	}
+
+	public static void reset() {
+		instance = new Config();
 	}
 
 	public static void load() {
