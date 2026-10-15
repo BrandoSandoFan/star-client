@@ -41,6 +41,10 @@ public record Module(String id, String name, String description, Category catego
 	public static final int HIGH_JUMP = 16;
 	public static final int SOFT_FALL = 17;
 	public static final int TRAJECTORIES = 18;
+	public static final int JESUS = 19;
+	public static final int AUTO_EAT = 20;
+	public static final int ANTI_AFK = 21;
+	public static final int SORTER = 22;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -61,5 +65,9 @@ public record Module(String id, String name, String description, Category catego
 				new Module("speed", "Speed", "Moves faster on the ground and in the air. Servers with movement checks will rubber-band you.", Category.MOVEMENT, false),
 				new Module("highjump", "High Jump", "Jumps much higher. Landing still hurts.", Category.MOVEMENT, false),
 				new Module("softfall", "Softfall", "Cancels fall damage by reporting that you are on the ground. Anticheats may flag it.", Category.MOVEMENT, false),
-				new Module("trajectories", "Trajectories", "Draws where arrows, tridents, pearls, snowballs, eggs and potions you hold will fly and land.", Category.RENDER, false));
+				new Module("trajectories", "Trajectories", "Draws where arrows, tridents, pearls, snowballs, eggs and potions you hold will fly and land.", Category.RENDER, false),
+				new Module("jesus", "Jesus", "Walk on water. Hold sneak to sink, jump to swim. Servers with movement checks will flag it.", Category.MOVEMENT, false),
+				new Module("autoeat", "Auto Eat", "Eats the best food in your hotbar when hunger drops to 7 bars, then switches back.", Category.WORLD, false),
+				new Module("antiafk", "Anti AFK", "Jumps and nudges your view every 20 seconds while you stand still.", Category.WORLD, false),
+				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, false));
 }

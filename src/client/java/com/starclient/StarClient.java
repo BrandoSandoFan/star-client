@@ -34,6 +34,10 @@ public class StarClient implements ClientModInitializer {
 	public static boolean highJumpOn;
 	public static boolean softFallOn;
 	public static boolean trajectoriesOn;
+	public static boolean jesusOn;
+	public static boolean autoEatOn;
+	public static boolean antiAfkOn;
+	public static boolean sorterOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -62,6 +66,7 @@ public class StarClient implements ClientModInitializer {
 			BaseFinder.clear();
 			ChestEsp.clear();
 			Movement.reset();
+			Utility.reset();
 			return;
 		}
 
@@ -80,6 +85,7 @@ public class StarClient implements ClientModInitializer {
 		if (baseFinderOn) BaseFinder.tick(mc);
 		if (chestEspOn) ChestEsp.tick(mc);
 		Movement.tick(mc);
+		Utility.tick(mc);
 		Combat.tick(mc);
 	}
 
@@ -113,6 +119,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.HIGH_JUMP -> highJumpOn;
 			case Module.SOFT_FALL -> softFallOn;
 			case Module.TRAJECTORIES -> trajectoriesOn;
+			case Module.JESUS -> jesusOn;
+			case Module.AUTO_EAT -> autoEatOn;
+			case Module.ANTI_AFK -> antiAfkOn;
+			case Module.SORTER -> sorterOn;
 			default -> false;
 		};
 	}
@@ -155,6 +165,20 @@ public class StarClient implements ClientModInitializer {
 			case Module.HIGH_JUMP -> highJumpOn = !highJumpOn;
 			case Module.SOFT_FALL -> softFallOn = !softFallOn;
 			case Module.TRAJECTORIES -> trajectoriesOn = !trajectoriesOn;
+			case Module.JESUS -> jesusOn = !jesusOn;
+			case Module.AUTO_EAT -> {
+				autoEatOn = !autoEatOn;
+				if (!autoEatOn) Utility.autoEatOff(mc);
+			}
+			case Module.ANTI_AFK -> {
+				antiAfkOn = !antiAfkOn;
+				if (!antiAfkOn) Utility.antiAfkOff(mc);
+			}
+			case Module.SORTER -> {
+				sorterOn = !sorterOn;
+				if (sorterOn) Utility.sorterStart(mc);
+				else Utility.sorterStop();
+			}
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();

@@ -1,6 +1,8 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -9,7 +11,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.effect.MobEffects;
 
-/** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly, Reach. */
+/** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly, Reach, Jesus and the other movement tweaks. */
 public final class Movement {
 	private static final float FLY_SPEED = 0.1f;
 
@@ -61,6 +63,18 @@ public final class Movement {
 			ab.mayfly = true;
 			ab.flying = true;
 			ab.setFlyingSpeed(FLY_SPEED * (mc.options.keySprint.isDown() ? 2.0f : 1.0f));
+		}
+
+		if (StarClient.jesusOn && !mc.player.isShiftKeyDown() && !mc.options.keyJump.isDown()
+				&& !mc.player.getAbilities().flying && !mc.player.isFallFlying() && !mc.player.isPassenger()) {
+			BlockPos feet = mc.player.blockPosition();
+			var fluid = mc.level.getFluidState(feet);
+			if (fluid.is(FluidTags.WATER)) {
+				Vec3 v = mc.player.getDeltaMovement();
+				boolean submerged = mc.level.getFluidState(feet.above()).is(FluidTags.WATER);
+				boolean belowSurface = mc.player.getY() - feet.getY() < fluid.getHeight(mc.level, feet);
+				mc.player.setDeltaMovement(v.x, submerged ? 0.2 : belowSurface ? 0.1 : 0.0, v.z);
+			}
 		}
 
 		boolean grounded = mc.player.onGround();
