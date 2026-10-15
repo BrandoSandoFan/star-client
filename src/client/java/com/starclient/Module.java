@@ -73,5 +73,5 @@ public record Module(String id, String name, String description, Category catego
 				new Module("antiafk", "Anti AFK", "Jumps and nudges your view every 20 seconds while you stand still.", Category.WORLD, false),
 				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, false),
 				new Module("hud", "HUD", "Lists your enabled modules in the top-right corner.", Category.RENDER, false),
-				new Module("panic", "Panic", "Turns every module off at once and hides the HUD..", Category.WORLD, false));
+				new Module("panic", "Panic", "Turns every module off at once and hides the HUD.", Category.WORLD, false));
 }

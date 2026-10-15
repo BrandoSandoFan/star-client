@@ -13,7 +13,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -192,7 +192,7 @@ public final class Utility {
 		}
 		for (int n = 0; n < OPS_PER_TICK && !sortOps.isEmpty(); n++) {
 			for (int slot : sortOps.poll()) {
-				mc.gameMode.handleInventoryMouseClick(p.inventoryMenu.containerId, slot, 0, ClickType.PICKUP, p);
+				mc.gameMode.handleInventoryMouseClick(p.inventoryMenu.containerId, slot, 0, ContainerInput.PICKUP, p);
 			}
 		}
 		if (sortOps.isEmpty()) {
