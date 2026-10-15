@@ -24,10 +24,6 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoWalkOn;
 	public static boolean flyOn;
 
-	private static final int[] DEFAULT_KEYS = {
-			InputConstants.KEY_R, InputConstants.KEY_B, InputConstants.KEY_F,
-			InputConstants.KEY_C, InputConstants.KEY_G, InputConstants.KEY_V, InputConstants.KEY_N, InputConstants.KEY_X};
-
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
 
@@ -38,7 +34,7 @@ public class StarClient implements ClientModInitializer {
 		moduleKeys = new KeyMapping[Module.ALL.size()];
 		for (int i = 0; i < moduleKeys.length; i++) {
 			moduleKeys[i] = KeyMappingHelper.registerKeyMapping(
-					new KeyMapping("key.starclient." + Module.ALL.get(i).id(), InputConstants.Type.KEYSYM, DEFAULT_KEYS[i], category));
+					new KeyMapping("key.starclient." + Module.ALL.get(i).id(), InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), category));
 		}
 		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
 
