@@ -39,7 +39,8 @@ public record Module(String id, String name, String description, Category catego
 	public static final int HITBOXES = 14;
 	public static final int SPEED = 15;
 	public static final int HIGH_JUMP = 16;
-	public static final int NO_FALL = 17;
+	public static final int SOFT_FALL = 17;
+	public static final int TRAJECTORIES = 18;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -59,5 +60,6 @@ public record Module(String id, String name, String description, Category catego
 				new Module("hitboxes", "Hitboxes", "Enlarges the area that counts as hitting an entity, for aiming, Hit Bot and Kill Aura. Servers still check real reach.", Category.COMBAT, true),
 				new Module("speed", "Speed", "Moves faster on the ground and in the air. Servers with movement checks will rubber-band you.", Category.MOVEMENT, false),
 				new Module("highjump", "High Jump", "Jumps much higher. Landing still hurts.", Category.MOVEMENT, false),
-				new Module("nofall", "No Fall", "Cancels fall damage by reporting that you are on the ground. Anticheats may flag it.", Category.MOVEMENT, false));
+				new Module("softfall", "Softfall", "Cancels fall damage by reporting that you are on the ground. Anticheats may flag it.", Category.MOVEMENT, false),
+				new Module("trajectories", "Trajectories", "Draws where arrows, tridents, pearls, snowballs, eggs and potions you hold will fly and land.", Category.RENDER, false));
 }

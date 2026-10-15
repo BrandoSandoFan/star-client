@@ -67,8 +67,8 @@ public final class Movement {
 		boolean controllable = mc.screen == null && !mc.player.isFallFlying() && !mc.player.getAbilities().flying
 				&& !mc.player.isInWater() && !mc.player.isInLava() && !mc.player.isPassenger();
 
-		// No Fall: once a fall is long enough to hurt, keep telling the server we are on the ground
-		if (StarClient.noFallOn && mc.player.fallDistance > 2.0 && !grounded && !mc.player.isFallFlying()
+		// Softfall: once a fall is long enough to hurt, keep telling the server we are on the ground
+		if (StarClient.softFallOn && mc.player.fallDistance > 2.0 && !grounded && !mc.player.isFallFlying()
 				&& !mc.player.getAbilities().flying) {
 			mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, mc.player.horizontalCollision));
 		}

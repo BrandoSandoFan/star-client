@@ -116,6 +116,21 @@ public final class StarRenderer {
 			}
 		}
 
+		if (StarClient.trajectoriesOn && !Freecam.isOn()) {
+			Trajectories.Path path = Trajectories.compute(mc);
+			if (path != null) {
+				final double s = 0.04;
+				for (Vec3 p : path.points()) {
+					out.add(new Box(p.x - s, p.y - s, p.z - s, p.x + s, p.y + s, p.z + s, 1f, 1f, 1f, 0.8f));
+				}
+				Vec3 l = path.landing();
+				if (l != null) {
+					final double h = 0.25;
+					out.add(new Box(l.x - h, l.y - h, l.z - h, l.x + h, l.y + h, l.z + h, 1f, 0.2f, 0.2f, 0.7f));
+				}
+			}
+		}
+
 		boxes = out;
 	}
 

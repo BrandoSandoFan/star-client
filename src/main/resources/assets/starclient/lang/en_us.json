@@ -18,5 +18,6 @@
   "key.starclient.hitboxes": "Toggle Hitboxes",
   "key.starclient.speed": "Toggle Speed",
   "key.starclient.highjump": "Toggle High Jump",
-  "key.starclient.nofall": "Toggle No Fall"
+  "key.starclient.softfall": "Toggle Softfall",
+  "key.starclient.trajectories": "Toggle Trajectories"
 }
