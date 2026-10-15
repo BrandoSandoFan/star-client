@@ -16,11 +16,6 @@ import net.minecraft.world.phys.Vec3;
 
 /** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
 public final class Combat {
-	private static final double AIM_RANGE = 6.0;
-	private static final float MAX_TURN = 8.0f;
-	private static final float EASE = 0.2f;
-	private static final float FOV = 90.0f;
-
 	private Combat() { }
 
 	public static void tick(Minecraft mc) {
@@ -28,22 +23,24 @@ public final class Combat {
 		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn) return;
 
 		if (StarClient.aimBotOn) {
-			LivingEntity target = nearest(mc, AIM_RANGE, FOV);
+			LivingEntity target = nearest(mc, "aimbot", Settings.get("aimbot.range"), Settings.getF("aimbot.fov"));
 			if (target != null) aim(mc, target);
 		}
 
-		if (mc.player.getAttackStrengthScale(0.0f) < 0.95f) return;
+		float charge = mc.player.getAttackStrengthScale(0.0f);
 
 		// Hit Bot only attacks what the crosshair is on
-		if (StarClient.hitBotOn && mc.hitResult instanceof EntityHitResult hit
-				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target)) {
+		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && mc.hitResult instanceof EntityHitResult hit
+				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target, "hitbot")) {
 			attack(mc, target);
 			return;
 		}
 
 		// Kill Aura attacks the nearest valid target in reach, regardless of where you look
-		if (StarClient.killAuraOn) {
-			LivingEntity target = nearest(mc, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE), 360.0f);
+		if (StarClient.killAuraOn && charge >= Settings.getF("killaura.charge")) {
+			double range = Settings.get("killaura.range");
+			if (range <= 0) range = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+			LivingEntity target = nearest(mc, "killaura", range, 360.0f);
 			if (target != null) attack(mc, target);
 		}
 	}
@@ -52,7 +49,7 @@ public final class Combat {
 	private static void attack(Minecraft mc, LivingEntity target) {
 		var p = mc.player;
 		if (StarClient.critsOn && p.onGround() && !p.isInWater() && !p.onClimbable() && !p.isPassenger()) {
-			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY() + 0.0625, p.getZ(), false, p.horizontalCollision));
+			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY() + Settings.get("crits.hop"), p.getZ(), false, p.horizontalCollision));
 			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY(), p.getZ(), false, p.horizontalCollision));
 		}
 		mc.gameMode.attack(p, target);
@@ -66,7 +63,7 @@ public final class Combat {
 	public static void expandHitboxes(Minecraft mc) {
 		if (!StarClient.hitboxesOn || mc.player == null || mc.level == null || mc.screen != null || Freecam.isOn()) return;
 		double reach = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
-		float grow = Config.get().hitboxExpand;
+		float grow = Settings.getF("hitboxes.expand");
 		Vec3 eye = mc.player.getEyePosition();
 		Vec3 end = eye.add(mc.player.getViewVector(1.0f).scale(reach));
 
@@ -91,16 +88,19 @@ public final class Combat {
 		if (bestEntity != null) mc.hitResult = new EntityHitResult(bestEntity, bestPos);
 	}
 
-	private static boolean isValid(Minecraft mc, LivingEntity e) {
-		return e != mc.player && (e instanceof Player || e instanceof Enemy)
+	/** {@code module} is the settings prefix whose "players" and "hostiles" toggles pick the valid target types. */
+	private static boolean isValid(Minecraft mc, LivingEntity e, String module) {
+		boolean players = Settings.on(module + ".players");
+		boolean hostiles = Settings.on(module + ".hostiles");
+		return e != mc.player && ((players && e instanceof Player) || (hostiles && e instanceof Enemy))
 				&& e.isAlive() && !e.isInvulnerable() && !e.isSpectator();
 	}
 
-	private static LivingEntity nearest(Minecraft mc, double range, float fov) {
+	private static LivingEntity nearest(Minecraft mc, String module, double range, float fov) {
 		LivingEntity best = null;
 		double bestDist = range * range;
 		for (Entity e : mc.level.entitiesForRendering()) {
-			if (!(e instanceof LivingEntity le) || !isValid(mc, le) || le.isInvisible()) continue;
+			if (!(e instanceof LivingEntity le) || !isValid(mc, le, module) || le.isInvisible()) continue;
 			if (!mc.player.hasLineOfSight(le)) continue;
 			double d = mc.player.distanceToSqr(le);
 			if (d < bestDist && yawDelta(mc, le) <= fov / 2) {
@@ -124,8 +124,10 @@ public final class Combat {
 		double horiz = Math.sqrt(to.x * to.x + to.z * to.z);
 		float yaw = (float) (Mth.atan2(to.z, to.x) * (180.0 / Math.PI)) - 90.0f;
 		float pitch = (float) -(Mth.atan2(to.y, horiz) * (180.0 / Math.PI));
-		float dy = Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * EASE, -MAX_TURN, MAX_TURN);
-		float dp = Mth.clamp((pitch - mc.player.getXRot()) * EASE, -MAX_TURN, MAX_TURN);
+		float ease = Settings.getF("aimbot.ease");
+		float maxTurn = Settings.getF("aimbot.turn");
+		float dy = Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * ease, -maxTurn, maxTurn);
+		float dp = Mth.clamp((pitch - mc.player.getXRot()) * ease, -maxTurn, maxTurn);
 		mc.player.setYRot(mc.player.getYRot() + dy);
 		mc.player.setXRot(Mth.clamp(mc.player.getXRot() + dp, -90.0f, 90.0f));
 	}

@@ -12,7 +12,6 @@ import net.minecraft.world.phys.Vec3;
 
 /** Trajectories: simulates the flight of whatever throwable or ranged weapon you are holding. */
 public final class Trajectories {
-	private static final int MAX_STEPS = 200;
 
 	/** Points along the flight path; {@code landing} is the block impact point, or null if nothing was hit. */
 	public record Path(List<Vec3> points, Vec3 landing) { }
@@ -30,9 +29,10 @@ public final class Trajectories {
 		Vec3 pos = mc.player.getEyePosition().subtract(0, 0.1, 0);
 		Vec3 vel = mc.player.getViewVector(1.0f).scale(speed);
 
+		int maxSteps = Settings.getI("trajectories.steps");
 		List<Vec3> points = new ArrayList<>();
 		Vec3 landing = null;
-		for (int i = 0; i < MAX_STEPS; i++) {
+		for (int i = 0; i < maxSteps; i++) {
 			Vec3 next = pos.add(vel);
 			HitResult hit = mc.level.clip(new ClipContext(pos, next, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
 			if (hit.getType() != HitResult.Type.MISS) {

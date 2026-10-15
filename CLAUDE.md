@@ -21,8 +21,10 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
-  - `ReachScreen` - reach distance slider
-  - `HitboxScreen` - hitbox expansion slider
+  - `Settings` - registry of per-module numeric/toggle settings (`Settings.Def`), stored in `Config.values`; read with `Settings.get/getI/getF/on(key)`. Add a module setting by adding a `Def` in the static block; `ModuleSettingsScreen` builds the page automatically
+  - `ModuleSettingsScreen` - generic settings page for every module with `hasSettings` (except ESP, which uses `EspScreen`); Chest ESP adds block presets + picker; nested `MobFilter` is the ESP mob filter page
+  - `PickerScreen` - searchable paged multi-select (mobs, blocks)
+  - `Presets` - block lists (Chest ESP) and mob lists (ESP filter)
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 slider used by `EspScreen`
   - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
@@ -32,21 +34,21 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 ## Features and keys
 | Module | Default key | Notes |
 |---|---|---|
-| ESP | unbound | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES` |
+| ESP | unbound | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES`. Mob filter (`Config.espMobMode`: all / only selected / hide selected, `Config.espMobs` entity ids) applies to Hostile and Animals; 'Only selected' ignores the category toggles for mobs |
 | Base Finder | unbound | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
 | Freecam | unbound | Client-only armor stand camera, 10 blocks/s moved per frame (not per tick), sprint x2.5, disables `smartCull` so terrain stays visible |
-| Chest ESP | unbound | Boxes on storage/farm block entities (chests, hoppers, droppers, furnaces, crafters, brewing stands, beacons) and growing amethyst (budding block, buds, clusters) within 8 chunks |
+| Chest ESP | unbound | Boxes on the blocks listed in `Config.chestBlocks` (default: chests, barrels, shulkers, hoppers, droppers, furnaces, crafters, brewing stands, beacons, amethyst) within `chestesp.radius` chunks. Block entities are read every pass; other blocks via section scans. Presets and a block picker in its settings |
 | Fullbright | unbound | Applies a hidden client-side night vision effect |
 | Auto Sprint | unbound | Sets sprint while forward is held |
 | Auto Walk | unbound | Holds the forward key |
 | Fly | unbound | Sets `mayfly`+`flying` abilities client-side; needs server permission |
-| Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Settings in `ReachScreen` |
+| Reach | unbound | Sets block+entity interaction range attributes client-side (3-12, default 6); servers validate, so far hits are usually rejected. Setting `reach.distance` |
 | Aim Bot | unbound | Combat tab; eases toward target (20% of the remaining angle per tick, max 8°) toward target |
 | Hit Bot | unbound | Combat tab; auto attack via `gameMode.attack` |
 | Elytra Fly | unbound | Movement tab; while gliding, alternates dive (+35°) until speed > 1.7 b/t and climb (-45°) until speed < 0.9 b/t, easing pitch 6°/tick. Start gliding yourself (jump twice in air) |
 | Kill Aura | unbound | Combat tab; attacks the nearest player/hostile within entity interaction range (Reach extends it) with line of sight, at >=95% charge; no rotation |
 | Crits | unbound | Combat tab; before Hit Bot/Kill Aura attacks (not manual clicks) sends two fake `ServerboundMovePlayerPacket.Pos` hops (+0.0625 y, off-ground) so the server counts a crit. Server ignores crits while you are sprinting |
-| Hitboxes | unbound | Combat tab; enlarges every entity hitbox by `Config.hitboxExpand` blocks per side (0-2, default 0.3, `HitboxScreen`). At the start of each tick `Combat.expandHitboxes` re-picks the crosshair entity against the inflated boxes (no mixin), so clicks, Hit Bot and Kill Aura use it; server still validates real reach |
+| Hitboxes | unbound | Combat tab; enlarges every entity hitbox by `hitboxes.expand` blocks per side (0-2, default 0.3). At the start of each tick `Combat.expandHitboxes` re-picks the crosshair entity against the inflated boxes (no mixin), so clicks, Hit Bot and Kill Aura use it; server still validates real reach |
 | Speed | unbound | Movement tab; sets horizontal velocity to 0.45 b/t along held WASD keys (skipped when gliding, flying, swimming or riding). Servers with movement checks rubber-band |
 | High Jump | unbound | Movement tab; on take-off with jump held, sets upward velocity to 0.9 b/t (vanilla 0.42) |
 | Softfall | unbound | Movement tab; while `fallDistance` > 2 and airborne (not gliding/flying) sends `ServerboundMovePlayerPacket.StatusOnly(onGround=true)` each tick so the server resets fall damage |
@@ -58,6 +60,8 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | HUD | unbound | Render tab; `Hud` registers a `HudElementRegistry` element before chat that draws enabled module names top-right (widest first, category colour) |
 | Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
 | Menu | Right Shift | Opens `ModulesScreen` |
+
+Every module except Fullbright and Auto Walk has a gear button opening its settings. Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
 Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic.

@@ -32,14 +32,16 @@ public final class Hud {
 		List<Component> lines = new ArrayList<>();
 		for (int i = 0; i < Module.ALL.size(); i++) {
 			Module m = Module.ALL.get(i);
-			if (i != Module.HUD && StarClient.isOn(i)) lines.add(Component.literal(m.name()).withStyle(m.category().colour));
+			if (i != Module.HUD && StarClient.isOn(i)) lines.add(Settings.on("hud.colour") ? Component.literal(m.name()).withStyle(m.category().colour) : Component.literal(m.name()));
 		}
 		lines.sort(Comparator.comparingInt((Component c) -> mc.font.width(c)).reversed());
 
+		boolean alignRight = Settings.on("hud.right");
+		boolean shadow = Settings.on("hud.shadow");
 		int right = mc.getWindow().getGuiScaledWidth() - MARGIN;
 		int y = MARGIN;
 		for (Component line : lines) {
-			graphics.text(mc.font, line, right - mc.font.width(line), y, 0xFFFFFFFF, true);
+			graphics.text(mc.font, line, alignRight ? right - mc.font.width(line) : MARGIN, y, 0xFFFFFFFF, shadow);
 			y += LINE;
 		}
 	}

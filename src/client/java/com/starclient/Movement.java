@@ -13,18 +13,7 @@ import net.minecraft.world.effect.MobEffects;
 
 /** Small per-tick modules: Fullbright, Auto Sprint, Auto Walk, Fly, Reach, Jesus and the other movement tweaks. */
 public final class Movement {
-	private static final float FLY_SPEED = 0.1f;
-
-	/** Elytra Fly: dive to build speed, then climb until it bleeds off. Speeds in blocks/tick, angles in degrees (negative = up). */
-	private static final float DIVE_PITCH = 35f;
-	private static final float CLIMB_PITCH = -45f;
-	private static final float PITCH_STEP = 6f;
-	private static final double DIVE_END_SPEED = 1.7;
-	private static final double CLIMB_END_SPEED = 0.9;
-
-	/** Speed: horizontal blocks/tick while moving (vanilla sprint is about 0.28). High Jump: upward blocks/tick on take-off (vanilla is 0.42). */
-	private static final double SPEED = 0.45;
-	private static final double HIGH_JUMP_VELOCITY = 0.9;
+	/** Tunable values (speeds, angles, thresholds) live in {@link Settings}. Elytra Fly pitch is negative = up. */
 
 	private static boolean wasOnGround;
 	private static boolean climbing;
@@ -50,7 +39,7 @@ public final class Movement {
 					origEntityRange = entity.getBaseValue();
 					origBlockRange = block.getBaseValue();
 				}
-				double reach = Config.get().reachDistance;
+				double reach = Settings.get("reach.distance");
 				entity.setBaseValue(reach);
 				block.setBaseValue(reach);
 			}
@@ -62,7 +51,7 @@ public final class Movement {
 			Abilities ab = mc.player.getAbilities();
 			ab.mayfly = true;
 			ab.flying = true;
-			ab.setFlyingSpeed(FLY_SPEED * (mc.options.keySprint.isDown() ? 2.0f : 1.0f));
+			ab.setFlyingSpeed(Settings.getF("fly.speed") * (mc.options.keySprint.isDown() ? Settings.getF("fly.sprint") : 1.0f));
 		}
 
 		if (StarClient.jesusOn && !mc.player.isShiftKeyDown() && !mc.options.keyJump.isDown()
@@ -73,7 +62,8 @@ public final class Movement {
 				Vec3 v = mc.player.getDeltaMovement();
 				boolean submerged = mc.level.getFluidState(feet.above()).is(FluidTags.WATER);
 				boolean belowSurface = mc.player.getY() - feet.getY() < fluid.getHeight(mc.level, feet);
-				mc.player.setDeltaMovement(v.x, submerged ? 0.2 : belowSurface ? 0.1 : 0.0, v.z);
+				double rise = Settings.get("jesus.rise");
+				mc.player.setDeltaMovement(v.x, submerged ? rise : belowSurface ? rise / 2 : 0.0, v.z);
 			}
 		}
 
@@ -82,14 +72,14 @@ public final class Movement {
 				&& !mc.player.isInWater() && !mc.player.isInLava() && !mc.player.isPassenger();
 
 		// Softfall: once a fall is long enough to hurt, keep telling the server we are on the ground
-		if (StarClient.softFallOn && mc.player.fallDistance > 2.0 && !grounded && !mc.player.isFallFlying()
+		if (StarClient.softFallOn && mc.player.fallDistance > Settings.get("softfall.distance") && !grounded && !mc.player.isFallFlying()
 				&& !mc.player.getAbilities().flying) {
 			mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, mc.player.horizontalCollision));
 		}
 
 		if (StarClient.highJumpOn && controllable && mc.options.keyJump.isDown() && wasOnGround && !grounded) {
 			Vec3 v = mc.player.getDeltaMovement();
-			if (v.y > 0) mc.player.setDeltaMovement(v.x, HIGH_JUMP_VELOCITY, v.z);
+			if (v.y > 0) mc.player.setDeltaMovement(v.x, Settings.get("highjump.velocity"), v.z);
 		}
 		wasOnGround = grounded;
 
@@ -98,11 +88,12 @@ public final class Movement {
 			double side = (mc.options.keyLeft.isDown() ? 1 : 0) - (mc.options.keyRight.isDown() ? 1 : 0);
 			if (fwd != 0 || side != 0) {
 				double len = Math.sqrt(fwd * fwd + side * side);
+				double speed = Settings.get("speed.speed");
 				double yaw = Math.toRadians(mc.player.getYRot());
 				double sin = Math.sin(yaw);
 				double cos = Math.cos(yaw);
-				double x = (-sin * fwd + cos * side) / len * SPEED;
-				double z = (cos * fwd + sin * side) / len * SPEED;
+				double x = (-sin * fwd + cos * side) / len * speed;
+				double z = (cos * fwd + sin * side) / len * speed;
 				Vec3 v = mc.player.getDeltaMovement();
 				mc.player.setDeltaMovement(x, v.y, z);
 			}
@@ -112,17 +103,18 @@ public final class Movement {
 			mc.options.keyUp.setDown(true);
 		}
 		if (StarClient.autoSprintOn && mc.options.keyUp.isDown() && !mc.player.isShiftKeyDown()
-				&& mc.player.getFoodData().getFoodLevel() > 6) {
+				&& mc.player.getFoodData().getFoodLevel() > Settings.get("autosprint.food")) {
 			mc.player.setSprinting(true);
 		}
 
 		if (StarClient.elytraFlyOn && mc.screen == null && mc.player.isFallFlying()) {
 			double speed = mc.player.getDeltaMovement().length();
-			if (climbing && speed < CLIMB_END_SPEED) climbing = false;
-			else if (!climbing && speed > DIVE_END_SPEED) climbing = true;
-			float target = climbing ? CLIMB_PITCH : DIVE_PITCH;
+			if (climbing && speed < Settings.get("elytrafly.climbend")) climbing = false;
+			else if (!climbing && speed > Settings.get("elytrafly.diveend")) climbing = true;
+			float target = climbing ? -Settings.getF("elytrafly.climb") : Settings.getF("elytrafly.dive");
 			float pitch = mc.player.getXRot();
-			float step = Math.max(-PITCH_STEP, Math.min(PITCH_STEP, (target - pitch) * 0.5f));
+			float maxStep = Settings.getF("elytrafly.step");
+			float step = Math.max(-maxStep, Math.min(maxStep, (target - pitch) * 0.5f));
 			mc.player.setXRot(pitch + step);
 		}
 	}

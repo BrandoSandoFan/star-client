@@ -25,7 +25,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 public final class BaseFinder {
 	public record Hit(BlockPos pos, int count) { }
 
-	private static final int MIN_BLOCKS = 10;
 	private static final int SCAN_INTERVAL_TICKS = 20;
 	private static final int CHUNKS_PER_PASS = 6;
 	private static final int RESCAN_TICKS = 20 * 60;
@@ -130,7 +129,7 @@ public final class BaseFinder {
 			}
 		}
 
-		if (count < MIN_BLOCKS) return null;
+		if (count < Settings.getI("basefinder.min")) return null;
 		return new Hit(new BlockPos((int) (sx / count), (int) (sy / count), (int) (sz / count)), count);
 	}
 
