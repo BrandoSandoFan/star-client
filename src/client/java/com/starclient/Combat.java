@@ -24,7 +24,7 @@ public final class Combat {
 	private Combat() { }
 
 	public static void tick(Minecraft mc) {
-		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null) return;
+		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null || Utility.isEating()) return;
 		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn) return;
 
 		if (StarClient.aimBotOn) {

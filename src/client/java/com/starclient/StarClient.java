@@ -34,6 +34,11 @@ public class StarClient implements ClientModInitializer {
 	public static boolean highJumpOn;
 	public static boolean softFallOn;
 	public static boolean trajectoriesOn;
+	public static boolean jesusOn;
+	public static boolean autoEatOn;
+	public static boolean antiAfkOn;
+	public static boolean sorterOn;
+	public static boolean hudOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -54,6 +59,8 @@ public class StarClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();
+		Hud.init();
+		SortButton.init();
 	}
 
 	private void tick(Minecraft mc) {
@@ -62,6 +69,7 @@ public class StarClient implements ClientModInitializer {
 			BaseFinder.clear();
 			ChestEsp.clear();
 			Movement.reset();
+			Utility.reset();
 			return;
 		}
 
@@ -72,7 +80,7 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < keys.length; i++) {
 			while (keys[i].consumeClick()) {
 				toggle(mc, i);
-				status(mc, Module.ALL.get(i).name(), isOn(i));
+				if (i != Module.PANIC) status(mc, Module.ALL.get(i).name(), isOn(i));
 			}
 		}
 
@@ -80,6 +88,7 @@ public class StarClient implements ClientModInitializer {
 		if (baseFinderOn) BaseFinder.tick(mc);
 		if (chestEspOn) ChestEsp.tick(mc);
 		Movement.tick(mc);
+		Utility.tick(mc);
 		Combat.tick(mc);
 	}
 
@@ -113,6 +122,11 @@ public class StarClient implements ClientModInitializer {
 			case Module.HIGH_JUMP -> highJumpOn;
 			case Module.SOFT_FALL -> softFallOn;
 			case Module.TRAJECTORIES -> trajectoriesOn;
+			case Module.JESUS -> jesusOn;
+			case Module.AUTO_EAT -> autoEatOn;
+			case Module.ANTI_AFK -> antiAfkOn;
+			case Module.SORTER -> sorterOn;
+			case Module.HUD -> hudOn;
 			default -> false;
 		};
 	}
@@ -155,12 +169,37 @@ public class StarClient implements ClientModInitializer {
 			case Module.HIGH_JUMP -> highJumpOn = !highJumpOn;
 			case Module.SOFT_FALL -> softFallOn = !softFallOn;
 			case Module.TRAJECTORIES -> trajectoriesOn = !trajectoriesOn;
+			case Module.JESUS -> jesusOn = !jesusOn;
+			case Module.AUTO_EAT -> {
+				autoEatOn = !autoEatOn;
+				if (!autoEatOn) Utility.autoEatOff(mc);
+			}
+			case Module.ANTI_AFK -> {
+				antiAfkOn = !antiAfkOn;
+				if (!antiAfkOn) Utility.antiAfkOff(mc);
+			}
+			case Module.SORTER -> {
+				sorterOn = !sorterOn;
+				if (sorterOn) Utility.sorterStart(mc);
+				else Utility.sorterStop();
+			}
+			case Module.HUD -> hudOn = !hudOn;
+			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
 				Movement.elytraReset();
 			}
 			default -> { }
 		}
+	}
+
+	/** Turns every module off (including the HUD) and closes any open screen. */
+	public static void panic(Minecraft mc) {
+		for (int i = 0; i < Module.ALL.size(); i++) {
+			if (i != Module.PANIC && isOn(i)) toggle(mc, i);
+		}
+		mc.setScreen(null);
+		mc.gui.setOverlayMessage(Component.literal("Panic: all modules off").withStyle(ChatFormatting.RED), false);
 	}
 
 	private static void status(Minecraft mc, String name, boolean on) {
