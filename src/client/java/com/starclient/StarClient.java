@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 
 public class StarClient implements ClientModInitializer {
 	public static final String ID = "starclient";
+	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(ID);
 
 	public static boolean espOn;
 	public static boolean baseFinderOn;
@@ -40,6 +41,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean sorterOn;
 	public static boolean hudOn;
 	public static boolean antiBaitOn;
+	public static boolean diagnosticsOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -61,6 +63,7 @@ public class StarClient implements ClientModInitializer {
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
 		StarRenderer.init();
 		Hud.init();
+		Diagnostics.init();
 		SortButton.init();
 	}
 
@@ -72,6 +75,7 @@ public class StarClient implements ClientModInitializer {
 			Movement.reset();
 			Utility.reset();
 			AntiBait.clear();
+			Diagnostics.reset();
 			return;
 		}
 
@@ -93,6 +97,7 @@ public class StarClient implements ClientModInitializer {
 		Movement.tick(mc);
 		Utility.tick(mc);
 		Combat.tick(mc);
+		Diagnostics.tick(mc);
 	}
 
 	/** Module keybinds in {@link Module#ALL} order. */
@@ -131,6 +136,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.SORTER -> sorterOn;
 			case Module.HUD -> hudOn;
 			case Module.ANTI_BAIT -> antiBaitOn;
+			case Module.DIAGNOSTICS -> diagnosticsOn;
 			default -> false;
 		};
 	}
@@ -191,6 +197,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.ANTI_BAIT -> {
 				antiBaitOn = !antiBaitOn;
 				if (!antiBaitOn) AntiBait.clear();
+			}
+			case Module.DIAGNOSTICS -> {
+				diagnosticsOn = !diagnosticsOn;
+				if (!diagnosticsOn) Diagnostics.reset();
 			}
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {

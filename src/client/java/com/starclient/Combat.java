@@ -15,7 +15,17 @@ import net.minecraft.world.phys.Vec3;
 
 /** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
 public final class Combat {
+	/** Game time of the last Hit Bot / Kill Aura attack, for the configured minimum delay. */
+	private static long lastAttack = Long.MIN_VALUE / 2;
+	private static final AimSpring yawSpring = new AimSpring();
+	private static final AimSpring pitchSpring = new AimSpring();
+	private static int springTarget = -1;
+
 	private Combat() { }
+
+	private static boolean delayElapsed(Minecraft mc, String key) {
+		return mc.level.getGameTime() - lastAttack >= Settings.getI(key);
+	}
 
 	public static void tick(Minecraft mc) {
 		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null || Utility.isEating()) return;
@@ -24,34 +34,38 @@ public final class Combat {
 		if (StarClient.aimBotOn) {
 			LivingEntity target = nearest(mc, "aimbot", Settings.get("aimbot.range"), Settings.getF("aimbot.fov"));
 			if (target != null) aim(mc, target);
+			else springTarget = -1;
 		}
 
 		float charge = mc.player.getAttackStrengthScale(0.0f);
 
 		// Hit Bot only attacks what the crosshair is on
-		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && mc.hitResult instanceof EntityHitResult hit
+		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && delayElapsed(mc, "hitbot.delay") && mc.hitResult instanceof EntityHitResult hit
 				&& hit.getEntity() instanceof LivingEntity target
 				&& isValid(mc, target, Settings.on("hitbot.players"), Settings.on("hitbot.hostiles"))) {
-			attack(mc, target);
+			attack(mc, target, "hitbot.delay");
 			return;
 		}
 
 		// Kill Aura attacks the nearest valid target in reach, regardless of where you look
-		if (StarClient.killAuraOn && charge >= Settings.getF("killaura.charge")) {
+		if (StarClient.killAuraOn && charge >= Settings.getF("killaura.charge") && delayElapsed(mc, "killaura.delay")) {
 			double range = Settings.get("killaura.range");
 			if (range <= 0) range = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
 			LivingEntity target = nearest(mc, "killaura", range, 360.0f);
-			if (target != null) attack(mc, target);
+			if (target != null) attack(mc, target, "killaura.delay");
 		}
 	}
 
 	/** Attacks and swings; with Crits on, first reports a tiny hop so the server counts the hit as a critical. */
-	private static void attack(Minecraft mc, LivingEntity target) {
+	private static void attack(Minecraft mc, LivingEntity target, String delayKey) {
 		var p = mc.player;
 		if (StarClient.critsOn && p.onGround() && !p.isInWater() && !p.onClimbable() && !p.isPassenger()) {
 			ProtocolSanitizer.sendHop(p.connection, p, Settings.get("crits.hop"));
 			ProtocolSanitizer.sendHop(p.connection, p, 0.0);
 		}
+		long now = mc.level.getGameTime();
+		Diagnostics.attack(now, Settings.getI(delayKey));
+		lastAttack = now;
 		mc.gameMode.attack(p, target);
 		p.swing(InteractionHand.MAIN_HAND);
 	}
@@ -124,8 +138,24 @@ public final class Combat {
 		float pitch = (float) -(Mth.atan2(to.y, horiz) * (180.0 / Math.PI));
 		float ease = Settings.getF("aimbot.ease");
 		float maxTurn = Settings.getF("aimbot.turn");
-		float dy = ProtocolSanitizer.limitTurn(Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * ease, -maxTurn, maxTurn));
-		float dp = ProtocolSanitizer.limitTurn(Mth.clamp((pitch - mc.player.getXRot()) * ease, -maxTurn, maxTurn));
+		float errYaw = Mth.wrapDegrees(yaw - mc.player.getYRot());
+		float errPitch = pitch - mc.player.getXRot();
+		float dy;
+		float dp;
+		if (Settings.on("aimbot.spring")) {
+			if (springTarget != t.getId()) {
+				yawSpring.reset();
+				pitchSpring.reset();
+				springTarget = t.getId();
+			}
+			double omega = Settings.get("aimbot.omega");
+			float cap = Math.min(maxTurn, ProtocolSanitizer.turnLimit());
+			dy = ProtocolSanitizer.limitTurn(yawSpring.step(errYaw, omega, cap));
+			dp = ProtocolSanitizer.limitTurn(pitchSpring.step(errPitch, omega, cap));
+		} else {
+			dy = ProtocolSanitizer.limitTurn(Mth.clamp(errYaw * ease, -maxTurn, maxTurn));
+			dp = ProtocolSanitizer.limitTurn(Mth.clamp(errPitch * ease, -maxTurn, maxTurn));
+		}
 		mc.player.setYRot(mc.player.getYRot() + dy);
 		mc.player.setXRot(Mth.clamp(mc.player.getXRot() + dp, -90.0f, 90.0f));
 	}

@@ -41,21 +41,29 @@ public final class ProtocolSanitizer {
 
 	/** Scales the horizontal part of {@code v} down to the vanilla limit; the vertical part is untouched. */
 	public static Vec3 clampHorizontal(LocalPlayer p, Vec3 v) {
-		if (!enabled()) return v;
 		double limit = horizontalLimit(p);
 		double len = Math.sqrt(v.x * v.x + v.z * v.z);
+		Diagnostics.report(Diagnostics.REQ_HORIZONTAL, len, limit);
+		if (!enabled()) return v;
 		return len <= limit ? v : new Vec3(v.x / len * limit, v.y, v.z / len * limit);
 	}
 
 	/** Clamps an upward take-off velocity to the vanilla jump. */
 	public static double clampJump(LocalPlayer p, double vy) {
+		Diagnostics.report(Diagnostics.REQ_JUMP, vy, jumpLimit(p));
 		return enabled() ? Math.min(vy, jumpLimit(p)) : vy;
+	}
+
+	/** Per-tick view change cap in degrees. */
+	public static float turnLimit() {
+		return enabled() ? Settings.getF("sanitize.maxturn") : 180.0f;
 	}
 
 	/** Limits a per-tick view change to {@code sanitize.maxturn} degrees. */
 	public static float limitTurn(float delta) {
-		if (!enabled()) return delta;
 		float max = Settings.getF("sanitize.maxturn");
+		Diagnostics.report(Diagnostics.REQ_TURN, Math.abs(delta), max);
+		if (!enabled()) return delta;
 		return Mth.clamp(delta, -max, max);
 	}
 
@@ -67,6 +75,7 @@ public final class ProtocolSanitizer {
 
 	/** Sends a movement-hop packet at {@code p}'s position plus a vertical offset limited to a vanilla-sized hop. */
 	public static void sendHop(ClientPacketListener conn, LocalPlayer p, double dy) {
+		Diagnostics.report(Diagnostics.PKT_HOP, Math.abs(dy), MAX_HOP);
 		double hop = enabled() ? Mth.clamp(dy, -MAX_HOP, MAX_HOP) : dy;
 		conn.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY() + hop, p.getZ(), false, p.horizontalCollision));
 	}
