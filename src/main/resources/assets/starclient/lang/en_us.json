@@ -31,5 +31,9 @@
   "key.starclient.autotool": "Toggle Auto Tool",
   "key.starclient.tracers": "Toggle Tracers",
   "key.starclient.zoom": "Toggle Zoom",
-  "key.starclient.waypoints": "Toggle Waypoints"
+  "key.starclient.waypoints": "Toggle Waypoints",
+  "key.starclient.autototem": "Toggle Auto Totem",
+  "key.starclient.autoarmor": "Toggle Auto Armor",
+  "key.starclient.autorespawn": "Toggle Auto Respawn",
+  "key.starclient.autoreplenish": "Toggle Auto Replenish"
 }

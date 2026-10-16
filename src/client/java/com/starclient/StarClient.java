@@ -46,6 +46,10 @@ public class StarClient implements ClientModInitializer {
 	public static boolean tracersOn;
 	public static boolean zoomOn;
 	public static boolean waypointsOn;
+	public static boolean autoTotemOn;
+	public static boolean autoArmorOn;
+	public static boolean autoRespawnOn;
+	public static boolean autoReplenishOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -155,6 +159,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.TRACERS -> tracersOn;
 			case Module.ZOOM -> zoomOn;
 			case Module.WAYPOINTS -> waypointsOn;
+			case Module.AUTO_TOTEM -> autoTotemOn;
+			case Module.AUTO_ARMOR -> autoArmorOn;
+			case Module.AUTO_RESPAWN -> autoRespawnOn;
+			case Module.AUTO_REPLENISH -> autoReplenishOn;
 			default -> false;
 		};
 	}
@@ -230,6 +238,13 @@ public class StarClient implements ClientModInitializer {
 				if (!zoomOn) Zoom.off(mc);
 			}
 			case Module.WAYPOINTS -> waypointsOn = !waypointsOn;
+			case Module.AUTO_TOTEM -> autoTotemOn = !autoTotemOn;
+			case Module.AUTO_ARMOR -> autoArmorOn = !autoArmorOn;
+			case Module.AUTO_RESPAWN -> autoRespawnOn = !autoRespawnOn;
+			case Module.AUTO_REPLENISH -> {
+				autoReplenishOn = !autoReplenishOn;
+				Gear.replenishReset();
+			}
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;

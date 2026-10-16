@@ -53,6 +53,10 @@ public record Module(String id, String name, String description, Category catego
 	public static final int TRACERS = 28;
 	public static final int ZOOM = 29;
 	public static final int WAYPOINTS = 30;
+	public static final int AUTO_TOTEM = 31;
+	public static final int AUTO_ARMOR = 32;
+	public static final int AUTO_RESPAWN = 33;
+	public static final int AUTO_REPLENISH = 34;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -85,5 +89,9 @@ public record Module(String id, String name, String description, Category catego
 				new Module("autotool", "Auto Tool", "Switches to the fastest hotbar tool for the block you are mining, then switches back.", Category.WORLD, true),
 				new Module("tracers", "Tracers", "Lines from your crosshair to every entity ESP shows, in the ESP category colours.", Category.RENDER, true),
 				new Module("zoom", "Zoom", "Narrows your field of view for a closer look. Restores it when switched off.", Category.RENDER, true),
-				new Module("waypoints", "Waypoints", "Shows saved positions and your last death point as beams through walls, with distance and direction on screen.", Category.RENDER, true));
+				new Module("waypoints", "Waypoints", "Shows saved positions and your last death point as beams through walls, with distance and direction on screen.", Category.RENDER, true),
+				new Module("autototem", "Auto Totem", "Moves a totem of undying into your offhand when it is empty or your health is low.", Category.COMBAT, true),
+				new Module("autoarmor", "Auto Armor", "Equips the best armor piece in your inventory for each slot.", Category.COMBAT, true),
+				new Module("autorespawn", "Auto Respawn", "Clicks Respawn on the death screen for you.", Category.WORLD, true),
+				new Module("autoreplenish", "Auto Replenish", "Refills a hotbar slot from your inventory when its stack runs low or is used up.", Category.WORLD, true));
 }

@@ -144,6 +144,17 @@ public final class Settings {
 				slider("waypoints.range", "Max distance (0 = any)", 0, 2000, 50, 0, "blocks"),
 				slider("waypoints.beam", "Beam height", 4, 128, 4, 32, "blocks"),
 				slider("waypoints.alpha", "Opacity", 0.1, 1, 0.05, 0.5, ""));
+		add(Module.AUTO_TOTEM,
+				slider("autototem.health", "Swap when health at or below", 1, 20, 1, 10, ""),
+				toggle("autototem.empty", "Fill an empty offhand", true),
+				slider("autototem.delay", "Ticks between clicks", 1, 10, 1, 2, "ticks"));
+		add(Module.AUTO_ARMOR,
+				toggle("autoarmor.elytra", "Keep worn elytra", true),
+				slider("autoarmor.delay", "Ticks between clicks", 1, 20, 1, 5, "ticks"));
+		add(Module.AUTO_RESPAWN, slider("autorespawn.delay", "Delay before respawn", 0, 60, 1, 10, "ticks"));
+		add(Module.AUTO_REPLENISH,
+				slider("autoreplenish.threshold", "Refill at or below stack size", 0, 16, 1, 1, ""),
+				slider("autoreplenish.delay", "Ticks between clicks", 1, 20, 1, 5, "ticks"));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */

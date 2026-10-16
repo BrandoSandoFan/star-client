@@ -21,7 +21,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `ProtocolSanitizer` - choke point for velocity writes (`setVelocity`, `clampJump`), view turns (`limitTurn`) and fake movement packets (`sendHop`, `sendGround`); clamps to vanilla limits unless global setting `sanitize.enabled` is off (`sanitize.maxturn` caps degrees per tick). New modules must write velocity, rotation and movement packets through it
   - `AimSpring` - critically damped spring (closed-form, one tick per step, no randomness) used by Aim Bot when `aimbot.spring` is on; `aimbot.omega` sets stiffness, turns still pass `aimbot.turn` and `sanitize.maxturn`
   - `Diagnostics` - module 26: overlay (`diag.overlay`) and JSON-lines log `logs/starclient-diagnostics.jsonl` (`diag.log`, `diag.logall`) of requested h-velocity/jump/turn/packet hop (reported by `ProtocolSanitizer` before clamping), observed speed/rise/position snap, and attack gap against each limit
-  - `Gear` - hotbar/inventory helpers: Auto Tool
+  - `Gear` - hotbar/inventory helpers: Auto Tool, Auto Totem, Auto Armor, Auto Replenish, Auto Respawn. Inventory modules share one cooldown and run only when the player menu is open (`containerMenu == inventoryMenu`), the cursor is empty and the Sorter is idle; they click with `PICKUP` triples on `inventoryMenu` slots (armor 5-8, main 9-35, hotbar 36-44, offhand 45)
   - `Zoom` - lowers the `fov` option while on (min 30, the vanilla slider floor), restores it on off, disconnect and client stop
   - `Waypoints`, `WaypointsScreen` - saved positions in `Config.waypoints` (per dimension key string); beams in `StarRenderer`, nearest 5 with distance and direction arrow in a top-centre HUD element; death point recorded on the dying edge; screen opened from the Waypoints settings page
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
@@ -74,12 +74,16 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Tracers | unbound | Render tab; flat double-sided strips (`StarRenderer.Line`) from 0.6 blocks ahead of the camera to the centre of every entity ESP would show (`StarRenderer.espColour`, so category toggles, colours, distance and mob filter apply even with ESP off). Width grows with distance |
 | Zoom | unbound | Render tab; see `Zoom`. `zoom.fov` 30-70 |
 | Waypoints | unbound | Render tab; see `Waypoints`. Optional death marker (`waypoints.death`), range, beam height, opacity |
+| Auto Totem | unbound | Combat tab; when the offhand is not a totem and is empty (`autototem.empty`) or health <= `autototem.health`, moves the first inventory totem into the offhand (returns the old offhand item to the source slot) |
+| Auto Armor | unbound | Combat tab; per slot, equips the inventory piece with the highest armor + 0.5 x toughness (strictly better than worn; needs armor > 0 so elytra and pumpkins are never equipped). `autoarmor.elytra` keeps a worn elytra |
+| Auto Respawn | unbound | World tab; on `DeathScreen` calls `player.respawn()` after `autorespawn.delay` ticks |
+| Auto Replenish | unbound | World tab; when a hotbar slot empties (and the screen is closed, so manual moves and drags do not count) pulls the same item from inventory slots 9-35; also tops up a stackable stack at or below `autoreplenish.threshold`. Tracking follows hotbar contents while a screen is open |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Every module has a gear button opening its settings (Fullbright: `fullbright.maxlight`; Auto Walk: `autowalk.sneak`, `autowalk.minhealth`; HUD: `hud.bar` pixel backing with a category colour edge). Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics, 27 Auto Tool, 28 Tracers, 29 Zoom, 30 Waypoints.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics, 27 Auto Tool, 28 Tracers, 29 Zoom, 30 Waypoints, 31 Auto Totem, 32 Auto Armor, 33 Auto Respawn, 34 Auto Replenish.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
