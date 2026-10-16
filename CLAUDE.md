@@ -11,7 +11,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 - `src/client/java/com/starclient/`
   - `StarClient` - entrypoint, keybinds, module toggle/state helpers (`keys()`, `isOn()`, `toggle()`), status overlay text
   - `Module` - module metadata (id, name, description, category, has-settings) and index constants; single source for menu rows and keybind registration
-  - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
+  - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers, spawners); `hits()` drops positions `AntiBait` flagged
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk, Jesus and the other movement modules
   - `Utility` - Auto Eat, Anti AFK, Sorter
   - `Hud` - enabled-module list overlay
@@ -80,4 +80,5 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
 - New module: append to `Module.ALL` (+ index constant), extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`
+- Client chunks: `mc.level.getChunk(cx, cz, ChunkStatus.FULL, false)` is a `LevelChunk` when loaded; `LevelChunk.getBlockEntities()` is the live map (no copy, unlike `getBlockEntitiesPos()`)
 - Tabs for indentation, matching existing code
