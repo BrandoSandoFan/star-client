@@ -48,6 +48,11 @@ public final class ModuleSettingsScreen extends PixelScreen {
 		}
 
 		if (module == Module.CHEST_ESP) y = addChestWidgets(left, y);
+		if (module == Module.WAYPOINTS) {
+			addRenderableWidget(PixelButton.builder(Component.literal("Manage waypoints... (" + Config.get().waypoints.size() + ")"),
+					b -> minecraft.setScreen(new WaypointsScreen(this))).bounds(left, y, 300, 20).build());
+			y += 24;
+		}
 		y = addPresets(left, y);
 
 		y += 6;

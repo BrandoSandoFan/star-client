@@ -21,6 +21,9 @@ public final class ProtocolSanitizer {
 	/** Largest vertical hop a fake movement packet may carry. */
 	private static final double MAX_HOP = 0.0625;
 
+	/** Tallest ledge Step may climb; vanilla players step 0.6 and jump 1.25. */
+	private static final double MAX_STEP = 1.0;
+
 	private ProtocolSanitizer() { }
 
 	public static boolean enabled() {
@@ -52,6 +55,11 @@ public final class ProtocolSanitizer {
 	public static double clampJump(LocalPlayer p, double vy) {
 		Diagnostics.report(Diagnostics.REQ_JUMP, vy, jumpLimit(p));
 		return enabled() ? Math.min(vy, jumpLimit(p)) : vy;
+	}
+
+	/** Clamps a step-height request to {@link #MAX_STEP}. */
+	public static double clampStep(double height) {
+		return enabled() ? Math.min(height, MAX_STEP) : height;
 	}
 
 	/** Per-tick view change cap in degrees. */

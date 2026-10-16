@@ -82,6 +82,20 @@ public final class Config {
 		chestVersion++;
 	}
 
+	/** A saved world position. {@code dim} is the dimension key string, so waypoints only show in the dimension they were made in. */
+	public static final class Waypoint {
+		public String name = "Waypoint";
+		public String dim = "";
+		public int x;
+		public int y;
+		public int z;
+		public int rgb = 0xFFD700;
+		/** True for the automatic death marker; only the latest one is kept. */
+		public boolean death;
+	}
+
+	public List<Waypoint> waypoints = new ArrayList<>();
+
 	public static final int PROFILE_SLOTS = 5;
 	public Profile[] profiles = new Profile[PROFILE_SLOTS];
 

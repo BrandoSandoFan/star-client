@@ -27,5 +27,19 @@
   "key.starclient.hud": "Toggle HUD",
   "key.starclient.panic": "Panic (all modules off)",
   "key.starclient.antibait": "Toggle Anti Bait",
-  "key.starclient.diagnostics": "Toggle Diagnostics"
+  "key.starclient.diagnostics": "Toggle Diagnostics",
+  "key.starclient.autotool": "Toggle Auto Tool",
+  "key.starclient.tracers": "Toggle Tracers",
+  "key.starclient.zoom": "Toggle Zoom",
+  "key.starclient.waypoints": "Toggle Waypoints",
+  "key.starclient.autototem": "Toggle Auto Totem",
+  "key.starclient.autoarmor": "Toggle Auto Armor",
+  "key.starclient.autorespawn": "Toggle Auto Respawn",
+  "key.starclient.autoreplenish": "Toggle Auto Replenish",
+  "key.starclient.step": "Toggle Step",
+  "key.starclient.safewalk": "Toggle Safe Walk",
+  "key.starclient.noslow": "Toggle No Slow",
+  "key.starclient.velocity": "Toggle Velocity",
+  "key.starclient.portalfinder": "Toggle Portal Finder",
+  "key.starclient.signreader": "Toggle Sign Reader"
 }
