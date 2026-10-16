@@ -8,14 +8,12 @@ import java.util.function.Predicate;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Searchable, paged multi-select list used to choose ESP mobs and Chest ESP blocks. */
-public final class PickerScreen extends Screen {
+public final class PickerScreen extends PixelScreen {
 	public record Item(String id, Component name) { }
 
 	private static final int COLUMNS = 2;
@@ -34,9 +32,9 @@ public final class PickerScreen extends Screen {
 	private boolean selectedOnly;
 	private int page;
 	private int pageSize = 16;
-	private Button pageLabel;
-	private Button prev;
-	private Button next;
+	private PixelButton pageLabel;
+	private PixelButton prev;
+	private PixelButton next;
 
 	public PickerScreen(Screen parent, String heading, List<Item> items, Predicate<String> selected, Consumer<String> toggle, Runnable clear) {
 		super(Component.literal(heading));
@@ -54,8 +52,8 @@ public final class PickerScreen extends Screen {
 		int cx = width / 2;
 		int left = cx - PANEL() / 2;
 
-		Component title = Component.literal("◆ " + heading).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-		addRenderableWidget(new StringWidget(cx - font.width(title) / 2, 12, font.width(title), 9, title, font));
+		Component title = Component.literal("" + heading).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+		heading(title, 12);
 
 		EditBox search = new EditBox(font, left, 26, PANEL(), 18, Component.literal("Search"));
 		search.setHint(Component.literal("Search..."));
@@ -73,32 +71,33 @@ public final class PickerScreen extends Screen {
 		int rows = Math.max(3, (footer - top) / ROW_HEIGHT);
 		pageSize = rows * COLUMNS;
 
-		prev = Button.builder(Component.literal("<"), b -> {
+		prev = PixelButton.builder(Component.literal("<"), b -> {
 			page--;
 			populate();
 		}).bounds(left, footer, 40, 20).build();
-		next = Button.builder(Component.literal(">"), b -> {
+		next = PixelButton.builder(Component.literal(">"), b -> {
 			page++;
 			populate();
 		}).bounds(left + PANEL() - 40, footer, 40, 20).build();
-		pageLabel = Button.builder(Component.empty(), b -> { }).bounds(left + 44, footer, PANEL() - 88, 20).build();
+		pageLabel = PixelButton.builder(Component.empty(), b -> { }).bounds(left + 44, footer, PANEL() - 88, 20).build();
 		pageLabel.active = false;
 		addRenderableWidget(prev);
 		addRenderableWidget(next);
 		addRenderableWidget(pageLabel);
 
 		int bottom = height - 28;
-		addRenderableWidget(Button.builder(selectedOnlyLabel(), b -> {
+		addRenderableWidget(PixelButton.builder(selectedOnlyLabel(), b -> {
 			selectedOnly = !selectedOnly;
 			page = 0;
 			b.setMessage(selectedOnlyLabel());
 			populate();
 		}).bounds(left, bottom, 100, 20).build());
-		addRenderableWidget(Button.builder(Component.literal("Clear all"), b -> {
+		addRenderableWidget(PixelButton.builder(Component.literal("Clear all"), b -> {
 			clear.run();
 			populate();
 		}).bounds(left + 104, bottom, 90, 20).build());
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(left + 198, bottom, PANEL() - 198, 20).build());
+		addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold().bounds(left + 198, bottom, PANEL() - 198, 20).build());
+		panel(left - 8, 4, PANEL() + 16, height - 8);
 
 		populate();
 	}
@@ -139,7 +138,7 @@ public final class PickerScreen extends Screen {
 			int slot = i - start;
 			int x = left + (slot % COLUMNS) * (CELL_WIDTH + 4);
 			int y = 50 + (slot / COLUMNS) * ROW_HEIGHT;
-			Button cell = Button.builder(cellLabel(item), b -> {
+			PixelButton cell = PixelButton.builder(cellLabel(item), b -> {
 				toggle.accept(item.id());
 				b.setMessage(cellLabel(item));
 			}).bounds(x, y, CELL_WIDTH, 20).build();

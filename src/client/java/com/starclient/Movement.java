@@ -28,7 +28,9 @@ public final class Movement {
 
 	public static void tick(Minecraft mc) {
 		if (StarClient.fullbrightOn) {
-			if (!mc.player.hasEffect(MobEffects.NIGHT_VISION)) {
+			if (mc.level.getMaxLocalRawBrightness(mc.player.blockPosition()) > Settings.getI("fullbright.maxlight")) {
+				fullbrightOff(mc);
+			} else if (!mc.player.hasEffect(MobEffects.NIGHT_VISION)) {
 				mc.player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 1_000_000, 0, false, false, false));
 				nightVisionApplied = true;
 			}
@@ -103,7 +105,9 @@ public final class Movement {
 		}
 
 		if (StarClient.autoWalkOn && mc.screen == null) {
-			mc.options.keyUp.setDown(true);
+			boolean pause = (Settings.on("autowalk.sneak") && mc.player.isShiftKeyDown())
+					|| mc.player.getHealth() < Settings.getF("autowalk.minhealth");
+			mc.options.keyUp.setDown(!pause);
 		}
 		if (StarClient.autoSprintOn && mc.options.keyUp.isDown() && !mc.player.isShiftKeyDown()
 				&& mc.player.getFoodData().getFoodLevel() > Settings.get("autosprint.food")) {

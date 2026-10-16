@@ -27,8 +27,10 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `PickerScreen` - searchable paged multi-select (mobs, blocks)
   - `Presets` - block lists (Chest ESP) and mob lists (ESP filter)
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
-  - `ValueSlider` - generic 0..1 slider used by `EspScreen`
-  - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
+  - `ValueSlider` - generic 0..1 pixel-style slider used by `EspScreen` and `ModuleSettingsScreen`
+  - `PixelDropdown` - dropdown widget (label + options, opens downward in columns of 6 via `GuiGraphicsExtractor.nextStratum()`); add it before widgets its open list covers so it wins their clicks. Used for presets and the ESP mob filter mode
+  - `Theme`, `PixelButton`, `PixelScreen` - pixel UI (`Theme.star` and `PixelScreen.heading` draw the star heading): `Theme` draws bevelled boxes/panel/checker backdrop with `GuiGraphicsExtractor.fill`; `PixelButton` (builder like vanilla `Button`: `bounds`, `gold`, `danger`, `outline`, `stripe`) extends `AbstractButton` and draws in `extractContents`; every screen extends `PixelScreen` and calls `panel(x, y, w, h)` at the end of `init` (backdrop and panel are drawn in `extractBackground`). Use `PixelButton`, not `Button`, in new screens
+  - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when a settings screen closes
 - `src/main/resources/fabric.mod.json` - mod id `starclient`
 - `src/main/resources/assets/starclient/lang/en_us.json` - keybind names
 
@@ -63,7 +65,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). `antibait.min` (default 3) new Chest ESP/Base Finder targets within `antibait.area` (default 16) blocks of each other in one tick, or any single new spawner/trial spawner (`antibait.spawners`), are hidden from Chest ESP, and their chunk from Base Finder. Entity ESP is not affected. Plain blocks (amethyst, ores, glass) are not tracked |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
-Every module except Fullbright and Auto Walk has a gear button opening its settings. Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
+Every module has a gear button opening its settings (Fullbright: `fullbright.maxlight`; Auto Walk: `autowalk.sneak`, `autowalk.minhealth`; HUD: `hud.bar` pixel backing with a category colour edge). Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
 Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait.
@@ -74,9 +76,10 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - The sandbox cannot reach Fabric/Mojang Maven, so it cannot compile locally; push and read the failing job log from the Actions run
 
 ## 26.1 API notes (learned from compile errors)
+- Rendering: `Screen.extractBackground/extractRenderState(GuiGraphicsExtractor, mx, my, a)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents` (abstract) and `onPress(InputWithModifiers)`. `GuiGraphicsExtractor`: `fill(x1,y1,x2,y2,argb)`, `outline(x,y,w,h,argb)`, `text(font, Component, x, y, argb, shadow)`
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
-- Screens use `keyPressed(KeyEvent)` with `event.key()`; avoid overriding render methods and let widgets draw themselves
+- Screens use `keyPressed(KeyEvent)` with `event.key()`. Custom widgets override `extractWidgetRenderState`/`extractContents`; mouse events carry `event.x()`/`event.y()` (`MouseButtonEvent`)
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions

@@ -1,6 +1,5 @@
 package com.starclient;
 
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 
@@ -22,8 +21,8 @@ public final class SortButton {
 			int rows = Utility.containerSize(container.getMenu()) / 9;
 			int top = (height - (114 + rows * 18)) / 2;
 			int right = (width + GUI_WIDTH) / 2;
-			Screens.getWidgets(screen).add(Button.builder(Component.literal("Sort"), b -> Utility.sortOpenContainer(client))
-					.bounds(right - BUTTON_WIDTH, top - BUTTON_HEIGHT - 4, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+			Screens.getWidgets(screen).add(PixelButton.builder(Component.literal("Sort"), b -> Utility.sortOpenContainer(client))
+					.gold().bounds(right - BUTTON_WIDTH, top - BUTTON_HEIGHT - 4, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 		});
 	}
 }

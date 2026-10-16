@@ -53,6 +53,10 @@ public final class Settings {
 		add(Module.CHEST_ESP,
 				slider("chestesp.alpha", "Opacity", 0.1, 1, 0.05, 0.4, ""),
 				slider("chestesp.radius", "Radius", 1, 8, 1, 8, "chunks"));
+		add(Module.FULLBRIGHT, slider("fullbright.maxlight", "Only when light is at most", 0, 15, 1, 15, ""));
+		add(Module.AUTO_WALK,
+				toggle("autowalk.sneak", "Pause while sneaking", false),
+				slider("autowalk.minhealth", "Pause below health", 0, 20, 1, 0, ""));
 		add(Module.AUTO_SPRINT, slider("autosprint.food", "Min food level", 0, 20, 1, 6, ""));
 		add(Module.FLY,
 				slider("fly.speed", "Flight speed", 0.05, 1, 0.05, 0.1, ""),
@@ -101,7 +105,8 @@ public final class Settings {
 		add(Module.HUD,
 				toggle("hud.right", "Align right", true),
 				toggle("hud.colour", "Category colours", true),
-				toggle("hud.shadow", "Text shadow", true));
+				toggle("hud.shadow", "Text shadow", true),
+				toggle("hud.bar", "Pixel backing", true));
 		add(Module.PANIC, toggle("panic.close", "Close open screen", true));
 		add(Module.ANTI_BAIT,
 				slider("antibait.min", "Min new blocks in one tick", 2, 10, 1, 3, ""),

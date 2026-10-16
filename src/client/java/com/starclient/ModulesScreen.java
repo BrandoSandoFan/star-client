@@ -2,17 +2,15 @@ package com.starclient;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
 /** Module menu: category tabs, per-module toggle and key rebind, ESP settings. */
-public final class ModulesScreen extends Screen {
+public final class ModulesScreen extends PixelScreen {
 	private static final int PANEL_WIDTH = 320;
 	private static final int ROW_HEIGHT = 22;
 	private static final int SECTION_HEIGHT = 12;
@@ -32,8 +30,8 @@ public final class ModulesScreen extends Screen {
 		int left = cx - PANEL_WIDTH / 2;
 		int y = 18;
 
-		Component heading = Component.literal("★ Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-		addCentred(heading, cx, y);
+		Component heading = Component.literal("Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+		heading(heading, y);
 		y += 12;
 
 		int enabled = 0;
@@ -54,10 +52,10 @@ public final class ModulesScreen extends Screen {
 			Component text = selected
 					? Component.literal(label).withStyle(colour, ChatFormatting.BOLD, ChatFormatting.UNDERLINE)
 					: Component.literal(label).withStyle(ChatFormatting.GRAY);
-			Button b = Button.builder(text, btn -> {
+			PixelButton b = PixelButton.builder(text, btn -> {
 				tab = target;
 				rebuildWidgets();
-			}).bounds(left + t * (tabWidth + gap), y, tabWidth, 20).build();
+			}).outline(selected ? Theme.GOLD : 0).bounds(left + t * (tabWidth + gap), y, tabWidth, 20).build();
 			addRenderableWidget(b);
 		}
 		y += 30;
@@ -84,18 +82,19 @@ public final class ModulesScreen extends Screen {
 		y += 8;
 		KeyMapping menuKey = StarClient.menuKey();
 		Component menuKeyLabel = listening == menuKey ? listeningLabel() : menuKey.getTranslatedKeyMessage();
-		addRenderableWidget(Button.builder(Component.literal("Menu key: ").withStyle(ChatFormatting.GRAY).append(menuKeyLabel), b -> {
+		addRenderableWidget(PixelButton.builder(Component.literal("Menu key: ").withStyle(ChatFormatting.GRAY).append(menuKeyLabel), b -> {
 			listening = menuKey;
 			rebuildWidgets();
 		}).bounds(left, y, PANEL_WIDTH, 20).build());
 		y += 24;
 
-		addRenderableWidget(Button.builder(Component.literal("Profiles..."), b -> minecraft.setScreen(new ProfilesScreen(this)))
+		addRenderableWidget(PixelButton.builder(Component.literal("Profiles..."), b -> minecraft.setScreen(new ProfilesScreen(this)))
 				.bounds(left, y, PANEL_WIDTH, 20).build());
 		y += 26;
 
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
+		addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold()
 				.bounds(cx - 100, y, 200, 20).build());
+		panel(left - 10, 6, PANEL_WIDTH + 20, y + 28 - 6);
 	}
 
 	private void addRow(int left, int y, int idx, Module m) {
@@ -103,17 +102,17 @@ public final class ModulesScreen extends Screen {
 		int toggleWidth = 150;
 		int gearWidth = 20;
 
-		Button toggle = Button.builder(moduleLabel(idx, m), b -> {
+		PixelButton toggle = PixelButton.builder(moduleLabel(idx, m), b -> {
 			StarClient.toggle(minecraft, idx);
 			rebuildWidgets();
-		}).bounds(left, y, toggleWidth, 20).build();
+		}).outline(StarClient.isOn(idx) ? Theme.GOLD : 0).stripe(m.category().colour.getColor()).bounds(left, y, toggleWidth, 20).build();
 		toggle.setTooltip(Tooltip.create(Component.literal(m.description())));
 		addRenderableWidget(toggle);
 
 		KeyMapping key = StarClient.keys()[idx];
 		Component keyLabel = listening == key ? listeningLabel() : key.getTranslatedKeyMessage();
 		int keyWidth = PANEL_WIDTH - toggleWidth - 4 - (hasGear ? gearWidth + 4 : 0);
-		Button keyButton = Button.builder(keyLabel, b -> {
+		PixelButton keyButton = PixelButton.builder(keyLabel, b -> {
 			listening = key;
 			rebuildWidgets();
 		}).bounds(left + toggleWidth + 4, y, keyWidth, 20).build();
@@ -121,7 +120,7 @@ public final class ModulesScreen extends Screen {
 		addRenderableWidget(keyButton);
 
 		if (hasGear) {
-			Button gear = Button.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.ESP
+			PixelButton gear = PixelButton.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.ESP
 					? new EspScreen(this) : new ModuleSettingsScreen(this, idx)))
 					.bounds(left + PANEL_WIDTH - gearWidth, y, gearWidth, 20).build();
 			gear.setTooltip(Tooltip.create(Component.literal("Module settings")));
