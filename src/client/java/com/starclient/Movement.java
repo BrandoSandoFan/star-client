@@ -5,7 +5,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -68,7 +67,7 @@ public final class Movement {
 				boolean submerged = mc.level.getFluidState(feet.above()).is(FluidTags.WATER);
 				boolean belowSurface = mc.player.getY() - feet.getY() < fluid.getHeight(mc.level, feet);
 				double rise = Settings.get("jesus.rise");
-				mc.player.setDeltaMovement(v.x, submerged ? rise : belowSurface ? rise / 2 : 0.0, v.z);
+				ProtocolSanitizer.setVelocity(mc.player, v.x, submerged ? rise : belowSurface ? rise / 2 : 0.0, v.z);
 			}
 		}
 
@@ -79,12 +78,12 @@ public final class Movement {
 		// Softfall: once a fall is long enough to hurt, keep telling the server we are on the ground
 		if (StarClient.softFallOn && mc.player.fallDistance > Settings.get("softfall.distance") && !grounded && !mc.player.isFallFlying()
 				&& !mc.player.getAbilities().flying) {
-			mc.player.connection.send(new ServerboundMovePlayerPacket.StatusOnly(true, mc.player.horizontalCollision));
+			ProtocolSanitizer.sendGround(mc.player.connection, mc.player);
 		}
 
 		if (StarClient.highJumpOn && controllable && mc.options.keyJump.isDown() && wasOnGround && !grounded) {
 			Vec3 v = mc.player.getDeltaMovement();
-			if (v.y > 0) mc.player.setDeltaMovement(v.x, Settings.get("highjump.velocity"), v.z);
+			if (v.y > 0) mc.player.setDeltaMovement(v.x, ProtocolSanitizer.clampJump(mc.player, Settings.get("highjump.velocity")), v.z);
 		}
 		wasOnGround = grounded;
 
@@ -100,7 +99,7 @@ public final class Movement {
 				double x = (-sin * fwd + cos * side) / len * speed;
 				double z = (cos * fwd + sin * side) / len * speed;
 				Vec3 v = mc.player.getDeltaMovement();
-				mc.player.setDeltaMovement(x, v.y, z);
+				ProtocolSanitizer.setVelocity(mc.player, x, v.y, z);
 			}
 		}
 
@@ -122,7 +121,7 @@ public final class Movement {
 			float target = climbing ? -Settings.getF("elytrafly.climb") : Settings.getF("elytrafly.dive");
 			float pitch = mc.player.getXRot();
 			float maxStep = Settings.getF("elytrafly.step");
-			float step = Math.max(-maxStep, Math.min(maxStep, (target - pitch) * 0.5f));
+			float step = ProtocolSanitizer.limitTurn(Math.max(-maxStep, Math.min(maxStep, (target - pitch) * 0.5f)));
 			mc.player.setXRot(pitch + step);
 		}
 	}

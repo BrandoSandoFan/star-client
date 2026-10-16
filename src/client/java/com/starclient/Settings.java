@@ -45,6 +45,15 @@ public final class Settings {
 		for (Def d : defs) BY_KEY.put(d.key(), d);
 	}
 
+	/** Global settings with no module page. */
+	static {
+		for (Def d : new Def[] {
+				toggle("sanitize.enabled", "Clamp to vanilla limits", true),
+				slider("sanitize.maxturn", "Max turn per tick", 1, 90, 1, 30, "deg")}) {
+			BY_KEY.put(d.key(), d);
+		}
+	}
+
 	static {
 		add(Module.BASE_FINDER, slider("basefinder.min", "Min blocks per chunk", 1, 40, 1, 10, ""));
 		add(Module.FREECAM,
@@ -66,11 +75,14 @@ public final class Settings {
 				slider("aimbot.range", "Range", 1, 12, 0.5, 6, "blocks"),
 				slider("aimbot.turn", "Max turn per tick", 1, 30, 1, 8, "deg"),
 				slider("aimbot.ease", "Smoothing", 0.05, 1, 0.05, 0.2, ""),
+				toggle("aimbot.spring", "Critically damped spring", false),
+				slider("aimbot.omega", "Spring stiffness", 0.1, 1.5, 0.05, 0.6, "/tick"),
 				slider("aimbot.fov", "Field of view", 30, 360, 10, 90, "deg"),
 				toggle("aimbot.players", "Target players", true),
 				toggle("aimbot.hostiles", "Target hostile mobs", true));
 		add(Module.HIT_BOT,
 				slider("hitbot.charge", "Min attack charge", 0.5, 1, 0.05, 0.95, ""),
+				slider("hitbot.delay", "Min ticks between attacks", 0, 20, 1, 0, "ticks"),
 				toggle("hitbot.players", "Target players", true),
 				toggle("hitbot.hostiles", "Target hostile mobs", true));
 		add(Module.ELYTRA_FLY,
@@ -85,6 +97,7 @@ public final class Settings {
 		add(Module.KILL_AURA,
 				slider("killaura.range", "Range (0 = Reach)", 0, 12, 0.5, 0, "blocks"),
 				slider("killaura.charge", "Min attack charge", 0.5, 1, 0.05, 0.95, ""),
+				slider("killaura.delay", "Min ticks between attacks", 0, 20, 1, 0, "ticks"),
 				toggle("killaura.players", "Target players", true),
 				toggle("killaura.hostiles", "Target hostile mobs", true));
 		add(Module.CRITS, slider("crits.hop", "Fake hop height", 0.02, 0.25, 0.01, 0.06, "blocks"));
@@ -108,6 +121,11 @@ public final class Settings {
 				toggle("hud.shadow", "Text shadow", true),
 				toggle("hud.bar", "Pixel backing", true));
 		add(Module.PANIC, toggle("panic.close", "Close open screen", true));
+		add(Module.DIAGNOSTICS,
+				toggle("diag.overlay", "Show overlay", true),
+				slider("diag.hold", "Hold values", 5, 100, 5, 20, "ticks"),
+				toggle("diag.log", "Write logs/starclient-diagnostics.jsonl", false),
+				toggle("diag.logall", "Log every tick (else only exceeded)", false));
 		add(Module.ANTI_BAIT,
 				slider("antibait.min", "Min new blocks in one tick", 2, 10, 1, 3, ""),
 				slider("antibait.area", "Area", 4, 32, 1, 16, "blocks"),

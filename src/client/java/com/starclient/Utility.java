@@ -118,7 +118,7 @@ public final class Utility {
 		if (afkIdle >= Settings.getI("antiafk.seconds") * 20) {
 			afkIdle = 0;
 			afkFlip = !afkFlip;
-			p.setYRot(p.getYRot() + (afkFlip ? 1 : -1) * Settings.getF("antiafk.nudge"));
+			p.setYRot(p.getYRot() + ProtocolSanitizer.limitTurn((afkFlip ? 1 : -1) * Settings.getF("antiafk.nudge")));
 			afkJumpTicks = 2;
 			mc.options.keyJump.setDown(true);
 		}
