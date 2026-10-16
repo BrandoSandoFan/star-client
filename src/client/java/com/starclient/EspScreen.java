@@ -49,6 +49,10 @@ public final class EspScreen extends Screen {
 				v -> cfg.espMaxDistance = (int) Math.round(v * 256)));
 		y += 30;
 
+		addRenderableWidget(Button.builder(Component.literal("Mob filter... (" + Config.ESP_MOB_MODES[cfg.espMobMode] + ")"),
+				b -> minecraft.setScreen(new ModuleSettingsScreen.MobFilter(this))).bounds(cx - 100, y, 200, 20).build());
+		y += 24;
+
 		addRenderableWidget(Button.builder(Component.literal("Reset to defaults"), b -> {
 			Config.reset();
 			rebuildWidgets();

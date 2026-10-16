@@ -5,6 +5,13 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.client.Minecraft;
 
@@ -27,11 +34,53 @@ public final class Config {
 	/** Max distance in blocks; 0 means unlimited. */
 	public int espMaxDistance = 0;
 
-	/** Interaction range in blocks while Reach is on. */
-	public float reachDistance = 6.0f;
+	public static final String[] ESP_MOB_MODES = {"All mobs", "Only selected", "Hide selected"};
+	/** 0 shows mobs by category toggle, 1 shows only {@link #espMobs}, 2 hides {@link #espMobs}. */
+	public int espMobMode = 0;
+	/** Entity type ids (e.g. {@code minecraft:creeper}) the mob filter applies to. */
+	public List<String> espMobs = new ArrayList<>();
+	private transient Set<String> espMobSet;
 
-	/** Blocks added to every side of an entity's hitbox while Hitboxes is on. */
-	public float hitboxExpand = 0.3f;
+	/** Block ids Chest ESP highlights. */
+	public List<String> chestBlocks = new ArrayList<>(Presets.CHEST_DEFAULT);
+	private transient Set<String> chestBlockSet;
+	/** Bumped whenever {@link #chestBlocks} changes so scanners can drop cached results. */
+	public transient int chestVersion;
+
+	/** Per-module settings, keyed as in {@link Settings}. Missing keys use the registered default. */
+	public Map<String, Double> values = new HashMap<>();
+
+	public boolean hasMob(String id) {
+		if (espMobSet == null) espMobSet = new HashSet<>(espMobs);
+		return espMobSet.contains(id);
+	}
+
+	public void toggleMob(String id) {
+		if (!espMobs.remove(id)) espMobs.add(id);
+		espMobSet = null;
+	}
+
+	public void setMobs(Collection<String> ids) {
+		espMobs = new ArrayList<>(ids);
+		espMobSet = null;
+	}
+
+	public boolean hasChestBlock(String id) {
+		if (chestBlockSet == null) chestBlockSet = new HashSet<>(chestBlocks);
+		return chestBlockSet.contains(id);
+	}
+
+	public void toggleChestBlock(String id) {
+		if (!chestBlocks.remove(id)) chestBlocks.add(id);
+		chestBlockSet = null;
+		chestVersion++;
+	}
+
+	public void setChestBlocks(Collection<String> ids) {
+		chestBlocks = new ArrayList<>(ids);
+		chestBlockSet = null;
+		chestVersion++;
+	}
 
 	public static final int PROFILE_SLOTS = 5;
 	public Profile[] profiles = new Profile[PROFILE_SLOTS];
@@ -43,8 +92,10 @@ public final class Config {
 		public int[] espColor;
 		public float espAlpha;
 		public int espMaxDistance;
-		public float reachDistance;
-		public float hitboxExpand;
+		public int espMobMode;
+		public List<String> espMobs;
+		public List<String> chestBlocks;
+		public Map<String, Double> values;
 
 		public static Profile capture(Config c) {
 			Profile p = new Profile();
@@ -54,8 +105,10 @@ public final class Config {
 			p.espColor = c.espColor.clone();
 			p.espAlpha = c.espAlpha;
 			p.espMaxDistance = c.espMaxDistance;
-			p.reachDistance = c.reachDistance;
-			p.hitboxExpand = c.hitboxExpand;
+			p.espMobMode = c.espMobMode;
+			p.espMobs = new ArrayList<>(c.espMobs);
+			p.chestBlocks = new ArrayList<>(c.chestBlocks);
+			p.values = new HashMap<>(c.values);
 			return p;
 		}
 
@@ -65,8 +118,10 @@ public final class Config {
 			if (espColor != null && espColor.length == ESP_NAMES.length) c.espColor = espColor.clone();
 			c.espAlpha = espAlpha;
 			c.espMaxDistance = espMaxDistance;
-			c.reachDistance = reachDistance;
-			c.hitboxExpand = hitboxExpand;
+			c.espMobMode = espMobMode;
+			if (espMobs != null) c.setMobs(espMobs);
+			if (chestBlocks != null) c.setChestBlocks(chestBlocks);
+			if (values != null) c.values = new HashMap<>(values);
 			if (mc.player == null || modules == null) return;
 			for (int i = 0; i < Module.ALL.size(); i++) {
 				boolean want = i < modules.length && modules[i];
@@ -117,6 +172,7 @@ public final class Config {
 	private boolean valid() {
 		return espEnabled != null && espEnabled.length == ESP_NAMES.length
 				&& espColor != null && espColor.length == ESP_NAMES.length
+				&& espMobs != null && chestBlocks != null && values != null
 				&& profiles != null && profiles.length == PROFILE_SLOTS;
 	}
 }

@@ -2,40 +2,32 @@ package com.starclient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
-import net.minecraft.world.level.block.entity.BarrelBlockEntity;
-import net.minecraft.world.level.block.entity.BeaconBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.entity.CrafterBlockEntity;
-import net.minecraft.world.level.block.entity.DispenserBlockEntity;
-import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
-import net.minecraft.world.level.block.entity.HopperBlockEntity;
-import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.world.level.block.entity.TrappedChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 /**
- * Finds storage and farm blocks in nearby loaded chunks: block entities (chests,
- * hoppers, droppers, furnaces...) plus plain blocks (growing amethyst).
+ * Finds the blocks chosen in {@link Config#chestBlocks} in nearby loaded chunks: block entities
+ * (chests, hoppers, furnaces...) are read directly, other blocks (ores, amethyst...) by scanning chunk sections.
  */
 public final class ChestEsp {
 	public record Hit(BlockPos pos, float r, float g, float b) { }
 
 	private static final int INTERVAL_TICKS = 10;
-	private static final int MAX_RADIUS_CHUNKS = 8;
 	private static final int BLOCK_CHUNKS_PER_PASS = 8;
 	private static final int BLOCK_RESCAN_TICKS = 100;
 
@@ -43,6 +35,8 @@ public final class ChestEsp {
 	private static final Map<Long, List<Hit>> BLOCK_HITS = new HashMap<>();
 	private static final Map<Long, Integer> BLOCK_SCANNED = new HashMap<>();
 	private static int ticks;
+	private static Set<Block> targets = Set.of();
+	private static int targetsVersion = -1;
 
 	private ChestEsp() { }
 
@@ -55,13 +49,30 @@ public final class ChestEsp {
 		BLOCK_HITS.clear();
 		BLOCK_SCANNED.clear();
 		ticks = 0;
+		targetsVersion = -1;
+	}
+
+	/** Re-resolves the chosen blocks (they may have changed) and drops cached chunk scans. */
+	private static void refreshTargets() {
+		Config cfg = Config.get();
+		if (targetsVersion == cfg.chestVersion) return;
+		targetsVersion = cfg.chestVersion;
+		Set<Block> set = new HashSet<>();
+		for (String id : cfg.chestBlocks) {
+			Identifier key = Identifier.tryParse(id);
+			if (key != null && BuiltInRegistries.BLOCK.containsKey(key)) set.add(BuiltInRegistries.BLOCK.getValue(key));
+		}
+		targets = set;
+		BLOCK_HITS.clear();
+		BLOCK_SCANNED.clear();
 	}
 
 	public static void tick(Minecraft mc) {
 		if (++ticks % INTERVAL_TICKS != 0) return;
 
+		refreshTargets();
 		ChunkPos center = mc.player.chunkPosition();
-		int radius = Math.min(mc.options.getEffectiveRenderDistance(), MAX_RADIUS_CHUNKS);
+		int radius = Math.min(mc.options.getEffectiveRenderDistance(), Settings.getI("chestesp.radius"));
 		List<Hit> out = new ArrayList<>();
 		int scanned = 0;
 
@@ -77,8 +88,11 @@ public final class ChestEsp {
 				for (BlockPos pos : chunk.getBlockEntitiesPos()) {
 					BlockEntity be = chunk.getBlockEntity(pos);
 					if (be == null) continue;
-					Hit hit = classify(be);
-					if (hit != null) out.add(hit);
+					Block block = be.getBlockState().getBlock();
+					if (targets.contains(block)) {
+						float[] c = blockColor(block);
+						out.add(new Hit(pos, c[0], c[1], c[2]));
+					}
 				}
 
 				long key = ChunkPos.pack(cx, cz);
@@ -121,30 +135,34 @@ public final class ChestEsp {
 		return found;
 	}
 
+	/** Block entities are picked up every pass, so the section scan only covers plain blocks. */
 	private static boolean isBlockTarget(BlockState state) {
-		Block b = state.getBlock();
-		return b == Blocks.BUDDING_AMETHYST || b == Blocks.AMETHYST_CLUSTER || b == Blocks.LARGE_AMETHYST_BUD
-				|| b == Blocks.MEDIUM_AMETHYST_BUD || b == Blocks.SMALL_AMETHYST_BUD;
+		return !state.hasBlockEntity() && targets.contains(state.getBlock());
 	}
 
 	private static float[] blockColor(Block b) {
-		if (b == Blocks.BUDDING_AMETHYST) return new float[] {1.0f, 0.2f, 1.0f};
-		return new float[] {0.75f, 0.55f, 1.0f};
-	}
-
-	private static Hit classify(BlockEntity be) {
-		BlockPos p = be.getBlockPos();
-		if (be instanceof TrappedChestBlockEntity) return new Hit(p, 1.0f, 0.2f, 0.2f);
-		if (be instanceof ChestBlockEntity) return new Hit(p, 1.0f, 0.65f, 0.1f);
-		if (be instanceof EnderChestBlockEntity) return new Hit(p, 0.6f, 0.2f, 1.0f);
-		if (be instanceof BarrelBlockEntity) return new Hit(p, 0.75f, 0.5f, 0.25f);
-		if (be instanceof ShulkerBoxBlockEntity) return new Hit(p, 1.0f, 0.4f, 0.9f);
-		if (be instanceof HopperBlockEntity) return new Hit(p, 0.85f, 0.85f, 0.9f);
-		if (be instanceof DispenserBlockEntity) return new Hit(p, 0.55f, 0.55f, 0.6f); // includes droppers
-		if (be instanceof CrafterBlockEntity) return new Hit(p, 0.9f, 0.9f, 0.3f);
-		if (be instanceof AbstractFurnaceBlockEntity) return new Hit(p, 1.0f, 0.5f, 0.3f);
-		if (be instanceof BrewingStandBlockEntity) return new Hit(p, 0.4f, 0.9f, 0.7f);
-		if (be instanceof BeaconBlockEntity) return new Hit(p, 0.3f, 1.0f, 1.0f);
-		return null;
+		String path = BuiltInRegistries.BLOCK.getKey(b).getPath();
+		int rgb = switch (path) {
+			case "trapped_chest" -> 0xFF3333;
+			case "chest" -> 0xFFA61A;
+			case "ender_chest" -> 0x9933FF;
+			case "barrel" -> 0xBF8040;
+			case "hopper" -> 0xD9D9E6;
+			case "dispenser", "dropper" -> 0x8C8C99;
+			case "crafter" -> 0xE6E64D;
+			case "furnace", "blast_furnace", "smoker" -> 0xFF804D;
+			case "brewing_stand" -> 0x66E6B3;
+			case "beacon" -> 0x4DFFFF;
+			case "budding_amethyst" -> 0xFF33FF;
+			case "amethyst_cluster", "large_amethyst_bud", "medium_amethyst_bud", "small_amethyst_bud" -> 0xBF8CFF;
+			case "spawner", "trial_spawner" -> 0x3366FF;
+			case "diamond_ore", "deepslate_diamond_ore" -> 0x33E6FF;
+			case "emerald_ore", "deepslate_emerald_ore" -> 0x33FF66;
+			case "gold_ore", "deepslate_gold_ore", "nether_gold_ore" -> 0xFFD633;
+			case "iron_ore", "deepslate_iron_ore" -> 0xE6BFA6;
+			case "ancient_debris" -> 0x8C5A3C;
+			default -> path.endsWith("shulker_box") ? 0xFF66E6 : Mth.hsvToRgb((path.hashCode() & 0x7FFFFFFF) % 360 / 360f, 0.7f, 1.0f);
+		};
+		return new float[] {((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f};
 	}
 }

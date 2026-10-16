@@ -25,18 +25,14 @@ import net.minecraft.world.phys.Vec3;
 /** Auto Eat, Anti AFK and the Sorter (player inventory, or an open chest, ender chest, barrel or shulker box). */
 public final class Utility {
 	/** Auto Eat starts when the food level is at or below this (20 is full). */
-	private static final int EAT_AT_OR_BELOW = 14;
 	private static final Set<Item> NOT_FOOD = Set.of(Items.ROTTEN_FLESH, Items.SPIDER_EYE, Items.PUFFERFISH, Items.POISONOUS_POTATO,
 			Items.CHORUS_FRUIT, Items.CHICKEN, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.SUSPICIOUS_STEW);
 
 	/** Anti AFK: ticks without any movement before a jump and look nudge, and the nudge size in degrees. */
-	private static final int AFK_INTERVAL = 400;
-	private static final float AFK_NUDGE = 10f;
 
 	/** Sorter: main inventory slots in the player menu, and swaps/merges done per tick. */
 	private static final int INV_FIRST = 9;
 	private static final int INV_END = 36;
-	private static final int OPS_PER_TICK = 2;
 
 	private static boolean eating;
 	private static int eatPrevSlot;
@@ -74,7 +70,7 @@ public final class Utility {
 		}
 		if (mc.screen != null || p.isUsingItem() || mc.gameMode == null) return;
 		var food = p.getFoodData();
-		if (!food.needsFood() || food.getFoodLevel() > EAT_AT_OR_BELOW) return;
+		if (!food.needsFood() || food.getFoodLevel() > Settings.getI("autoeat.hunger")) return;
 
 		int best = -1;
 		int bestNutrition = 0;
@@ -119,10 +115,10 @@ public final class Utility {
 		Vec3 pos = p.position();
 		boolean moved = afkLastPos == null || pos.distanceToSqr(afkLastPos) > 0.0004 || Math.abs(p.getYRot() - afkLastYaw) > 0.01f;
 		afkIdle = moved || mc.screen != null ? 0 : afkIdle + 1;
-		if (afkIdle >= AFK_INTERVAL) {
+		if (afkIdle >= Settings.getI("antiafk.seconds") * 20) {
 			afkIdle = 0;
 			afkFlip = !afkFlip;
-			p.setYRot(p.getYRot() + (afkFlip ? AFK_NUDGE : -AFK_NUDGE));
+			p.setYRot(p.getYRot() + (afkFlip ? 1 : -1) * Settings.getF("antiafk.nudge"));
 			afkJumpTicks = 2;
 			mc.options.keyJump.setDown(true);
 		}
@@ -222,7 +218,7 @@ public final class Utility {
 			sorterStop();
 			return;
 		}
-		for (int n = 0; n < OPS_PER_TICK && !sortOps.isEmpty(); n++) {
+		for (int n = 0; n < Settings.getI("sorter.ops") && !sortOps.isEmpty(); n++) {
 			for (int slot : sortOps.poll()) {
 				mc.gameMode.handleContainerInput(sortMenuId, slot, 0, ContainerInput.PICKUP, p);
 			}

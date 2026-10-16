@@ -198,7 +198,7 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < Module.ALL.size(); i++) {
 			if (i != Module.PANIC && isOn(i)) toggle(mc, i);
 		}
-		mc.setScreen(null);
+		if (Settings.on("panic.close")) mc.setScreen(null);
 		mc.gui.setOverlayMessage(Component.literal("Panic: all modules off").withStyle(ChatFormatting.RED), false);
 	}
 
