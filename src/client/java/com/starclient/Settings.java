@@ -155,6 +155,21 @@ public final class Settings {
 		add(Module.AUTO_REPLENISH,
 				slider("autoreplenish.threshold", "Refill at or below stack size", 0, 16, 1, 1, ""),
 				slider("autoreplenish.delay", "Ticks between clicks", 1, 20, 1, 5, "ticks"));
+		add(Module.STEP, slider("step.height", "Step height", 0.6, 2.5, 0.1, 1.0, "blocks"));
+		add(Module.SAFE_WALK);
+		add(Module.NO_SLOW);
+		add(Module.VELOCITY,
+				slider("velocity.horizontal", "Horizontal knockback kept", 0, 100, 5, 0, "%"),
+				slider("velocity.vertical", "Vertical knockback kept", 0, 100, 5, 100, "%"));
+		add(Module.PORTAL_FINDER,
+				toggle("portalfinder.nether", "Nether portals", true),
+				toggle("portalfinder.end", "End portals and frames", true),
+				slider("portalfinder.radius", "Radius", 1, 16, 1, 8, "chunks"),
+				slider("portalfinder.alpha", "Opacity", 0.1, 1, 0.05, 0.5, ""));
+		add(Module.SIGN_READER,
+				slider("signreader.range", "Range", 8, 128, 8, 48, "blocks"),
+				slider("signreader.max", "Signs listed", 1, 10, 1, 5, ""),
+				toggle("signreader.highlight", "Highlight signs", true));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */

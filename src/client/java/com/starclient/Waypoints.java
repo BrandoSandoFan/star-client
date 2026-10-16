@@ -84,20 +84,23 @@ public final class Waypoints {
 		wasDead = false;
 	}
 
+	/** Arrow showing where (x, z) lies relative to the way the player is facing. */
+	public static String arrow(Minecraft mc, double x, double z) {
+		double dx = x - mc.player.getX();
+		double dz = z - mc.player.getZ();
+		float bearing = (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
+		return ARROWS[Math.floorMod(Math.round(Mth.wrapDegrees(bearing - mc.player.getYRot()) / 45f), 8)];
+	}
+
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		if (!StarClient.waypointsOn || !Settings.on("waypoints.hud") || mc.player == null || mc.level == null || mc.options.hideGui) return;
 		List<Config.Waypoint> list = visible(mc);
 		int centre = mc.getWindow().getGuiScaledWidth() / 2;
 		int y = 4;
-		float yaw = mc.player.getYRot();
 		for (int i = 0; i < list.size() && i < MAX_LISTED; i++) {
 			Config.Waypoint w = list.get(i);
-			double dx = w.x + 0.5 - mc.player.getX();
-			double dz = w.z + 0.5 - mc.player.getZ();
-			float bearing = (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
-			int arrow = Math.floorMod(Math.round(Mth.wrapDegrees(bearing - yaw) / 45f), 8);
-			Component text = Component.literal(ARROWS[arrow] + " " + w.name + "  " + Math.round(distance(mc, w)) + "m").withStyle(ChatFormatting.WHITE);
+			Component text = Component.literal(arrow(mc, w.x + 0.5, w.z + 0.5) + " " + w.name + "  " + Math.round(distance(mc, w)) + "m").withStyle(ChatFormatting.WHITE);
 			int x = centre - mc.font.width(text) / 2;
 			graphics.text(mc.font, text, x, y, 0xFF000000 | w.rgb, true);
 			y += LINE;

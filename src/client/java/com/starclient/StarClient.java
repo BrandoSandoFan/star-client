@@ -50,6 +50,12 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoArmorOn;
 	public static boolean autoRespawnOn;
 	public static boolean autoReplenishOn;
+	public static boolean stepOn;
+	public static boolean safeWalkOn;
+	public static boolean noSlowOn;
+	public static boolean velocityOn;
+	public static boolean portalFinderOn;
+	public static boolean signReaderOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -75,6 +81,7 @@ public class StarClient implements ClientModInitializer {
 		StarRenderer.init();
 		Hud.init();
 		Waypoints.init();
+		SignReader.init();
 		Diagnostics.init();
 		SortButton.init();
 	}
@@ -91,6 +98,8 @@ public class StarClient implements ClientModInitializer {
 			Gear.reset();
 			Zoom.off(mc);
 			Waypoints.reset();
+			PortalFinder.clear();
+			SignReader.clear();
 			return;
 		}
 
@@ -109,6 +118,8 @@ public class StarClient implements ClientModInitializer {
 		if (antiBaitOn) AntiBait.tick(mc);
 		if (baseFinderOn) BaseFinder.tick(mc);
 		if (chestEspOn) ChestEsp.tick(mc);
+		if (portalFinderOn) PortalFinder.tick(mc);
+		if (signReaderOn) SignReader.tick(mc);
 		Movement.tick(mc);
 		Utility.tick(mc);
 		Combat.tick(mc);
@@ -163,6 +174,12 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_ARMOR -> autoArmorOn;
 			case Module.AUTO_RESPAWN -> autoRespawnOn;
 			case Module.AUTO_REPLENISH -> autoReplenishOn;
+			case Module.STEP -> stepOn;
+			case Module.SAFE_WALK -> safeWalkOn;
+			case Module.NO_SLOW -> noSlowOn;
+			case Module.VELOCITY -> velocityOn;
+			case Module.PORTAL_FINDER -> portalFinderOn;
+			case Module.SIGN_READER -> signReaderOn;
 			default -> false;
 		};
 	}
@@ -244,6 +261,21 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_REPLENISH -> {
 				autoReplenishOn = !autoReplenishOn;
 				Gear.replenishReset();
+			}
+			case Module.STEP -> {
+				stepOn = !stepOn;
+				if (!stepOn) Movement.stepOff(mc);
+			}
+			case Module.SAFE_WALK -> safeWalkOn = !safeWalkOn;
+			case Module.NO_SLOW -> noSlowOn = !noSlowOn;
+			case Module.VELOCITY -> velocityOn = !velocityOn;
+			case Module.PORTAL_FINDER -> {
+				portalFinderOn = !portalFinderOn;
+				if (!portalFinderOn) PortalFinder.clear();
+			}
+			case Module.SIGN_READER -> {
+				signReaderOn = !signReaderOn;
+				if (!signReaderOn) SignReader.clear();
 			}
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {

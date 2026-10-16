@@ -5,6 +5,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -22,6 +23,8 @@ public final class Movement {
 	private static boolean nightVisionApplied;
 	private static double origEntityRange = -1;
 	private static double origBlockRange = -1;
+	private static double origStep = -1;
+	private static int lastHurt;
 
 	private Movement() { }
 
@@ -46,6 +49,27 @@ public final class Movement {
 				double reach = Settings.get("reach.distance");
 				entity.setBaseValue(reach);
 				block.setBaseValue(reach);
+			}
+		}
+
+		if (StarClient.velocityOn) {
+			int hurt = mc.player.hurtTime;
+			if (hurt > lastHurt) {
+				Vec3 v = mc.player.getDeltaMovement();
+				double h = Settings.get("velocity.horizontal") / 100.0;
+				double up = Settings.get("velocity.vertical") / 100.0;
+				mc.player.setDeltaMovement(v.x * h, v.y > 0 ? v.y * up : v.y, v.z * h);
+			}
+			lastHurt = hurt;
+		} else {
+			lastHurt = mc.player.hurtTime;
+		}
+
+		if (StarClient.stepOn) {
+			AttributeInstance step = mc.player.getAttribute(Attributes.STEP_HEIGHT);
+			if (step != null) {
+				if (origStep < 0) origStep = step.getBaseValue();
+				step.setBaseValue(Math.max(origStep, ProtocolSanitizer.clampStep(Settings.get("step.height"))));
 			}
 		}
 
@@ -124,6 +148,53 @@ public final class Movement {
 			float step = ProtocolSanitizer.limitTurn(Math.max(-maxStep, Math.min(maxStep, (target - pitch) * 0.5f)));
 			mc.player.setXRot(pitch + step);
 		}
+
+		if (StarClient.noSlowOn && controllable && grounded && mc.player.isUsingItem()) {
+			// Item use scales movement input to 20%; add back the missing 80% of this tick's acceleration.
+			Vec3 a = inputAccel(mc);
+			Vec3 v = mc.player.getDeltaMovement();
+			ProtocolSanitizer.setVelocity(mc.player, v.x + a.x * 0.8, v.y, v.z + a.z * 0.8);
+		}
+
+		if (StarClient.safeWalkOn && controllable && grounded && !mc.player.isShiftKeyDown() && !mc.options.keyJump.isDown()) safeWalk(mc);
+	}
+
+	/** Horizontal acceleration the held movement keys add next tick on normal ground (0.2160 / 0.546^3 times the movement speed). */
+	private static Vec3 inputAccel(Minecraft mc) {
+		double fwd = (mc.options.keyUp.isDown() ? 1 : 0) - (mc.options.keyDown.isDown() ? 1 : 0);
+		double side = (mc.options.keyLeft.isDown() ? 1 : 0) - (mc.options.keyRight.isDown() ? 1 : 0);
+		if (fwd == 0 && side == 0) return Vec3.ZERO;
+		double len = Math.sqrt(fwd * fwd + side * side);
+		double accel = mc.player.getSpeed() * 1.327;
+		double yaw = Math.toRadians(mc.player.getYRot());
+		double sin = Math.sin(yaw);
+		double cos = Math.cos(yaw);
+		return new Vec3((-sin * fwd + cos * side) / len * accel, 0, (cos * fwd + sin * side) / len * accel);
+	}
+
+	/** Cancels next tick's horizontal movement on an axis when it would leave nothing within 0.6 blocks under the player. */
+	private static void safeWalk(Minecraft mc) {
+		var p = mc.player;
+		Vec3 v = p.getDeltaMovement();
+		Vec3 a = inputAccel(mc);
+		double mx = v.x + a.x;
+		double mz = v.z + a.z;
+		AABB bb = p.getBoundingBox();
+		boolean cancelX = mx != 0 && mc.level.noCollision(p, bb.move(mx, -0.6, 0));
+		boolean cancelZ = mz != 0 && mc.level.noCollision(p, bb.move(0, -0.6, mz));
+		if (!cancelX && !cancelZ && mx != 0 && mz != 0 && mc.level.noCollision(p, bb.move(mx, -0.6, mz))) {
+			cancelX = true;
+			cancelZ = true;
+		}
+		if (cancelX || cancelZ) p.setDeltaMovement(cancelX ? -a.x : v.x, v.y, cancelZ ? -a.z : v.z);
+	}
+
+	public static void stepOff(Minecraft mc) {
+		if (mc.player != null && origStep >= 0) {
+			AttributeInstance step = mc.player.getAttribute(Attributes.STEP_HEIGHT);
+			if (step != null) step.setBaseValue(origStep);
+		}
+		origStep = -1;
 	}
 
 	public static void elytraReset() {
@@ -187,6 +258,8 @@ public final class Movement {
 	public static void reset() {
 		origEntityRange = -1;
 		origBlockRange = -1;
+		origStep = -1;
+		lastHurt = 0;
 		nightVisionApplied = false;
 		wasOnGround = false;
 	}

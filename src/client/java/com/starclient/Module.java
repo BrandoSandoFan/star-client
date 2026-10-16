@@ -57,6 +57,12 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AUTO_ARMOR = 32;
 	public static final int AUTO_RESPAWN = 33;
 	public static final int AUTO_REPLENISH = 34;
+	public static final int STEP = 35;
+	public static final int SAFE_WALK = 36;
+	public static final int NO_SLOW = 37;
+	public static final int VELOCITY = 38;
+	public static final int PORTAL_FINDER = 39;
+	public static final int SIGN_READER = 40;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -93,5 +99,11 @@ public record Module(String id, String name, String description, Category catego
 				new Module("autototem", "Auto Totem", "Moves a totem of undying into your offhand when it is empty or your health is low.", Category.COMBAT, true),
 				new Module("autoarmor", "Auto Armor", "Equips the best armor piece in your inventory for each slot.", Category.COMBAT, true),
 				new Module("autorespawn", "Auto Respawn", "Clicks Respawn on the death screen for you.", Category.WORLD, true),
-				new Module("autoreplenish", "Auto Replenish", "Refills a hotbar slot from your inventory when its stack runs low or is used up.", Category.WORLD, true));
+				new Module("autoreplenish", "Auto Replenish", "Refills a hotbar slot from your inventory when its stack runs low or is used up.", Category.WORLD, true),
+				new Module("step", "Step", "Walk up ledges taller than a slab. Servers with movement checks may rubber-band you.", Category.MOVEMENT, true),
+				new Module("safewalk", "Safe Walk", "Stops you walking off block edges without sneaking. Works best on normal ground; ice still slides.", Category.MOVEMENT, true),
+				new Module("noslow", "No Slow", "Cancels the slowdown while eating, drawing a bow or using a shield. Servers with movement checks may flag it.", Category.MOVEMENT, true),
+				new Module("velocity", "Velocity", "Reduces the knockback you take when hit.", Category.MOVEMENT, true),
+				new Module("portalfinder", "Portal Finder", "Marks nether portals, end portals and end portal frames in loaded chunks.", Category.BASE_FINDING, true),
+				new Module("signreader", "Sign Reader", "Lists the text of nearby signs on screen and highlights them.", Category.BASE_FINDING, true));
 }

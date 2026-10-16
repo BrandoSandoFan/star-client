@@ -133,6 +133,21 @@ public final class StarRenderer {
 			}
 		}
 
+		if (StarClient.portalFinderOn) {
+			float alpha = Settings.getF("portalfinder.alpha");
+			for (PortalFinder.Hit hit : PortalFinder.hits()) {
+				BlockPos p = hit.pos();
+				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), alpha));
+			}
+		}
+
+		if (StarClient.signReaderOn && Settings.on("signreader.highlight")) {
+			for (SignReader.Entry sign : SignReader.entries()) {
+				BlockPos p = sign.pos();
+				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, 1f, 0.9f, 0.3f, 0.35f));
+			}
+		}
+
 		if (StarClient.baseFinderOn) {
 			for (BaseFinder.Hit hit : BaseFinder.hits()) {
 				double x = hit.pos().getX() + 0.5;

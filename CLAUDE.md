@@ -24,6 +24,8 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `Gear` - hotbar/inventory helpers: Auto Tool, Auto Totem, Auto Armor, Auto Replenish, Auto Respawn. Inventory modules share one cooldown and run only when the player menu is open (`containerMenu == inventoryMenu`), the cursor is empty and the Sorter is idle; they click with `PICKUP` triples on `inventoryMenu` slots (armor 5-8, main 9-35, hotbar 36-44, offhand 45)
   - `Zoom` - lowers the `fov` option while on (min 30, the vanilla slider floor), restores it on off, disconnect and client stop
   - `Waypoints`, `WaypointsScreen` - saved positions in `Config.waypoints` (per dimension key string); beams in `StarRenderer`, nearest 5 with distance and direction arrow in a top-centre HUD element; death point recorded on the dying edge; screen opened from the Waypoints settings page
+  - `PortalFinder` - section scan (like `BaseFinder`) for lit `NETHER_PORTAL`, `END_PORTAL_FRAME`, `END_PORTAL` and `END_GATEWAY`; boxes in `StarRenderer`. Unlit nether frames are plain obsidian and are not found
+  - `SignReader` - nearest signs with text (front and back, `SignBlockEntity`) within `signreader.range`, listed top-left via a HUD element with `Waypoints.arrow`; optional highlight boxes
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
@@ -78,12 +80,18 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Auto Armor | unbound | Combat tab; per slot, equips the inventory piece with the highest armor + 0.5 x toughness (strictly better than worn; needs armor > 0 so elytra and pumpkins are never equipped). `autoarmor.elytra` keeps a worn elytra |
 | Auto Respawn | unbound | World tab; on `DeathScreen` calls `player.respawn()` after `autorespawn.delay` ticks |
 | Auto Replenish | unbound | World tab; when a hotbar slot empties (and the screen is closed, so manual moves and drags do not count) pulls the same item from inventory slots 9-35; also tops up a stackable stack at or below `autoreplenish.threshold`. Tracking follows hotbar contents while a screen is open |
+| Step | unbound | Movement tab; sets the `STEP_HEIGHT` attribute to `step.height` (never below the original), clamped to 1.0 by `ProtocolSanitizer.clampStep`; restored on off |
+| Safe Walk | unbound | Movement tab; on the ground, not sneaking or jumping, predicts next tick's movement (velocity plus held-key acceleration, `Movement.inputAccel`) and cancels an axis when the box moved there has no collision within 0.6 blocks below. Assumes normal friction, so ice slides |
+| No Slow | unbound | Movement tab; while using an item on the ground adds back the 80% of key acceleration that item use removes, through `ProtocolSanitizer.setVelocity` |
+| Velocity | unbound | Movement tab; when `hurtTime` rises, scales horizontal (`velocity.horizontal`, default 0%) and upward (`velocity.vertical`, default 100%) velocity. Runs at end of tick, so the first tick of knockback still applies |
+| Portal Finder | unbound | Bases tab; see `PortalFinder` |
+| Sign Reader | unbound | Bases tab; see `SignReader` |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Every module has a gear button opening its settings (Fullbright: `fullbright.maxlight`; Auto Walk: `autowalk.sneak`, `autowalk.minhealth`; HUD: `hud.bar` pixel backing with a category colour edge). Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics, 27 Auto Tool, 28 Tracers, 29 Zoom, 30 Waypoints, 31 Auto Totem, 32 Auto Armor, 33 Auto Respawn, 34 Auto Replenish.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics, 27 Auto Tool, 28 Tracers, 29 Zoom, 30 Waypoints, 31 Auto Totem, 32 Auto Armor, 33 Auto Respawn, 34 Auto Replenish, 35 Step, 36 Safe Walk, 37 No Slow, 38 Velocity, 39 Portal Finder, 40 Sign Reader.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
