@@ -63,7 +63,11 @@ public final class BaseFinder {
 	}
 
 	public static List<Hit> hits() {
-		return new ArrayList<>(HITS.values());
+		List<Hit> out = new ArrayList<>();
+		for (Map.Entry<Long, Hit> e : HITS.entrySet()) {
+			if (!AntiBait.hidesChunk(e.getKey())) out.add(e.getValue());
+		}
+		return out;
 	}
 
 	public static void tick(Minecraft mc) {
@@ -134,7 +138,7 @@ public final class BaseFinder {
 		return new Hit(new BlockPos((int) (sx / count), (int) (sy / count), (int) (sz / count)), count);
 	}
 
-	private static boolean isMarker(BlockState state) {
+	static boolean isMarker(BlockState state) {
 		return MARKERS.contains(state.getBlock());
 	}
 }

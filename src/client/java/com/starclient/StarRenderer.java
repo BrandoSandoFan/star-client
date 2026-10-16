@@ -87,6 +87,7 @@ public final class StarRenderer {
 			for (Entity e : mc.level.entitiesForRendering()) {
 				if (e == Freecam.camera()) continue;
 				if (e == mc.player && !Freecam.isOn()) continue;
+				if (AntiBait.hidesEntity(e)) continue;
 
 				int cat = categoryOf(e);
 				if (cat < 0 || !cfg.espEnabled[cat]) continue;
@@ -135,7 +136,7 @@ public final class StarRenderer {
 	}
 
 	/** Index into {@link Config#ESP_NAMES}, or -1 for entities ESP ignores. */
-	private static int categoryOf(Entity e) {
+	static int categoryOf(Entity e) {
 		if (e instanceof Player) return 0;
 		if (e instanceof Enemy) return 1;
 		if (e instanceof ItemEntity) return 3;

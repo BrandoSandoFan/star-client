@@ -47,7 +47,8 @@ public final class ChestEsp {
 	private ChestEsp() { }
 
 	public static List<Hit> hits() {
-		return hits;
+		if (!StarClient.antiBaitOn) return hits;
+		return hits.stream().filter(h -> !AntiBait.hidesBlock(h.pos())).toList();
 	}
 
 	public static void clear() {
@@ -132,7 +133,7 @@ public final class ChestEsp {
 		return new float[] {0.75f, 0.55f, 1.0f};
 	}
 
-	private static Hit classify(BlockEntity be) {
+	static Hit classify(BlockEntity be) {
 		BlockPos p = be.getBlockPos();
 		if (be instanceof TrappedChestBlockEntity) return new Hit(p, 1.0f, 0.2f, 0.2f);
 		if (be instanceof ChestBlockEntity) return new Hit(p, 1.0f, 0.65f, 0.1f);

@@ -39,6 +39,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean antiAfkOn;
 	public static boolean sorterOn;
 	public static boolean hudOn;
+	public static boolean antiBaitOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -70,6 +71,7 @@ public class StarClient implements ClientModInitializer {
 			ChestEsp.clear();
 			Movement.reset();
 			Utility.reset();
+			AntiBait.clear();
 			return;
 		}
 
@@ -85,6 +87,7 @@ public class StarClient implements ClientModInitializer {
 		}
 
 		Freecam.tick(mc);
+		if (antiBaitOn) AntiBait.tick(mc);
 		if (baseFinderOn) BaseFinder.tick(mc);
 		if (chestEspOn) ChestEsp.tick(mc);
 		Movement.tick(mc);
@@ -127,6 +130,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.ANTI_AFK -> antiAfkOn;
 			case Module.SORTER -> sorterOn;
 			case Module.HUD -> hudOn;
+			case Module.ANTI_BAIT -> antiBaitOn;
 			default -> false;
 		};
 	}
@@ -184,6 +188,10 @@ public class StarClient implements ClientModInitializer {
 				else Utility.sorterStop();
 			}
 			case Module.HUD -> hudOn = !hudOn;
+			case Module.ANTI_BAIT -> {
+				antiBaitOn = !antiBaitOn;
+				if (!antiBaitOn) AntiBait.clear();
+			}
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
