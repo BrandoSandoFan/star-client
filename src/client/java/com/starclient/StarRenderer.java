@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -89,7 +90,14 @@ public final class StarRenderer {
 				if (e == mc.player && !Freecam.isOn()) continue;
 
 				int cat = categoryOf(e);
-				if (cat < 0 || !cfg.espEnabled[cat]) continue;
+				if (cat < 0) continue;
+				if ((cat == 1 || cat == 2) && cfg.espMobMode != 0) {
+					boolean listed = cfg.hasMob(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString());
+					// "Only selected" shows listed mobs whatever their category toggle says.
+					if (cfg.espMobMode == 1 ? !listed : listed || !cfg.espEnabled[cat]) continue;
+				} else if (!cfg.espEnabled[cat]) {
+					continue;
+				}
 				if (cfg.espMaxDistance > 0 && e.distanceToSqr(origin) > maxDist) continue;
 
 				int rgb = cfg.espColor[cat];
@@ -112,7 +120,7 @@ public final class StarRenderer {
 		if (StarClient.chestEspOn) {
 			for (ChestEsp.Hit hit : ChestEsp.hits()) {
 				BlockPos p = hit.pos();
-				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), 0.4f));
+				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), Settings.getF("chestesp.alpha")));
 			}
 		}
 
@@ -120,11 +128,13 @@ public final class StarRenderer {
 			Trajectories.Path path = Trajectories.compute(mc);
 			if (path != null) {
 				final double s = 0.04;
-				for (Vec3 p : path.points()) {
-					out.add(new Box(p.x - s, p.y - s, p.z - s, p.x + s, p.y + s, p.z + s, 1f, 1f, 1f, 0.8f));
+				if (Settings.on("trajectories.path")) {
+					for (Vec3 p : path.points()) {
+						out.add(new Box(p.x - s, p.y - s, p.z - s, p.x + s, p.y + s, p.z + s, 1f, 1f, 1f, 0.8f));
+					}
 				}
 				Vec3 l = path.landing();
-				if (l != null) {
+				if (l != null && Settings.on("trajectories.landing")) {
 					final double h = 0.25;
 					out.add(new Box(l.x - h, l.y - h, l.z - h, l.x + h, l.y + h, l.z + h, 1f, 0.2f, 0.2f, 0.7f));
 				}

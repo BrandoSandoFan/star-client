@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.entity.TrialSpawnerBlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -26,12 +27,9 @@ import net.minecraft.world.phys.Vec3;
  * time are only a baseline, so walking into a real base still shows it. Players
  * place one block at a time, so a burst of several storage blocks in the same area
  * is treated as bait and kept out of Chest ESP and Base Finder. Spawners cannot be
- * placed in survival, so a new one is bait on its own.
+ * placed in survival, so a new one (spawner or trial spawner) is bait on its own.
  */
 public final class AntiBait {
-	/** Storage/marker block entities added in one tick within {@link #BLOCK_AREA} of each other. */
-	private static final int BLOCK_MIN = 3;
-	private static final double BLOCK_AREA = 16;
 	/** Keep an unloaded chunk's contents this long, so an unload + resend still diffs against them. */
 	private static final int FORGET_TICKS = 100;
 
@@ -96,7 +94,7 @@ public final class AntiBait {
 					t.bait.retainAll(now.keySet());
 					for (Map.Entry<BlockPos, BlockEntity> e : now.entrySet()) {
 						if (!t.known.add(e.getKey())) continue;
-						if (e.getValue() instanceof SpawnerBlockEntity) spawners.add(e.getKey());
+						if (isSpawner(e.getValue())) spawners.add(e.getKey());
 						else if (counts(e.getValue())) added.add(e.getKey());
 					}
 				}
@@ -106,10 +104,11 @@ public final class AntiBait {
 		CHUNKS.values().removeIf(t -> ticks - t.lastSeen > FORGET_TICKS);
 
 		List<BlockPos> bait = new ArrayList<>(spawners);
-		if (added.size() >= BLOCK_MIN) {
+		int min = Settings.getI("antibait.min");
+		if (added.size() >= min) {
 			List<Vec3> points = new ArrayList<>();
 			for (BlockPos p : added) points.add(Vec3.atCenterOf(p));
-			for (int i : crowded(points, BLOCK_AREA, BLOCK_MIN)) bait.add(added.get(i));
+			for (int i : crowded(points, Settings.get("antibait.area"), min)) bait.add(added.get(i));
 		}
 		if (bait.isEmpty()) return;
 		for (BlockPos p : bait) CHUNKS.get(ChunkPos.pack(p.getX() >> 4, p.getZ() >> 4)).bait.add(p);
@@ -118,9 +117,14 @@ public final class AntiBait {
 				+ " near " + at.getX() + " " + at.getY() + " " + at.getZ()).withStyle(ChatFormatting.GOLD), false);
 	}
 
-	/** Storage the Chest ESP draws, or a block Base Finder counts. */
+	/** Survival players cannot place spawners, so a new one is bait on its own. */
+	private static boolean isSpawner(BlockEntity be) {
+		return Settings.on("antibait.spawners") && (be instanceof SpawnerBlockEntity || be instanceof TrialSpawnerBlockEntity);
+	}
+
+	/** A block the Chest ESP draws, or one Base Finder counts. */
 	private static boolean counts(BlockEntity be) {
-		return ChestEsp.classify(be) != null || BaseFinder.isMarker(be.getBlockState());
+		return ChestEsp.isTarget(be.getBlockState().getBlock()) || BaseFinder.isMarker(be.getBlockState());
 	}
 
 	/** Indices of points with at least {@code min} points (itself included) within {@code area} blocks. */

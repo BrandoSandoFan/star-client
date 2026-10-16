@@ -10,8 +10,6 @@ import net.minecraft.world.entity.player.Player;
  * movement packets, so the real player stays put (same mechanism as spectating).
  */
 public final class Freecam {
-	private static final double SPEED = 10.0; // blocks per second
-	private static final double SPRINT_MULT = 2.5;
 	private static final double ACCEL = 14.0; // velocity easing rate, 1/s
 
 	private static ArmorStand cam;
@@ -93,7 +91,7 @@ public final class Freecam {
 		double dz = Math.cos(rad) * fwd + Math.sin(rad) * side;
 
 		double len = Math.sqrt(dx * dx + vert * vert + dz * dz);
-		double speed = SPEED * (mc.options.keySprint.isDown() ? SPRINT_MULT : 1.0);
+		double speed = Settings.get("freecam.speed") * (mc.options.keySprint.isDown() ? Settings.get("freecam.sprint") : 1.0);
 		double tx = 0, ty = 0, tz = 0;
 		if (len > 0) {
 			tx = dx / len * speed;
