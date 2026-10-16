@@ -1,7 +1,6 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -50,8 +49,8 @@ public final class Combat {
 	private static void attack(Minecraft mc, LivingEntity target) {
 		var p = mc.player;
 		if (StarClient.critsOn && p.onGround() && !p.isInWater() && !p.onClimbable() && !p.isPassenger()) {
-			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY() + Settings.get("crits.hop"), p.getZ(), false, p.horizontalCollision));
-			p.connection.send(new ServerboundMovePlayerPacket.Pos(p.getX(), p.getY(), p.getZ(), false, p.horizontalCollision));
+			ProtocolSanitizer.sendHop(p.connection, p, Settings.get("crits.hop"));
+			ProtocolSanitizer.sendHop(p.connection, p, 0.0);
 		}
 		mc.gameMode.attack(p, target);
 		p.swing(InteractionHand.MAIN_HAND);
@@ -125,8 +124,8 @@ public final class Combat {
 		float pitch = (float) -(Mth.atan2(to.y, horiz) * (180.0 / Math.PI));
 		float ease = Settings.getF("aimbot.ease");
 		float maxTurn = Settings.getF("aimbot.turn");
-		float dy = Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * ease, -maxTurn, maxTurn);
-		float dp = Mth.clamp((pitch - mc.player.getXRot()) * ease, -maxTurn, maxTurn);
+		float dy = ProtocolSanitizer.limitTurn(Mth.clamp(Mth.wrapDegrees(yaw - mc.player.getYRot()) * ease, -maxTurn, maxTurn));
+		float dp = ProtocolSanitizer.limitTurn(Mth.clamp((pitch - mc.player.getXRot()) * ease, -maxTurn, maxTurn));
 		mc.player.setYRot(mc.player.getYRot() + dy);
 		mc.player.setXRot(Mth.clamp(mc.player.getXRot() + dp, -90.0f, 90.0f));
 	}

@@ -45,6 +45,15 @@ public final class Settings {
 		for (Def d : defs) BY_KEY.put(d.key(), d);
 	}
 
+	/** Global settings with no module page. */
+	static {
+		for (Def d : new Def[] {
+				toggle("sanitize.enabled", "Clamp to vanilla limits", true),
+				slider("sanitize.maxturn", "Max turn per tick", 1, 90, 1, 30, "deg")}) {
+			BY_KEY.put(d.key(), d);
+		}
+	}
+
 	static {
 		add(Module.BASE_FINDER, slider("basefinder.min", "Min blocks per chunk", 1, 40, 1, 10, ""));
 		add(Module.FREECAM,

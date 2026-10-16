@@ -18,6 +18,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `SortButton` - "Sort" button on container screens (`ScreenEvents.AFTER_INIT`), calls `Utility.sortOpenContainer`
   - `ProfilesScreen` - 5 profile slots (`Config.Profile`: module on/off states plus ESP, Reach and Hitbox settings); Save/Load/Clear, opened from the "Profiles..." button in `ModulesScreen`; Load toggles modules to match the snapshot
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
+  - `ProtocolSanitizer` - choke point for velocity writes (`setVelocity`, `clampJump`), view turns (`limitTurn`) and fake movement packets (`sendHop`, `sendGround`); clamps to vanilla limits unless global setting `sanitize.enabled` is off (`sanitize.maxturn` caps degrees per tick). New modules must write velocity, rotation and movement packets through it
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
