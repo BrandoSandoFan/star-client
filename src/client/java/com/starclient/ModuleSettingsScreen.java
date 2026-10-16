@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,7 +14,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.Block;
 
 /** Generic settings page for one module, built from {@link Settings#defs}. Chest ESP adds block presets and a block picker. */
-public final class ModuleSettingsScreen extends Screen {
+public final class ModuleSettingsScreen extends PixelScreen {
 	private final Screen parent;
 	private final int module;
 
@@ -37,7 +36,7 @@ public final class ModuleSettingsScreen extends Screen {
 
 		for (Settings.Def d : Settings.defs(module)) {
 			if (d.toggle()) {
-				addRenderableWidget(Button.builder(toggleLabel(d), b -> {
+				addRenderableWidget(PixelButton.builder(toggleLabel(d), b -> {
 					Settings.set(d.key(), Settings.on(d.key()) ? 0 : 1);
 					b.setMessage(toggleLabel(d));
 				}).bounds(left, y, 300, 20).build());
@@ -53,12 +52,13 @@ public final class ModuleSettingsScreen extends Screen {
 		y = addPresets(left, y);
 
 		y += 6;
-		addRenderableWidget(Button.builder(Component.literal("Reset to defaults"), b -> {
+		addRenderableWidget(PixelButton.builder(Component.literal("Reset to defaults"), b -> {
 			Settings.reset(module);
 			rebuildWidgets();
 		}).bounds(cx - 100, y, 200, 20).build());
 		y += 24;
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
+		addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold().bounds(cx - 100, y, 200, 20).build());
+		panel(left - 10, 10, 320, y + 28 - 10);
 	}
 
 	/** One button per {@link Settings#PRESETS} entry for this module, three per row. */
@@ -72,7 +72,7 @@ public final class ModuleSettingsScreen extends Screen {
 		int col = 0;
 		for (Map.Entry<String, Map<String, Double>> preset : presets.entrySet()) {
 			Map<String, Double> values = preset.getValue();
-			addRenderableWidget(Button.builder(Component.literal(preset.getKey()), b -> {
+			addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
 				Settings.applyPreset(module, values);
 				rebuildWidgets();
 			}).bounds(left + col * 152, y, 148, 20).build());
@@ -99,7 +99,7 @@ public final class ModuleSettingsScreen extends Screen {
 		int col = 0;
 		for (Map.Entry<String, List<String>> preset : Presets.BLOCKS.entrySet()) {
 			List<String> ids = preset.getValue();
-			addRenderableWidget(Button.builder(Component.literal(preset.getKey()), b -> {
+			addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
 				cfg.setChestBlocks(ids);
 				rebuildWidgets();
 			}).bounds(left + col * 102, y, 96, 20).build());
@@ -110,7 +110,7 @@ public final class ModuleSettingsScreen extends Screen {
 		}
 		if (col != 0) y += 22;
 
-		addRenderableWidget(Button.builder(Component.literal("Choose blocks... (" + cfg.chestBlocks.size() + " selected)"), b -> {
+		addRenderableWidget(PixelButton.builder(Component.literal("Choose blocks... (" + cfg.chestBlocks.size() + " selected)"), b -> {
 			List<PickerScreen.Item> items = new ArrayList<>();
 			for (Block block : BuiltInRegistries.BLOCK) {
 				if (block.defaultBlockState().isAir()) continue;
@@ -124,7 +124,7 @@ public final class ModuleSettingsScreen extends Screen {
 	}
 
 	/** Mob filter page for ESP: mode switch, presets and a mob picker. */
-	public static final class MobFilter extends Screen {
+	public static final class MobFilter extends PixelScreen {
 		private final Screen parent;
 
 		public MobFilter(Screen parent) {
@@ -142,7 +142,7 @@ public final class ModuleSettingsScreen extends Screen {
 			Component heading = Component.literal("◆ ESP Mob Filter").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
 			addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, 16, font.width(heading), 9, heading, font));
 
-			addRenderableWidget(Button.builder(Component.literal("Mode: " + Config.ESP_MOB_MODES[cfg.espMobMode]), b -> {
+			addRenderableWidget(PixelButton.builder(Component.literal("Mode: " + Config.ESP_MOB_MODES[cfg.espMobMode]), b -> {
 				cfg.espMobMode = (cfg.espMobMode + 1) % Config.ESP_MOB_MODES.length;
 				b.setMessage(Component.literal("Mode: " + Config.ESP_MOB_MODES[cfg.espMobMode]));
 			}).bounds(left, y, 300, 20).build());
@@ -155,7 +155,7 @@ public final class ModuleSettingsScreen extends Screen {
 			int col = 0;
 			for (Map.Entry<String, List<String>> preset : Presets.MOBS.entrySet()) {
 				List<String> ids = preset.getValue();
-				addRenderableWidget(Button.builder(Component.literal(preset.getKey()), b -> {
+				addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
 					cfg.setMobs(ids);
 					if (!ids.isEmpty()) cfg.espMobMode = 1;
 					rebuildWidgets();
@@ -168,7 +168,7 @@ public final class ModuleSettingsScreen extends Screen {
 			if (col != 0) y += 22;
 
 			y += 4;
-			addRenderableWidget(Button.builder(Component.literal("Choose mobs... (" + cfg.espMobs.size() + " selected)"), b -> {
+			addRenderableWidget(PixelButton.builder(Component.literal("Choose mobs... (" + cfg.espMobs.size() + " selected)"), b -> {
 				List<PickerScreen.Item> items = new ArrayList<>();
 				for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
 					if (type.getCategory() == MobCategory.MISC) continue;
@@ -179,7 +179,8 @@ public final class ModuleSettingsScreen extends Screen {
 			}).bounds(left, y, 300, 20).build());
 			y += 30;
 
-			addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
+			addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold().bounds(cx - 100, y, 200, 20).build());
+			panel(left - 10, 10, 320, y + 28 - 10);
 		}
 
 		@Override

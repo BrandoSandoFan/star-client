@@ -105,7 +105,8 @@ public final class Settings {
 		add(Module.HUD,
 				toggle("hud.right", "Align right", true),
 				toggle("hud.colour", "Category colours", true),
-				toggle("hud.shadow", "Text shadow", true));
+				toggle("hud.shadow", "Text shadow", true),
+				toggle("hud.bar", "Pixel backing", true));
 		add(Module.PANIC, toggle("panic.close", "Close open screen", true));
 		add(Module.ANTI_BAIT,
 				slider("antibait.min", "Min new blocks in one tick", 2, 10, 1, 3, ""),

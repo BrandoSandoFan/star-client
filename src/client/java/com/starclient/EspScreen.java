@@ -1,14 +1,13 @@
 package com.starclient;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 
 /** ESP customisation: per-category toggle and RGB colour, opacity and range. */
-public final class EspScreen extends Screen {
+public final class EspScreen extends PixelScreen {
 	private final Screen parent;
 
 	public EspScreen(Screen parent) {
@@ -28,7 +27,7 @@ public final class EspScreen extends Screen {
 
 		for (int i = 0; i < Config.ESP_NAMES.length; i++) {
 			final int idx = i;
-			addRenderableWidget(Button.builder(categoryLabel(idx), b -> {
+			addRenderableWidget(PixelButton.builder(categoryLabel(idx), b -> {
 				cfg.espEnabled[idx] = !cfg.espEnabled[idx];
 				b.setMessage(categoryLabel(idx));
 			}).bounds(left, y, 90, 20).build());
@@ -49,17 +48,18 @@ public final class EspScreen extends Screen {
 				v -> cfg.espMaxDistance = (int) Math.round(v * 256)));
 		y += 30;
 
-		addRenderableWidget(Button.builder(Component.literal("Mob filter... (" + Config.ESP_MOB_MODES[cfg.espMobMode] + ")"),
+		addRenderableWidget(PixelButton.builder(Component.literal("Mob filter... (" + Config.ESP_MOB_MODES[cfg.espMobMode] + ")"),
 				b -> minecraft.setScreen(new ModuleSettingsScreen.MobFilter(this))).bounds(cx - 100, y, 200, 20).build());
 		y += 24;
 
-		addRenderableWidget(Button.builder(Component.literal("Reset to defaults"), b -> {
+		addRenderableWidget(PixelButton.builder(Component.literal("Reset to defaults"), b -> {
 			Config.reset();
 			rebuildWidgets();
 		}).bounds(cx - 100, y, 200, 20).build());
 		y += 24;
 
-		addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 100, y, 200, 20).build());
+		addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold().bounds(cx - 100, y, 200, 20).build());
+		panel(left - 10, 10, 320, y + 28 - 10);
 	}
 
 	private Component categoryLabel(int idx) {
