@@ -130,6 +130,20 @@ public final class Settings {
 				slider("antibait.min", "Min new blocks in one tick", 2, 10, 1, 3, ""),
 				slider("antibait.area", "Area", 4, 32, 1, 16, "blocks"),
 				toggle("antibait.spawners", "Hide any new spawner", true));
+		add(Module.AUTO_TOOL,
+				toggle("autotool.restore", "Switch back when done", true),
+				slider("autotool.protect", "Skip tools at or below durability", 0, 50, 1, 2, ""));
+		add(Module.TRACERS,
+				slider("tracers.alpha", "Opacity", 0.1, 1, 0.05, 0.8, ""),
+				slider("tracers.width", "Thickness", 0.005, 0.05, 0.005, 0.01, ""),
+				slider("tracers.range", "Max distance (0 = ESP setting)", 0, 256, 8, 0, "blocks"));
+		add(Module.ZOOM, slider("zoom.fov", "Zoom field of view", 30, 70, 5, 30, "deg"));
+		add(Module.WAYPOINTS,
+				toggle("waypoints.death", "Mark death point", true),
+				toggle("waypoints.hud", "Show list on screen", true),
+				slider("waypoints.range", "Max distance (0 = any)", 0, 2000, 50, 0, "blocks"),
+				slider("waypoints.beam", "Beam height", 4, 128, 4, 32, "blocks"),
+				slider("waypoints.alpha", "Opacity", 0.1, 1, 0.05, 0.5, ""));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */

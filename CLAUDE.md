@@ -21,6 +21,9 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `ProtocolSanitizer` - choke point for velocity writes (`setVelocity`, `clampJump`), view turns (`limitTurn`) and fake movement packets (`sendHop`, `sendGround`); clamps to vanilla limits unless global setting `sanitize.enabled` is off (`sanitize.maxturn` caps degrees per tick). New modules must write velocity, rotation and movement packets through it
   - `AimSpring` - critically damped spring (closed-form, one tick per step, no randomness) used by Aim Bot when `aimbot.spring` is on; `aimbot.omega` sets stiffness, turns still pass `aimbot.turn` and `sanitize.maxturn`
   - `Diagnostics` - module 26: overlay (`diag.overlay`) and JSON-lines log `logs/starclient-diagnostics.jsonl` (`diag.log`, `diag.logall`) of requested h-velocity/jump/turn/packet hop (reported by `ProtocolSanitizer` before clamping), observed speed/rise/position snap, and attack gap against each limit
+  - `Gear` - hotbar/inventory helpers: Auto Tool
+  - `Zoom` - lowers the `fov` option while on (min 30, the vanilla slider floor), restores it on off, disconnect and client stop
+  - `Waypoints`, `WaypointsScreen` - saved positions in `Config.waypoints` (per dimension key string); beams in `StarRenderer`, nearest 5 with distance and direction arrow in a top-centre HUD element; death point recorded on the dying edge; screen opened from the Waypoints settings page
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
@@ -67,12 +70,16 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
 | Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). `antibait.min` (default 3) new Chest ESP/Base Finder targets within `antibait.area` (default 16) blocks of each other in one tick, or any single new spawner/trial spawner (`antibait.spawners`), are hidden from Chest ESP, and their chunk from Base Finder. Entity ESP is not affected. Plain blocks (amethyst, ores, glass) are not tracked |
 | Diagnostics | unbound | Render tab; see `Diagnostics`. Red = value over its limit (requested values are clamped when `sanitize.enabled`), amber = 80%+. 'Position snap' (observed horizontal step over 3x the speed limit) is the hint for a server correction |
+| Auto Tool | unbound | World tab; while attack is held on a block, selects the hotbar slot with the highest `ItemStack.getDestroySpeed` (needs > 1.0, skips tools at or below `autotool.protect` durability, ties keep the current slot), restores the slot on release if you did not change it. Not in creative or while eating |
+| Tracers | unbound | Render tab; flat double-sided strips (`StarRenderer.Line`) from 0.6 blocks ahead of the camera to the centre of every entity ESP would show (`StarRenderer.espColour`, so category toggles, colours, distance and mob filter apply even with ESP off). Width grows with distance |
+| Zoom | unbound | Render tab; see `Zoom`. `zoom.fov` 30-70 |
+| Waypoints | unbound | Render tab; see `Waypoints`. Optional death marker (`waypoints.death`), range, beam height, opacity |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Every module has a gear button opening its settings (Fullbright: `fullbright.maxlight`; Auto Walk: `autowalk.sneak`, `autowalk.minhealth`; HUD: `hud.bar` pixel backing with a category colour edge). Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait, 26 Diagnostics, 27 Auto Tool, 28 Tracers, 29 Zoom, 30 Waypoints.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)

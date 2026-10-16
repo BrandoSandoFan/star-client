@@ -50,6 +50,9 @@ public final class StarRenderer {
 	/** Immutable render state produced in the extraction phase. */
 	private record Box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a) { }
 
+	/** A flat strip from A to B, widened by (px, py, pz) on each side; drawn double sided. */
+	private record Line(double ax, double ay, double az, double bx, double by, double bz, float px, float py, float pz, float r, float g, float b, float a) { }
+
 	private static final RenderPipeline FILLED_THROUGH_WALLS = RenderPipelines.register(
 			RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
 					.withLocation(Identifier.fromNamespaceAndPath(StarClient.ID, "pipeline/filled_through_walls"))
@@ -64,6 +67,7 @@ public final class StarRenderer {
 	private static final Map<EntityType<?>, String> TYPE_IDS = new HashMap<>();
 
 	private static volatile List<Box> boxes = List.of();
+	private static volatile List<Line> lines = List.of();
 	private static BufferBuilder buffer;
 	private static MappableRingBuffer vertexBuffer;
 
@@ -81,34 +85,51 @@ public final class StarRenderer {
 		Freecam.frame(mc);
 		if (mc.level == null || mc.player == null) {
 			boxes = List.of();
+			lines = List.of();
 			return;
 		}
 
 		List<Box> out = new ArrayList<>();
 
+		Config cfg = Config.get();
+		Vec3 origin = context.levelState().cameraRenderState.pos;
+
 		if (StarClient.espOn) {
-			Config cfg = Config.get();
-			double maxDist = cfg.espMaxDistance * (double) cfg.espMaxDistance;
-			Vec3 origin = context.levelState().cameraRenderState.pos;
 			for (Entity e : mc.level.entitiesForRendering()) {
-				if (e == Freecam.camera()) continue;
-				if (e == mc.player && !Freecam.isOn()) continue;
-
-				int cat = categoryOf(e);
-				if (cat < 0) continue;
-				if ((cat == 1 || cat == 2) && cfg.espMobMode != 0) {
-					boolean listed = cfg.hasMob(TYPE_IDS.computeIfAbsent(e.getType(), t -> BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()));
-					// "Only selected" shows listed mobs whatever their category toggle says.
-					if (cfg.espMobMode == 1 ? !listed : listed || !cfg.espEnabled[cat]) continue;
-				} else if (!cfg.espEnabled[cat]) {
-					continue;
-				}
-				if (cfg.espMaxDistance > 0 && e.distanceToSqr(origin) > maxDist) continue;
-
-				int rgb = cfg.espColor[cat];
+				int rgb = espColour(mc, cfg, e, origin);
+				if (rgb < 0) continue;
 				AABB bb = e.getBoundingBox();
 				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ,
 						((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, cfg.espAlpha));
+			}
+		}
+
+		List<Line> strips = new ArrayList<>();
+		if (StarClient.tracersOn) {
+			Entity viewer = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
+			Vec3 look = viewer.getViewVector(1.0f);
+			Vec3 from = origin.add(look.scale(0.6));
+			double range = Settings.get("tracers.range");
+			float alpha = Settings.getF("tracers.alpha");
+			float width = Settings.getF("tracers.width");
+			for (Entity e : mc.level.entitiesForRendering()) {
+				int rgb = espColour(mc, cfg, e, origin);
+				if (rgb < 0) continue;
+				Vec3 to = e.getBoundingBox().getCenter();
+				if (range > 0 && to.distanceToSqr(origin) > range * range) continue;
+				addLine(strips, origin, from, to, width, ((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, alpha);
+			}
+		}
+
+		if (StarClient.waypointsOn) {
+			float alpha = Settings.getF("waypoints.alpha");
+			double beam = Settings.get("waypoints.beam");
+			for (Config.Waypoint w : Waypoints.visible(mc)) {
+				float r = ((w.rgb >> 16) & 0xFF) / 255f;
+				float g = ((w.rgb >> 8) & 0xFF) / 255f;
+				float b = (w.rgb & 0xFF) / 255f;
+				out.add(new Box(w.x, w.y, w.z, w.x + 1, w.y + 1, w.z + 1, r, g, b, alpha));
+				out.add(new Box(w.x + 0.4, w.y + 1, w.z + 0.4, w.x + 0.6, w.y + 1 + beam, w.z + 0.6, r, g, b, alpha * 0.7f));
 			}
 		}
 
@@ -148,6 +169,36 @@ public final class StarRenderer {
 		}
 
 		boxes = out;
+		lines = strips;
+	}
+
+	/** Colour (RGB) ESP would draw {@code e} in, or -1 when ESP filters it out. Shared by the ESP boxes and Tracers. */
+	private static int espColour(Minecraft mc, Config cfg, Entity e, Vec3 origin) {
+		if (e == Freecam.camera()) return -1;
+		if (e == mc.player && !Freecam.isOn()) return -1;
+
+		int cat = categoryOf(e);
+		if (cat < 0) return -1;
+		if ((cat == 1 || cat == 2) && cfg.espMobMode != 0) {
+			boolean listed = cfg.hasMob(TYPE_IDS.computeIfAbsent(e.getType(), t -> BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()));
+			// "Only selected" shows listed mobs whatever their category toggle says.
+			if (cfg.espMobMode == 1 ? !listed : listed || !cfg.espEnabled[cat]) return -1;
+		} else if (!cfg.espEnabled[cat]) {
+			return -1;
+		}
+		if (cfg.espMaxDistance > 0 && e.distanceToSqr(origin) > cfg.espMaxDistance * (double) cfg.espMaxDistance) return -1;
+		return cfg.espColor[cat];
+	}
+
+	private static void addLine(List<Line> out, Vec3 camera, Vec3 a, Vec3 b, float width, float r, float g, float bl, float alpha) {
+		Vec3 dir = b.subtract(a);
+		Vec3 mid = a.add(b).scale(0.5);
+		Vec3 side = dir.cross(mid.subtract(camera));
+		double len = side.length();
+		if (len < 1e-6) return;
+		// Widen with distance so far tracers stay visible.
+		double half = width * (0.5 + mid.distanceTo(camera) * 0.1) / len;
+		out.add(new Line(a.x, a.y, a.z, b.x, b.y, b.z, (float) (side.x * half), (float) (side.y * half), (float) (side.z * half), r, g, bl, alpha));
 	}
 
 	/** Index into {@link Config#ESP_NAMES}, or -1 for entities ESP ignores. */
@@ -163,7 +214,8 @@ public final class StarRenderer {
 
 	private static void render(LevelRenderContext context) {
 		List<Box> snapshot = boxes;
-		if (snapshot.isEmpty()) return;
+		List<Line> strips = lines;
+		if (snapshot.isEmpty() && strips.isEmpty()) return;
 
 		PoseStack matrices = context.poseStack();
 		Vec3 camera = context.levelState().cameraRenderState.pos;
@@ -180,9 +232,33 @@ public final class StarRenderer {
 			addBox(pose, buffer, (float) b.minX(), (float) b.minY(), (float) b.minZ(), (float) b.maxX(), (float) b.maxY(), (float) b.maxZ(), b.r(), b.g(), b.b(), b.a());
 		}
 
+		for (Line l : strips) addLine(pose, buffer, l);
+
 		matrices.popPose();
 
 		draw(Minecraft.getInstance());
+	}
+
+	private static void addLine(Matrix4fc m, BufferBuilder buf, Line l) {
+		float ax = (float) l.ax();
+		float ay = (float) l.ay();
+		float az = (float) l.az();
+		float bx = (float) l.bx();
+		float by = (float) l.by();
+		float bz = (float) l.bz();
+		float r = l.r();
+		float g = l.g();
+		float b = l.b();
+		float a = l.a();
+		// One quad per winding so the strip shows from either side whatever the pipeline culls.
+		buf.addVertex(m, ax + l.px(), ay + l.py(), az + l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, ax - l.px(), ay - l.py(), az - l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, bx - l.px(), by - l.py(), bz - l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, bx + l.px(), by + l.py(), bz + l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, bx + l.px(), by + l.py(), bz + l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, bx - l.px(), by - l.py(), bz - l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, ax - l.px(), ay - l.py(), az - l.pz()).setColor(r, g, b, a);
+		buf.addVertex(m, ax + l.px(), ay + l.py(), az + l.pz()).setColor(r, g, b, a);
 	}
 
 	private static void addBox(Matrix4fc m, BufferBuilder buf, float x0, float y0, float z0, float x1, float y1, float z1, float r, float g, float b, float a) {

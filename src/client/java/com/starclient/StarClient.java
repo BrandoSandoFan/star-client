@@ -42,6 +42,10 @@ public class StarClient implements ClientModInitializer {
 	public static boolean hudOn;
 	public static boolean antiBaitOn;
 	public static boolean diagnosticsOn;
+	public static boolean autoToolOn;
+	public static boolean tracersOn;
+	public static boolean zoomOn;
+	public static boolean waypointsOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -60,9 +64,13 @@ public class StarClient implements ClientModInitializer {
 		Config.load();
 		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
-		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> StarRenderer.close());
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+			Zoom.off(client);
+			StarRenderer.close();
+		});
 		StarRenderer.init();
 		Hud.init();
+		Waypoints.init();
 		Diagnostics.init();
 		SortButton.init();
 	}
@@ -76,6 +84,9 @@ public class StarClient implements ClientModInitializer {
 			Utility.reset();
 			AntiBait.clear();
 			Diagnostics.reset();
+			Gear.reset();
+			Zoom.off(mc);
+			Waypoints.reset();
 			return;
 		}
 
@@ -98,6 +109,9 @@ public class StarClient implements ClientModInitializer {
 		Utility.tick(mc);
 		Combat.tick(mc);
 		Diagnostics.tick(mc);
+		Gear.tick(mc);
+		Zoom.tick(mc);
+		Waypoints.tick(mc);
 	}
 
 	/** Module keybinds in {@link Module#ALL} order. */
@@ -137,6 +151,10 @@ public class StarClient implements ClientModInitializer {
 			case Module.HUD -> hudOn;
 			case Module.ANTI_BAIT -> antiBaitOn;
 			case Module.DIAGNOSTICS -> diagnosticsOn;
+			case Module.AUTO_TOOL -> autoToolOn;
+			case Module.TRACERS -> tracersOn;
+			case Module.ZOOM -> zoomOn;
+			case Module.WAYPOINTS -> waypointsOn;
 			default -> false;
 		};
 	}
@@ -202,6 +220,16 @@ public class StarClient implements ClientModInitializer {
 				diagnosticsOn = !diagnosticsOn;
 				if (!diagnosticsOn) Diagnostics.reset();
 			}
+			case Module.AUTO_TOOL -> {
+				autoToolOn = !autoToolOn;
+				if (!autoToolOn) Gear.autoToolOff(mc);
+			}
+			case Module.TRACERS -> tracersOn = !tracersOn;
+			case Module.ZOOM -> {
+				zoomOn = !zoomOn;
+				if (!zoomOn) Zoom.off(mc);
+			}
+			case Module.WAYPOINTS -> waypointsOn = !waypointsOn;
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;

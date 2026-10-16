@@ -49,6 +49,10 @@ public record Module(String id, String name, String description, Category catego
 	public static final int PANIC = 24;
 	public static final int ANTI_BAIT = 25;
 	public static final int DIAGNOSTICS = 26;
+	public static final int AUTO_TOOL = 27;
+	public static final int TRACERS = 28;
+	public static final int ZOOM = 29;
+	public static final int WAYPOINTS = 30;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -77,5 +81,9 @@ public record Module(String id, String name, String description, Category catego
 				new Module("hud", "HUD", "Lists your enabled modules in the top-right corner.", Category.RENDER, true),
 				new Module("panic", "Panic", "Turns every module off at once and hides the HUD.", Category.WORLD, true),
 				new Module("antibait", "Anti Bait", "Hides chests that appear in bulk, and new spawners, in chunks you already had loaded, like admin-placed bait stashes.", Category.RENDER, true),
-				new Module("diagnostics", "Diagnostics", "Overlay and optional log of per-tick velocity, turn and packet values against their limits, for finding which check a test server reacts to.", Category.RENDER, true));
+				new Module("diagnostics", "Diagnostics", "Overlay and optional log of per-tick velocity, turn and packet values against their limits, for finding which check a test server reacts to.", Category.RENDER, true),
+				new Module("autotool", "Auto Tool", "Switches to the fastest hotbar tool for the block you are mining, then switches back.", Category.WORLD, true),
+				new Module("tracers", "Tracers", "Lines from your crosshair to every entity ESP shows, in the ESP category colours.", Category.RENDER, true),
+				new Module("zoom", "Zoom", "Narrows your field of view for a closer look. Restores it when switched off.", Category.RENDER, true),
+				new Module("waypoints", "Waypoints", "Shows saved positions and your last death point as beams through walls, with distance and direction on screen.", Category.RENDER, true));
 }
