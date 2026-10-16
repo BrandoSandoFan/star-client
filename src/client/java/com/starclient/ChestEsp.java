@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.entity.TrappedChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -146,6 +147,7 @@ public final class ChestEsp {
 		if (be instanceof AbstractFurnaceBlockEntity) return new Hit(p, 1.0f, 0.5f, 0.3f);
 		if (be instanceof BrewingStandBlockEntity) return new Hit(p, 0.4f, 0.9f, 0.7f);
 		if (be instanceof BeaconBlockEntity) return new Hit(p, 0.3f, 1.0f, 1.0f);
+		if (be instanceof SpawnerBlockEntity) return new Hit(p, 0.9f, 0.1f, 0.5f);
 		return null;
 	}
 }

@@ -75,5 +75,5 @@ public record Module(String id, String name, String description, Category catego
 				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, false),
 				new Module("hud", "HUD", "Lists your enabled modules in the top-right corner.", Category.RENDER, false),
 				new Module("panic", "Panic", "Turns every module off at once and hides the HUD.", Category.WORLD, false),
-				new Module("antibait", "Anti Bait", "Hides chests and mobs that appear in bulk in chunks you already had loaded, like admin-placed bait stashes.", Category.RENDER, false));
+				new Module("antibait", "Anti Bait", "Hides chests that appear in bulk, and new spawners, in chunks you already had loaded, like admin-placed bait stashes.", Category.RENDER, false));
 }

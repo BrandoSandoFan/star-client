@@ -20,7 +20,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
-  - `AntiBait` - per-tick diff of block entities in already-loaded chunks and of entities; bursts are flagged and filtered out of `ChestEsp.hits()`, `BaseFinder.hits()` and ESP
+  - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `ReachScreen` - reach distance slider
   - `HitboxScreen` - hitbox expansion slider
@@ -36,7 +36,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | ESP | unbound | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES` |
 | Base Finder | unbound | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
 | Freecam | unbound | Client-only armor stand camera, 10 blocks/s moved per frame (not per tick), sprint x2.5, disables `smartCull` so terrain stays visible |
-| Chest ESP | unbound | Boxes on storage/farm block entities (chests, hoppers, droppers, furnaces, crafters, brewing stands, beacons) and growing amethyst (budding block, buds, clusters) within 8 chunks |
+| Chest ESP | unbound | Boxes on storage/farm block entities (chests, hoppers, droppers, furnaces, crafters, brewing stands, beacons, spawners) and growing amethyst (budding block, buds, clusters) within 8 chunks |
 | Fullbright | unbound | Applies a hidden client-side night vision effect |
 | Auto Sprint | unbound | Sets sprint while forward is held |
 | Auto Walk | unbound | Holds the forward key |
@@ -58,7 +58,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Sorter | unbound | World tab; one-shot: plans merges then a selection sort of main inventory slots 9-35 (item id, then count desc, empties last) as `PICKUP` click triples, replays 2 per tick via `gameMode.handleContainerInput` (`ContainerInput.PICKUP`), then switches itself off. Toggling sorts the player inventory. Chests, ender chests, barrels and shulker boxes (`ChestMenu`/`ShulkerBoxMenu`) get a "Sort" button added by `SortButton` that sorts the container part (slots 0..size-36) |
 | HUD | unbound | Render tab; `Hud` registers a `HudElementRegistry` element before chat that draws enabled module names top-right (widest first, category colour) |
 | Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
-| Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). 3+ new Chest ESP/Base Finder targets within 16 blocks of each other in one tick are hidden from Chest ESP, and their chunk from Base Finder. 5+ new ESP entities (not items) within 8 blocks of each other and 24 of you in one tick are hidden from ESP; 60-tick grace after join, dimension change or a >16 block jump. Plain blocks (amethyst, glass) are not tracked |
+| Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). 3+ new Chest ESP/Base Finder targets within 16 blocks of each other in one tick, or any single new spawner, are hidden from Chest ESP, and their chunk from Base Finder. Entity ESP is not affected. Plain blocks (amethyst, glass) are not tracked |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
