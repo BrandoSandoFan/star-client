@@ -25,5 +25,6 @@
   "key.starclient.antiafk": "Toggle Anti AFK",
   "key.starclient.sorter": "Toggle Sorter",
   "key.starclient.hud": "Toggle HUD",
-  "key.starclient.panic": "Panic (all modules off)"
+  "key.starclient.panic": "Panic (all modules off)",
+  "key.starclient.antibait": "Toggle Anti Bait"
 }

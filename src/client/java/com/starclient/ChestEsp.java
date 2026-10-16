@@ -41,7 +41,8 @@ public final class ChestEsp {
 	private ChestEsp() { }
 
 	public static List<Hit> hits() {
-		return hits;
+		if (!StarClient.antiBaitOn) return hits;
+		return hits.stream().filter(h -> !AntiBait.hidesBlock(h.pos())).toList();
 	}
 
 	public static void clear() {
@@ -50,6 +51,12 @@ public final class ChestEsp {
 		BLOCK_SCANNED.clear();
 		ticks = 0;
 		targetsVersion = -1;
+	}
+
+	/** Whether {@code b} is one of the blocks chosen for Chest ESP. */
+	static boolean isTarget(Block b) {
+		refreshTargets();
+		return targets.contains(b);
 	}
 
 	/** Re-resolves the chosen blocks (they may have changed) and drops cached chunk scans. */

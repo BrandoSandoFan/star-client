@@ -11,7 +11,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 - `src/client/java/com/starclient/`
   - `StarClient` - entrypoint, keybinds, module toggle/state helpers (`keys()`, `isOn()`, `toggle()`), status overlay text
   - `Module` - module metadata (id, name, description, category, has-settings) and index constants; single source for menu rows and keybind registration
-  - `ChestEsp` - scans nearby loaded chunks' block entities (chests, barrels, ender chests, shulkers)
+  - `ChestEsp` - scans nearby loaded chunks for the blocks in `Config.chestBlocks`; `hits()` drops positions `AntiBait` flagged
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk, Jesus and the other movement modules
   - `Utility` - Auto Eat, Anti AFK, Sorter
   - `Hud` - enabled-module list overlay
@@ -20,6 +20,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `StarRenderer` - level render hooks and through-walls box pipeline; ESP categories/colours come from `Config`
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
+  - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
   - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `Settings` - registry of per-module numeric/toggle settings (`Settings.Def`), stored in `Config.values`; read with `Settings.get/getI/getF/on(key)`. Add a module setting by adding a `Def` in the static block; `ModuleSettingsScreen` builds the page automatically
   - `ModuleSettingsScreen` - generic settings page for every module with `hasSettings` (except ESP, which uses `EspScreen`); Chest ESP adds block presets + picker; nested `MobFilter` is the ESP mob filter page
@@ -59,12 +60,13 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Sorter | unbound | World tab; one-shot: plans merges then a selection sort of main inventory slots 9-35 (item id, then count desc, empties last) as `PICKUP` click triples, replays 2 per tick via `gameMode.handleContainerInput` (`ContainerInput.PICKUP`), then switches itself off. Toggling sorts the player inventory. Chests, ender chests, barrels and shulker boxes (`ChestMenu`/`ShulkerBoxMenu`) get a "Sort" button added by `SortButton` that sorts the container part (slots 0..size-36) |
 | HUD | unbound | Render tab; `Hud` registers a `HudElementRegistry` element before chat that draws enabled module names top-right (widest first, category colour) |
 | Panic | unbound | World tab; one-shot: `StarClient.panic` toggles off every enabled module (HUD included) and closes the screen. Never reports ON |
+| Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). `antibait.min` (default 3) new Chest ESP/Base Finder targets within `antibait.area` (default 16) blocks of each other in one tick, or any single new spawner/trial spawner (`antibait.spawners`), are hidden from Chest ESP, and their chunk from Base Finder. Entity ESP is not affected. Plain blocks (amethyst, ores, glass) are not tracked |
 | Menu | Right Shift | Opens `ModulesScreen` |
 
 Every module except Fullbright and Auto Walk has a gear button opening its settings. Module settings live in `Settings` (defaults and ranges are the old hard-coded constants; Crits hop is now 0.06). Profiles also save the settings map, mob filter and Chest ESP blocks.
 
 Module keys are unbound by default (menu key is Right Shift). All keys are rebindable from the menu (saved via `Options`) or Options > Controls.
-Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic.
+Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest ESP, 4 Fullbright, 5 Auto Sprint, 6 Auto Walk, 7 Fly, 8 Reach, 9 Aim Bot, 10 Hit Bot, 11 Elytra Fly, 12 Kill Aura, 13 Crits, 14 Hitboxes, 15 Speed, 16 High Jump, 17 Softfall, 18 Trajectories, 19 Jesus, 20 Auto Eat, 21 Anti AFK, 22 Sorter, 23 HUD, 24 Panic, 25 Anti Bait.
 
 ## Build
 - `./gradlew build` -> jar in `build/libs/` (ignore `*-sources.jar`)
@@ -82,4 +84,5 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
 - New module: append to `Module.ALL` (+ index constant), extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`
+- Client chunks: `mc.level.getChunk(cx, cz, ChunkStatus.FULL, false)` is a `LevelChunk` when loaded; `LevelChunk.getBlockEntities()` is the live map (no copy, unlike `getBlockEntitiesPos()`)
 - Tabs for indentation, matching existing code

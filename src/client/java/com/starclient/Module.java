@@ -47,6 +47,7 @@ public record Module(String id, String name, String description, Category catego
 	public static final int SORTER = 22;
 	public static final int HUD = 23;
 	public static final int PANIC = 24;
+	public static final int ANTI_BAIT = 25;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -73,5 +74,6 @@ public record Module(String id, String name, String description, Category catego
 				new Module("antiafk", "Anti AFK", "Jumps and nudges your view every 20 seconds while you stand still.", Category.WORLD, true),
 				new Module("sorter", "Sorter", "Merges and sorts your main inventory once, then turns itself off.", Category.WORLD, true),
 				new Module("hud", "HUD", "Lists your enabled modules in the top-right corner.", Category.RENDER, true),
-				new Module("panic", "Panic", "Turns every module off at once and hides the HUD.", Category.WORLD, true));
+				new Module("panic", "Panic", "Turns every module off at once and hides the HUD.", Category.WORLD, true),
+				new Module("antibait", "Anti Bait", "Hides chests that appear in bulk, and new spawners, in chunks you already had loaded, like admin-placed bait stashes.", Category.RENDER, true));
 }

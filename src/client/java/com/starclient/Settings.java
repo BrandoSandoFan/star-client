@@ -103,6 +103,10 @@ public final class Settings {
 				toggle("hud.colour", "Category colours", true),
 				toggle("hud.shadow", "Text shadow", true));
 		add(Module.PANIC, toggle("panic.close", "Close open screen", true));
+		add(Module.ANTI_BAIT,
+				slider("antibait.min", "Min new blocks in one tick", 2, 10, 1, 3, ""),
+				slider("antibait.area", "Area", 4, 32, 1, 16, "blocks"),
+				toggle("antibait.spawners", "Hide any new spawner", true));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */
