@@ -19,7 +19,10 @@ public final class Hud {
 	private static final int MARGIN = 4;
 	private static final int LINE = 10;
 
-	private record Line(Component text, int colour) { }
+	private record Line(Component text, int colour, int width) { }
+
+	private static List<Line> cached = List.of();
+	private static long cachedKey = -1;
 
 	private Hud() { }
 
@@ -31,13 +34,25 @@ public final class Hud {
 		Minecraft mc = Minecraft.getInstance();
 		if (!StarClient.hudOn || mc.player == null || mc.options.hideGui) return;
 
-		List<Line> lines = new ArrayList<>();
+		// Rebuild the sorted list only when the set of enabled modules or the colour setting changes.
+		boolean coloured = Settings.on("hud.colour");
+		long key = coloured ? 1L << 62 : 0L;
 		for (int i = 0; i < Module.ALL.size(); i++) {
-			Module m = Module.ALL.get(i);
-			if (i != Module.HUD && StarClient.isOn(i)) lines.add(new Line(Settings.on("hud.colour") ? Component.literal(m.name()).withStyle(m.category().colour) : Component.literal(m.name()),
-					0xFF000000 | m.category().colour.getColor()));
+			if (i != Module.HUD && StarClient.isOn(i)) key |= 1L << i;
 		}
-		lines.sort(Comparator.comparingInt((Line l) -> mc.font.width(l.text())).reversed());
+		if (key != cachedKey) {
+			List<Line> built = new ArrayList<>();
+			for (int i = 0; i < Module.ALL.size(); i++) {
+				if ((key & (1L << i)) == 0) continue;
+				Module m = Module.ALL.get(i);
+				Component text = coloured ? Component.literal(m.name()).withStyle(m.category().colour) : Component.literal(m.name());
+				built.add(new Line(text, 0xFF000000 | m.category().colour.getColor(), mc.font.width(text)));
+			}
+			built.sort(Comparator.comparingInt(Line::width).reversed());
+			cached = built;
+			cachedKey = key;
+		}
+		List<Line> lines = cached;
 
 		boolean alignRight = Settings.on("hud.right");
 		boolean shadow = Settings.on("hud.shadow");
@@ -45,7 +60,7 @@ public final class Hud {
 		int y = MARGIN;
 		boolean bar = Settings.on("hud.bar");
 		for (Line line : lines) {
-			int w = mc.font.width(line.text());
+			int w = line.width();
 			int x = alignRight ? right - w : MARGIN;
 			if (bar) {
 				graphics.fill(x - 3, y - 1, x + w + 2, y + LINE - 1, 0x90101216);

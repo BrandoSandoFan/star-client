@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 
@@ -34,6 +35,7 @@ public final class ChestEsp {
 	private static volatile List<Hit> hits = List.of();
 	private static final Map<Long, List<Hit>> BLOCK_HITS = new HashMap<>();
 	private static final Map<Long, Integer> BLOCK_SCANNED = new HashMap<>();
+	private static final Map<Block, float[]> COLORS = new HashMap<>();
 	private static int ticks;
 	private static Set<Block> targets = Set.of();
 	private static int targetsVersion = -1;
@@ -42,7 +44,9 @@ public final class ChestEsp {
 
 	public static List<Hit> hits() {
 		if (!StarClient.antiBaitOn) return hits;
-		return hits.stream().filter(h -> !AntiBait.hidesBlock(h.pos())).toList();
+		List<Hit> out = new ArrayList<>(hits.size());
+		for (Hit h : hits) if (!AntiBait.hidesBlock(h.pos())) out.add(h);
+		return out;
 	}
 
 	public static void clear() {
@@ -92,13 +96,14 @@ public final class ChestEsp {
 				int cz = center.z() + dz;
 				ChunkAccess chunk = mc.level.getChunk(cx, cz, ChunkStatus.FULL, false);
 				if (chunk == null) continue;
-				for (BlockPos pos : chunk.getBlockEntitiesPos()) {
-					BlockEntity be = chunk.getBlockEntity(pos);
-					if (be == null) continue;
-					Block block = be.getBlockState().getBlock();
-					if (targets.contains(block)) {
-						float[] c = blockColor(block);
-						out.add(new Hit(pos, c[0], c[1], c[2]));
+				if (chunk instanceof LevelChunk lc) {
+					// Live map: no copy and no per-position lookup.
+					for (BlockEntity be : lc.getBlockEntities().values()) {
+						Block block = be.getBlockState().getBlock();
+						if (targets.contains(block)) {
+							float[] c = blockColor(block);
+							out.add(new Hit(be.getBlockPos(), c[0], c[1], c[2]));
+						}
 					}
 				}
 
@@ -148,6 +153,10 @@ public final class ChestEsp {
 	}
 
 	private static float[] blockColor(Block b) {
+		return COLORS.computeIfAbsent(b, ChestEsp::computeColor);
+	}
+
+	private static float[] computeColor(Block b) {
 		String path = BuiltInRegistries.BLOCK.getKey(b).getPath();
 		int rgb = switch (path) {
 			case "trapped_chest" -> 0xFF3333;

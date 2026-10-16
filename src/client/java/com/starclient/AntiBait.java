@@ -133,7 +133,8 @@ public final class AntiBait {
 		List<Integer> out = new ArrayList<>();
 		for (int i = 0; i < points.size(); i++) {
 			int n = 0;
-			for (Vec3 q : points) if (points.get(i).distanceToSqr(q) <= max) n++;
+			Vec3 p = points.get(i);
+			for (Vec3 q : points) if (p.distanceToSqr(q) <= max) n++;
 			if (n >= min) out.add(i);
 		}
 		return out;
