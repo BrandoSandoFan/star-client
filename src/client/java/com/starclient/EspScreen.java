@@ -1,7 +1,6 @@
 package com.starclient;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -22,8 +21,8 @@ public final class EspScreen extends PixelScreen {
 		int left = cx - 150;
 		int y = 40;
 
-		Component heading = Component.literal("\u25C6 ESP Settings").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-		addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, 20, font.width(heading), 9, heading, font));
+		Component heading = Component.literal("ESP Settings").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+		heading(heading, 20);
 
 		for (int i = 0; i < Config.ESP_NAMES.length; i++) {
 			final int idx = i;

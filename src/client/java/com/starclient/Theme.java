@@ -24,6 +24,8 @@ public final class Theme {
 	public static final int BACK_A = 0xFF1D222B;
 	public static final int BACK_B = 0xFF242A35;
 	private static final int TILE = 12;
+	public static final int STAR_SIZE = 9;
+	private static final int[][] STAR = {{4, 0, 1, 2}, {3, 2, 3, 1}, {0, 3, 9, 1}, {1, 4, 7, 1}, {2, 5, 5, 1}, {2, 6, 2, 1}, {5, 6, 2, 1}, {1, 7, 2, 1}, {6, 7, 2, 1}};
 
 	private Theme() { }
 
@@ -60,6 +62,12 @@ public final class Theme {
 	public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
 		g.fill(x + 3, y + 3, x + w + 3, y + h + 3, 0x66000000);
 		bevel(g, x, y, w, h, PANEL, PANEL_HI, PANEL_LO);
+	}
+
+	/** Nine-unit pixel star with a one-unit drop shadow. */
+	public static void star(GuiGraphicsExtractor g, int x, int y, int colour) {
+		for (int[] r : STAR) g.fill(x + r[0] + 1, y + r[1] + 1, x + r[0] + r[2] + 1, y + r[1] + r[3] + 1, 0xFF000000);
+		for (int[] r : STAR) g.fill(x + r[0], y + r[1], x + r[0] + r[2], y + r[1] + r[3], colour);
 	}
 
 	/** One-unit coloured frame just inside the border. */

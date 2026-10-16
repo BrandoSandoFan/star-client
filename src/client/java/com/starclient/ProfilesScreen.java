@@ -21,8 +21,8 @@ public final class ProfilesScreen extends PixelScreen {
 		int left = cx - 150;
 		int y = 20;
 
-		Component heading = Component.literal("◆ Profiles").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-		addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, y, font.width(heading), 9, heading, font));
+		Component heading = Component.literal("Profiles").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+		heading(heading, y);
 		y += 24;
 
 		for (int slot = 0; slot < Config.PROFILE_SLOTS; slot++) {

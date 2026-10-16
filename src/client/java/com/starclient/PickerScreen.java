@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -53,8 +52,8 @@ public final class PickerScreen extends PixelScreen {
 		int cx = width / 2;
 		int left = cx - PANEL() / 2;
 
-		Component title = Component.literal("◆ " + heading).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-		addRenderableWidget(new StringWidget(cx - font.width(title) / 2, 12, font.width(title), 9, title, font));
+		Component title = Component.literal("" + heading).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+		heading(title, 12);
 
 		EditBox search = new EditBox(font, left, 26, PANEL(), 18, Component.literal("Search"));
 		search.setHint(Component.literal("Search..."));

@@ -28,8 +28,9 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
   - `Presets` - block lists (Chest ESP) and mob lists (ESP filter)
   - `EspScreen` - ESP customisation: per-category toggle and RGB, opacity, range
   - `ValueSlider` - generic 0..1 pixel-style slider used by `EspScreen` and `ModuleSettingsScreen`
-  - `Theme`, `PixelButton`, `PixelScreen` - pixel UI: `Theme` draws bevelled boxes/panel/checker backdrop with `GuiGraphicsExtractor.fill`; `PixelButton` (builder like vanilla `Button`: `bounds`, `gold`, `danger`, `outline`, `stripe`) extends `AbstractButton` and draws in `extractContents`; every screen extends `PixelScreen` and calls `panel(x, y, w, h)` at the end of `init` (backdrop and panel are drawn in `extractBackground`). Use `PixelButton`, not `Button`, in new screens
-  - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when `EspScreen` closes
+  - `PixelDropdown` - dropdown widget (label + options, opens downward in columns of 6 via `GuiGraphicsExtractor.nextStratum()`); add it before widgets its open list covers so it wins their clicks. Used for presets and the ESP mob filter mode
+  - `Theme`, `PixelButton`, `PixelScreen` - pixel UI (`Theme.star` and `PixelScreen.heading` draw the star heading): `Theme` draws bevelled boxes/panel/checker backdrop with `GuiGraphicsExtractor.fill`; `PixelButton` (builder like vanilla `Button`: `bounds`, `gold`, `danger`, `outline`, `stripe`) extends `AbstractButton` and draws in `extractContents`; every screen extends `PixelScreen` and calls `panel(x, y, w, h)` at the end of `init` (backdrop and panel are drawn in `extractBackground`). Use `PixelButton`, not `Button`, in new screens
+  - `Config` - persisted settings, JSON at `config/starclient.json`, loaded on init and saved when a settings screen closes
 - `src/main/resources/fabric.mod.json` - mod id `starclient`
 - `src/main/resources/assets/starclient/lang/en_us.json` - keybind names
 
@@ -78,7 +79,7 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - Rendering: `Screen.extractBackground/extractRenderState(GuiGraphicsExtractor, mx, my, a)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents` (abstract) and `onPress(InputWithModifiers)`. `GuiGraphicsExtractor`: `fill(x1,y1,x2,y2,argb)`, `outline(x,y,w,h,argb)`, `text(font, Component, x, y, argb, shadow)`
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
-- Screens use `keyPressed(KeyEvent)` with `event.key()`; avoid overriding render methods and let widgets draw themselves
+- Screens use `keyPressed(KeyEvent)` with `event.key()`. Custom widgets override `extractWidgetRenderState`/`extractContents`; mouse events carry `event.x()`/`event.y()` (`MouseButtonEvent`)
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions

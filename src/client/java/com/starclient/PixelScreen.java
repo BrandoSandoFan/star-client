@@ -1,6 +1,7 @@
 package com.starclient;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -21,6 +22,16 @@ public abstract class PixelScreen extends Screen {
 		panelY = y;
 		panelW = w;
 		panelH = h;
+	}
+
+	/** Centred screen heading with the pixel star to its left. */
+	protected final void heading(Component text, int y) {
+		int x = (width - (Theme.STAR_SIZE + 4 + font.width(text))) / 2;
+		Renderable r = (graphics, mouseX, mouseY, partialTick) -> {
+			Theme.star(graphics, x, y, Theme.GOLD);
+			graphics.text(font, text, x + Theme.STAR_SIZE + 4, y + 1, 0xFFFFFFFF, true);
+		};
+		addRenderableOnly(r);
 	}
 
 	@Override

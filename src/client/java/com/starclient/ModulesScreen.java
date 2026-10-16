@@ -4,7 +4,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 
@@ -31,8 +30,8 @@ public final class ModulesScreen extends PixelScreen {
 		int left = cx - PANEL_WIDTH / 2;
 		int y = 18;
 
-		Component heading = Component.literal("★ Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
-		addCentred(heading, cx, y);
+		Component heading = Component.literal("Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+		heading(heading, y);
 		y += 12;
 
 		int enabled = 0;

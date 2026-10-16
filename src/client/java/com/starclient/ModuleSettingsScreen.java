@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -30,9 +29,9 @@ public final class ModuleSettingsScreen extends PixelScreen {
 		int left = cx - 150;
 		int y = 36;
 
-		Component heading = Component.literal("◆ " + Module.ALL.get(module).name() + " Settings")
+		Component heading = Component.literal("" + Module.ALL.get(module).name() + " Settings")
 				.withStyle(Module.ALL.get(module).category().colour, ChatFormatting.BOLD);
-		addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, 16, font.width(heading), 9, heading, font));
+		heading(heading, 16);
 
 		for (Settings.Def d : Settings.defs(module)) {
 			if (d.toggle()) {
@@ -61,27 +60,16 @@ public final class ModuleSettingsScreen extends PixelScreen {
 		panel(left - 10, 10, 320, y + 28 - 10);
 	}
 
-	/** One button per {@link Settings#PRESETS} entry for this module, three per row. */
+	/** Dropdown over this module's {@link Settings#PRESETS}. */
 	private int addPresets(int left, int y) {
 		Map<String, Map<String, Double>> presets = Settings.PRESETS.get(module);
 		if (presets == null) return y;
-		y += 4;
-		Component label = Component.literal("Presets").withStyle(ChatFormatting.GRAY);
-		addRenderableWidget(new StringWidget(left, y, font.width(label), 9, label, font));
-		y += 12;
-		int col = 0;
-		for (Map.Entry<String, Map<String, Double>> preset : presets.entrySet()) {
-			Map<String, Double> values = preset.getValue();
-			addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
-				Settings.applyPreset(module, values);
-				rebuildWidgets();
-			}).bounds(left + col * 152, y, 148, 20).build());
-			if (++col == 2) {
-				col = 0;
-				y += 22;
-			}
-		}
-		return col != 0 ? y + 22 : y;
+		List<String> names = new ArrayList<>(presets.keySet());
+		addRenderableWidget(new PixelDropdown(left, y, 300, 20, "Preset", names, -1, i -> {
+			Settings.applyPreset(module, presets.get(names.get(i)));
+			rebuildWidgets();
+		}));
+		return y + 24;
 	}
 
 	private Component toggleLabel(Settings.Def d) {
@@ -91,24 +79,12 @@ public final class ModuleSettingsScreen extends PixelScreen {
 
 	private int addChestWidgets(int left, int y) {
 		Config cfg = Config.get();
-		y += 4;
-		Component label = Component.literal("Presets").withStyle(ChatFormatting.GRAY);
-		addRenderableWidget(new StringWidget(left, y, font.width(label), 9, label, font));
-		y += 12;
-
-		int col = 0;
-		for (Map.Entry<String, List<String>> preset : Presets.BLOCKS.entrySet()) {
-			List<String> ids = preset.getValue();
-			addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
-				cfg.setChestBlocks(ids);
-				rebuildWidgets();
-			}).bounds(left + col * 102, y, 96, 20).build());
-			if (++col == 3) {
-				col = 0;
-				y += 22;
-			}
-		}
-		if (col != 0) y += 22;
+		List<String> names = new ArrayList<>(Presets.BLOCKS.keySet());
+		addRenderableWidget(new PixelDropdown(left, y, 300, 20, "Block preset", names, -1, i -> {
+			cfg.setChestBlocks(Presets.BLOCKS.get(names.get(i)));
+			rebuildWidgets();
+		}));
+		y += 24;
 
 		addRenderableWidget(PixelButton.builder(Component.literal("Choose blocks... (" + cfg.chestBlocks.size() + " selected)"), b -> {
 			List<PickerScreen.Item> items = new ArrayList<>();
@@ -139,35 +115,19 @@ public final class ModuleSettingsScreen extends PixelScreen {
 			int left = cx - 150;
 			int y = 36;
 
-			Component heading = Component.literal("◆ ESP Mob Filter").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-			addRenderableWidget(new StringWidget(cx - font.width(heading) / 2, 16, font.width(heading), 9, heading, font));
+			Component heading = Component.literal("ESP Mob Filter").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+			heading(heading, 16);
 
-			addRenderableWidget(PixelButton.builder(Component.literal("Mode: " + Config.ESP_MOB_MODES[cfg.espMobMode]), b -> {
-				cfg.espMobMode = (cfg.espMobMode + 1) % Config.ESP_MOB_MODES.length;
-				b.setMessage(Component.literal("Mode: " + Config.ESP_MOB_MODES[cfg.espMobMode]));
-			}).bounds(left, y, 300, 20).build());
-			y += 28;
-
-			Component label = Component.literal("Presets (switch to Only selected)").withStyle(ChatFormatting.GRAY);
-			addRenderableWidget(new StringWidget(left, y, font.width(label), 9, label, font));
-			y += 12;
-
-			int col = 0;
-			for (Map.Entry<String, List<String>> preset : Presets.MOBS.entrySet()) {
-				List<String> ids = preset.getValue();
-				addRenderableWidget(PixelButton.builder(Component.literal(preset.getKey()), b -> {
-					cfg.setMobs(ids);
-					if (!ids.isEmpty()) cfg.espMobMode = 1;
-					rebuildWidgets();
-				}).bounds(left + col * 102, y, 96, 20).build());
-				if (++col == 3) {
-					col = 0;
-					y += 22;
-				}
-			}
-			if (col != 0) y += 22;
-
-			y += 4;
+			addRenderableWidget(new PixelDropdown(left, y, 300, 20, "Mode", List.of(Config.ESP_MOB_MODES), cfg.espMobMode, i -> cfg.espMobMode = i));
+			y += 24;
+			List<String> names = new ArrayList<>(Presets.MOBS.keySet());
+			addRenderableWidget(new PixelDropdown(left, y, 300, 20, "Preset", names, -1, i -> {
+				List<String> ids = Presets.MOBS.get(names.get(i));
+				cfg.setMobs(ids);
+				if (!ids.isEmpty()) cfg.espMobMode = 1;
+				rebuildWidgets();
+			}));
+			y += 32;
 			addRenderableWidget(PixelButton.builder(Component.literal("Choose mobs... (" + cfg.espMobs.size() + " selected)"), b -> {
 				List<PickerScreen.Item> items = new ArrayList<>();
 				for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
