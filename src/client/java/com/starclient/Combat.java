@@ -31,7 +31,8 @@ public final class Combat {
 
 		// Hit Bot only attacks what the crosshair is on
 		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && mc.hitResult instanceof EntityHitResult hit
-				&& hit.getEntity() instanceof LivingEntity target && isValid(mc, target, "hitbot")) {
+				&& hit.getEntity() instanceof LivingEntity target
+				&& isValid(mc, target, Settings.on("hitbot.players"), Settings.on("hitbot.hostiles"))) {
 			attack(mc, target);
 			return;
 		}
@@ -88,10 +89,7 @@ public final class Combat {
 		if (bestEntity != null) mc.hitResult = new EntityHitResult(bestEntity, bestPos);
 	}
 
-	/** {@code module} is the settings prefix whose "players" and "hostiles" toggles pick the valid target types. */
-	private static boolean isValid(Minecraft mc, LivingEntity e, String module) {
-		boolean players = Settings.on(module + ".players");
-		boolean hostiles = Settings.on(module + ".hostiles");
+	private static boolean isValid(Minecraft mc, LivingEntity e, boolean players, boolean hostiles) {
 		return e != mc.player && ((players && e instanceof Player) || (hostiles && e instanceof Enemy))
 				&& e.isAlive() && !e.isInvulnerable() && !e.isSpectator();
 	}
@@ -99,14 +97,15 @@ public final class Combat {
 	private static LivingEntity nearest(Minecraft mc, String module, double range, float fov) {
 		LivingEntity best = null;
 		double bestDist = range * range;
+		boolean players = Settings.on(module + ".players");
+		boolean hostiles = Settings.on(module + ".hostiles");
 		for (Entity e : mc.level.entitiesForRendering()) {
-			if (!(e instanceof LivingEntity le) || !isValid(mc, le, module) || le.isInvisible()) continue;
-			if (!mc.player.hasLineOfSight(le)) continue;
+			if (!(e instanceof LivingEntity le) || !isValid(mc, le, players, hostiles) || le.isInvisible()) continue;
+			// Cheap distance and angle tests first; the line-of-sight raycast last.
 			double d = mc.player.distanceToSqr(le);
-			if (d < bestDist && yawDelta(mc, le) <= fov / 2) {
-				bestDist = d;
-				best = le;
-			}
+			if (d >= bestDist || yawDelta(mc, le) > fov / 2 || !mc.player.hasLineOfSight(le)) continue;
+			bestDist = d;
+			best = le;
 		}
 		return best;
 	}

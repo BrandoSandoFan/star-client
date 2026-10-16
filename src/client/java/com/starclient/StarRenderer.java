@@ -1,7 +1,9 @@
 package com.starclient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -31,6 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -57,6 +60,8 @@ public final class StarRenderer {
 	private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
 	private static final Vector3f MODEL_OFFSET = new Vector3f();
 	private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
+
+	private static final Map<EntityType<?>, String> TYPE_IDS = new HashMap<>();
 
 	private static volatile List<Box> boxes = List.of();
 	private static BufferBuilder buffer;
@@ -92,7 +97,7 @@ public final class StarRenderer {
 				int cat = categoryOf(e);
 				if (cat < 0) continue;
 				if ((cat == 1 || cat == 2) && cfg.espMobMode != 0) {
-					boolean listed = cfg.hasMob(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString());
+					boolean listed = cfg.hasMob(TYPE_IDS.computeIfAbsent(e.getType(), t -> BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()));
 					// "Only selected" shows listed mobs whatever their category toggle says.
 					if (cfg.espMobMode == 1 ? !listed : listed || !cfg.espEnabled[cat]) continue;
 				} else if (!cfg.espEnabled[cat]) {
@@ -118,9 +123,10 @@ public final class StarRenderer {
 		}
 
 		if (StarClient.chestEspOn) {
+			float alpha = Settings.getF("chestesp.alpha");
 			for (ChestEsp.Hit hit : ChestEsp.hits()) {
 				BlockPos p = hit.pos();
-				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), Settings.getF("chestesp.alpha")));
+				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), alpha));
 			}
 		}
 
