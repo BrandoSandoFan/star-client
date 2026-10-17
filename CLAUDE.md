@@ -9,7 +9,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 
 ## Layout
 - `src/client/java/com/starclient/`
-  - `StarClient` - entrypoint, keybinds, module toggle/state helpers (`keys()`, `isOn()`, `toggle()`), status overlay text
+  - `StarClient` - entrypoint, keybinds, module toggle/state helpers (`keys()`, `isOn()`, `toggle()`), status overlay text. Attacks and item use (`Combat.tick`, Auto Eat, Elytra rockets) run on `START_CLIENT_TICK` (`startTick`); everything else on `END_CLIENT_TICK`
   - `Module` - module metadata (id, name, description, category, has-settings) and index constants; single source for menu rows and keybind registration
   - `ChestEsp` - scans nearby loaded chunks for the blocks in `Config.chestBlocks`; `hits()` drops positions `AntiBait` flagged
   - `Movement` - per-tick Fullbright (client-side night vision), Auto Sprint, Auto Walk, Jesus and the other movement modules

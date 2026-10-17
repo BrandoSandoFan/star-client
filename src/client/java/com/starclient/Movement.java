@@ -28,6 +28,12 @@ public final class Movement {
 
 	private Movement() { }
 
+	public static void startTick(Minecraft mc) {
+		if (StarClient.elytraFlyOn && !Freecam.isOn() && mc.screen == null && mc.player.isFallFlying() && Settings.on("elytrafly.rockets")) {
+			autoRocket(mc, mc.player.getDeltaMovement().length());
+		}
+	}
+
 	public static void tick(Minecraft mc) {
 		if (StarClient.fullbrightOn) {
 			if (mc.level.getMaxLocalRawBrightness(mc.player.blockPosition()) > Settings.getI("fullbright.maxlight")) {
@@ -139,7 +145,6 @@ public final class Movement {
 
 		if (StarClient.elytraFlyOn && mc.screen == null && mc.player.isFallFlying()) {
 			double speed = mc.player.getDeltaMovement().length();
-			if (Settings.on("elytrafly.rockets")) autoRocket(mc, speed);
 			if (climbing && speed < Settings.get("elytrafly.climbend")) climbing = false;
 			else if (!climbing && speed > Settings.get("elytrafly.diveend")) climbing = true;
 			float target = climbing ? -Settings.getF("elytrafly.climb") : Settings.getF("elytrafly.dive");

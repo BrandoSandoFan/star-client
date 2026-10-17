@@ -48,8 +48,11 @@ public final class Utility {
 
 	private Utility() { }
 
-	public static void tick(Minecraft mc) {
+	public static void startTick(Minecraft mc) {
 		if (StarClient.autoEatOn) autoEat(mc);
+	}
+
+	public static void tick(Minecraft mc) {
 		if (StarClient.antiAfkOn) antiAfk(mc);
 		if (StarClient.sorterOn) sort(mc);
 	}

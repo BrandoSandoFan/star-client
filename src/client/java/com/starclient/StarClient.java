@@ -73,6 +73,7 @@ public class StarClient implements ClientModInitializer {
 
 		Config.load();
 		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
+		ClientTickEvents.START_CLIENT_TICK.register(this::startTick);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			Zoom.off(client);
@@ -84,6 +85,14 @@ public class StarClient implements ClientModInitializer {
 		SignReader.init();
 		Diagnostics.init();
 		SortButton.init();
+	}
+
+	/** Attacks and item use run here, before the game handles the tick, not after it. */
+	private void startTick(Minecraft mc) {
+		if (mc.player == null || mc.level == null) return;
+		Utility.startTick(mc);
+		Movement.startTick(mc);
+		Combat.tick(mc);
 	}
 
 	private void tick(Minecraft mc) {
@@ -122,7 +131,6 @@ public class StarClient implements ClientModInitializer {
 		if (signReaderOn) SignReader.tick(mc);
 		Movement.tick(mc);
 		Utility.tick(mc);
-		Combat.tick(mc);
 		Diagnostics.tick(mc);
 		Gear.tick(mc);
 		Zoom.tick(mc);
