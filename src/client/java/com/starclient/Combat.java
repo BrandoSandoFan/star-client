@@ -71,7 +71,7 @@ public final class Combat {
 	}
 
 	/**
-	 * Hitboxes: runs at the start of the tick, before clicks are handled, and replaces the crosshair target with the
+	 * Hitboxes: runs at the start of the tick, before clicks are handled, replaces the crosshair target with the
 	 * nearest entity whose inflated bounding box the view ray crosses (unless a block is closer).
 	 */
 	public static void expandHitboxes(Minecraft mc) {
@@ -99,7 +99,15 @@ public final class Combat {
 				bestPos = pos;
 			}
 		}
-		if (bestEntity != null) mc.hitResult = new EntityHitResult(bestEntity, bestPos);
+		if (bestEntity == null) return;
+		mc.hitResult = new EntityHitResult(bestEntity, bestPos);
+		// The game re-picks the crosshair target after this hook and before it handles clicks, which discards the
+		// result above, so manual clicks are consumed and sent here against the inflated box.
+		if (mc.gameMode == null) return;
+		while (mc.options.keyAttack.consumeClick()) {
+			mc.gameMode.attack(mc.player, bestEntity);
+			mc.player.swing(InteractionHand.MAIN_HAND);
+		}
 	}
 
 	private static boolean isValid(Minecraft mc, LivingEntity e, boolean players, boolean hostiles) {
