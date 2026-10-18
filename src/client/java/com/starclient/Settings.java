@@ -135,8 +135,9 @@ public final class Settings {
 				slider("autotool.protect", "Skip tools at or below durability", 0, 50, 1, 2, ""));
 		add(Module.TRACERS,
 				slider("tracers.alpha", "Opacity", 0.1, 1, 0.05, 0.8, ""),
-				slider("tracers.width", "Thickness", 0.005, 0.05, 0.005, 0.01, ""),
-				slider("tracers.range", "Max distance (0 = ESP setting)", 0, 256, 8, 0, "blocks"));
+				slider("tracers.width", "Thickness", 0.001, 0.02, 0.001, 0.003, ""),
+				slider("tracers.max", "Max tracers (nearest first)", 1, 64, 1, 16, ""),
+				slider("tracers.range", "Max distance (0 = no limit)", 0, 256, 8, 0, "blocks"));
 		add(Module.ZOOM, slider("zoom.fov", "Zoom field of view", 30, 70, 5, 30, "deg"));
 		add(Module.WAYPOINTS,
 				toggle("waypoints.death", "Mark death point", true),

@@ -1,6 +1,7 @@
 package com.starclient;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,9 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 public final class StarRenderer {
 	/** Immutable render state produced in the extraction phase. */
 	private record Box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a) { }
+
+	/** A tracer destination and its colour. */
+	private record Target(Vec3 pos, float r, float g, float b) { }
 
 	/** A flat strip from A to B, widened by (px, py, pz) on each side; drawn double sided. */
 	private record Line(double ax, double ay, double az, double bx, double by, double bz, float px, float py, float pz, float r, float g, float b, float a) { }
@@ -107,12 +111,28 @@ public final class StarRenderer {
 			double range = Settings.get("tracers.range");
 			float alpha = Settings.getF("tracers.alpha");
 			float width = Settings.getF("tracers.width");
-			for (Entity e : mc.level.entitiesForRendering()) {
-				int rgb = espColour(mc, cfg, e, origin);
-				if (rgb < 0) continue;
-				Vec3 to = e.getBoundingBox().getCenter();
-				if (range > 0 && to.distanceToSqr(origin) > range * range) continue;
-				addLine(strips, origin, from, to, width, ((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, alpha);
+			// Only what is switched on gets a tracer: entities need ESP, blocks need Chest ESP / Portal Finder.
+			List<Target> targets = new ArrayList<>();
+			if (StarClient.espOn) {
+				for (Entity e : mc.level.entitiesForRendering()) {
+					int rgb = espColour(mc, cfg, e, origin);
+					if (rgb < 0) continue;
+					targets.add(new Target(e.getBoundingBox().getCenter(), ((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f));
+				}
+			}
+			if (StarClient.chestEspOn) {
+				for (ChestEsp.Hit hit : ChestEsp.hits()) targets.add(new Target(Vec3.atCenterOf(hit.pos()), hit.r(), hit.g(), hit.b()));
+			}
+			if (StarClient.portalFinderOn) {
+				for (PortalFinder.Hit hit : PortalFinder.hits()) targets.add(new Target(Vec3.atCenterOf(hit.pos()), hit.r(), hit.g(), hit.b()));
+			}
+			double max = range > 0 ? range * range : Double.MAX_VALUE;
+			targets.removeIf(t -> t.pos().distanceToSqr(origin) > max);
+			targets.sort(Comparator.comparingDouble(t -> t.pos().distanceToSqr(origin)));
+			int limit = Math.min(targets.size(), Settings.getI("tracers.max"));
+			for (int i = 0; i < limit; i++) {
+				Target t = targets.get(i);
+				addLine(strips, origin, from, t.pos(), width, t.r(), t.g(), t.b(), alpha);
 			}
 		}
 
@@ -207,7 +227,7 @@ public final class StarRenderer {
 		double len = side.length();
 		if (len < 1e-6) return;
 		// Widen with distance so far tracers stay visible.
-		double half = width * (0.5 + mid.distanceTo(camera) * 0.1) / len;
+		double half = width * (0.5 + mid.distanceTo(camera) * 0.02) / len;
 		out.add(new Line(a.x, a.y, a.z, b.x, b.y, b.z, (float) (side.x * half), (float) (side.y * half), (float) (side.z * half), r, g, bl, alpha));
 	}
 
