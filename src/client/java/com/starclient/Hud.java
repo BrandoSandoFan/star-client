@@ -32,7 +32,7 @@ public final class Hud {
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!StarClient.hudOn || mc.player == null || mc.options.hideGui) return;
+		if (!StarClient.hudOn || mc.player == null || mc.gui.hud.isHidden()) return;
 
 		// Rebuild the sorted list only when the set of enabled modules or the colour setting changes.
 		boolean coloured = Settings.on("hud.colour");
@@ -46,7 +46,7 @@ public final class Hud {
 				if ((key & (1L << i)) == 0) continue;
 				Module m = Module.ALL.get(i);
 				Component text = coloured ? Component.literal(m.name()).withStyle(m.category().colour) : Component.literal(m.name());
-				built.add(new Line(text, 0xFF000000 | m.category().colour.getColor(), mc.font.width(text)));
+				built.add(new Line(text, 0xFF000000 | m.category().rgb, mc.font.width(text)));
 			}
 			built.sort(Comparator.comparingInt(Line::width).reversed());
 			cached = built;

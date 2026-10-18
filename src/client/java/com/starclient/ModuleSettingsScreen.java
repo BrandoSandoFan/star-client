@@ -50,7 +50,7 @@ public final class ModuleSettingsScreen extends PixelScreen {
 		if (module == Module.CHEST_ESP) y = addChestWidgets(left, y);
 		if (module == Module.WAYPOINTS) {
 			addRenderableWidget(PixelButton.builder(Component.literal("Manage waypoints... (" + Config.get().waypoints.size() + ")"),
-					b -> minecraft.setScreen(new WaypointsScreen(this))).bounds(left, y, 300, 20).build());
+					b -> minecraft.gui.setScreen(new WaypointsScreen(this))).bounds(left, y, 300, 20).build());
 			y += 24;
 		}
 		y = addPresets(left, y);
@@ -98,7 +98,7 @@ public final class ModuleSettingsScreen extends PixelScreen {
 				items.add(new PickerScreen.Item(BuiltInRegistries.BLOCK.getKey(block).toString(), block.getName()));
 			}
 			items.sort((a, c) -> a.name().getString().compareToIgnoreCase(c.name().getString()));
-			minecraft.setScreen(new PickerScreen(this, "Chest ESP Blocks", items, cfg::hasChestBlock, cfg::toggleChestBlock,
+			minecraft.gui.setScreen(new PickerScreen(this, "Chest ESP Blocks", items, cfg::hasChestBlock, cfg::toggleChestBlock,
 					() -> cfg.setChestBlocks(List.of())));
 		}).bounds(left, y, 300, 20).build());
 		return y + 24;
@@ -140,7 +140,7 @@ public final class ModuleSettingsScreen extends PixelScreen {
 					items.add(new PickerScreen.Item(BuiltInRegistries.ENTITY_TYPE.getKey(type).toString(), type.getDescription()));
 				}
 				items.sort((a, c) -> a.name().getString().compareToIgnoreCase(c.name().getString()));
-				minecraft.setScreen(new PickerScreen(this, "ESP Mobs", items, cfg::hasMob, cfg::toggleMob, () -> cfg.setMobs(List.of())));
+				minecraft.gui.setScreen(new PickerScreen(this, "ESP Mobs", items, cfg::hasMob, cfg::toggleMob, () -> cfg.setMobs(List.of())));
 			}).bounds(left, y, 300, 20).build());
 			y += 30;
 
@@ -155,7 +155,7 @@ public final class ModuleSettingsScreen extends PixelScreen {
 
 		@Override
 		public void onClose() {
-			minecraft.setScreen(parent);
+			minecraft.gui.setScreen(parent);
 		}
 	}
 
@@ -166,6 +166,6 @@ public final class ModuleSettingsScreen extends PixelScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 }

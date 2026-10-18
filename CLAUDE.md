@@ -1,6 +1,6 @@
 # Star Client
 
-Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-game module menu.
+Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-game module menu.
 
 ## Stack
 - Java 25, Fabric Loom `1.17-SNAPSHOT` (resolves to 1.17.x, requires Gradle >= 9.5.0), Gradle wrapper 9.5.0
@@ -73,7 +73,7 @@ Client-side Fabric mod for Minecraft 26.1: ESP, base finder, freecam, and an in-
 | Anti Bait | unbound | Render tab; every tick diffs each loaded chunk's block entities against what it held before (first sight of a chunk is baseline; unloaded chunks remembered 100 ticks so an unload+resend still diffs). `antibait.min` (default 3) new Chest ESP/Base Finder targets within `antibait.area` (default 16) blocks of each other in one tick, or any single new spawner/trial spawner (`antibait.spawners`), are hidden from Chest ESP, and their chunk from Base Finder. Entity ESP is not affected. Plain blocks (amethyst, ores, glass) are not tracked |
 | Diagnostics | unbound | Render tab; see `Diagnostics`. Red = value over its limit (requested values are clamped when `sanitize.enabled`), amber = 80%+. 'Position snap' (observed horizontal step over 3x the speed limit) is the hint for a server correction |
 | Auto Tool | unbound | World tab; while attack is held on a block, selects the hotbar slot with the highest `ItemStack.getDestroySpeed` (needs > 1.0, skips tools at or below `autotool.protect` durability, ties keep the current slot), restores the slot on release if you did not change it. Not in creative or while eating |
-| Tracers | unbound | Render tab; flat double-sided strips (`StarRenderer.Line`) from 0.6 blocks ahead of the camera to the centre of every entity ESP would show (`StarRenderer.espColour`, so category toggles, colours, distance and mob filter apply even with ESP off). Width grows with distance |
+| Tracers | unbound | Render tab; flat double-sided strips (`StarRenderer.Line`) from 0.6 blocks ahead of the camera to the nearest `tracers.max` targets of the modules that are on: ESP entities (`StarRenderer.espColour`: category toggles, colours, distance, mob filter), Chest ESP blocks, Portal Finder blocks. Nothing is drawn for a module that is off. Thin (`tracers.width`, default 0.003), widening only slightly with distance |
 | Zoom | unbound | Render tab; see `Zoom`. `zoom.fov` 30-70 |
 | Waypoints | unbound | Render tab; see `Waypoints`. Optional death marker (`waypoints.death`), range, beam height, opacity |
 | Auto Totem | unbound | Combat tab; when the offhand is not a totem and is empty (`autototem.empty`) or health <= `autototem.health`, moves the first inventory totem into the offhand (returns the old offhand item to the source slot) |
@@ -98,15 +98,17 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - CI: `.github/workflows/build.yml` builds on every push/PR and uploads the jar as artifact `star-client`
 - The sandbox cannot reach Fabric/Mojang Maven, so it cannot compile locally; push and read the failing job log from the Actions run
 
-## 26.1 API notes (learned from compile errors)
+## 26.2 API notes (learned from compile errors)
 - Rendering: `Screen.extractBackground/extractRenderState(GuiGraphicsExtractor, mx, my, a)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents` (abstract) and `onPress(InputWithModifiers)`. `GuiGraphicsExtractor`: `fill(x1,y1,x2,y2,argb)`, `outline(x,y,w,h,argb)`, `text(font, Component, x, y, argb, shadow)`
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
 - Screens use `keyPressed(KeyEvent)` with `event.key()`. Custom widgets override `extractWidgetRenderState`/`extractContents`; mouse events carry `event.x()`/`event.y()` (`MouseButtonEvent`)
+- 26.2: current screen is `mc.gui.screen()` / `mc.gui.setScreen(...)` (not `mc.screen`/`mc.setScreen`); overlay message is `mc.gui.hud.setOverlayMessage`; hidden HUD is `mc.gui.hud.isHidden()`; `ChatFormatting.getColor` is gone (`Module.Category.rgb` holds the RGB); the main render target is `mc.gameRenderer.mainRenderTarget()`
+- 26.2 through-walls boxes: `StarRenderer` uses `StagedVertexBuffer` (`appendDraw`, `getVertexBuilder`, `upload`, `getExecuteInfo`, `endFrame`) and `RenderPass.drawIndexed(indexCount, 1, firstIndex, baseVertex, 0)`, following the Fabric docs `CustomRenderPipeline` example
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions
-- Mojang-mapped names (Minecraft 26.1 is unobfuscated)
+- Mojang-mapped names (Minecraft 26.2 is unobfuscated)
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
 - New module: append to `Module.ALL` (+ index constant), extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`

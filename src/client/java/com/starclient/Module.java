@@ -7,18 +7,21 @@ import net.minecraft.ChatFormatting;
 /** Static module metadata. Index in {@link #ALL} is the module id used across the client. */
 public record Module(String id, String name, String description, Category category, boolean hasSettings) {
 	public enum Category {
-		RENDER("Render", ChatFormatting.AQUA),
-		MOVEMENT("Movement", ChatFormatting.GREEN),
-		WORLD("World", ChatFormatting.LIGHT_PURPLE),
-		COMBAT("Combat", ChatFormatting.RED),
-		BASE_FINDING("Bases", ChatFormatting.YELLOW);
+		RENDER("Render", ChatFormatting.AQUA, 0x55FFFF),
+		MOVEMENT("Movement", ChatFormatting.GREEN, 0x55FF55),
+		WORLD("World", ChatFormatting.LIGHT_PURPLE, 0xFF55FF),
+		COMBAT("Combat", ChatFormatting.RED, 0xFF5555),
+		BASE_FINDING("Bases", ChatFormatting.YELLOW, 0xFFFF55);
 
 		public final String label;
 		public final ChatFormatting colour;
+		/** RGB of {@link #colour}; ChatFormatting no longer exposes it in 26.2. */
+		public final int rgb;
 
-		Category(String label, ChatFormatting colour) {
+		Category(String label, ChatFormatting colour, int rgb) {
 			this.label = label;
 			this.colour = colour;
+			this.rgb = rgb;
 		}
 	}
 
@@ -93,7 +96,7 @@ public record Module(String id, String name, String description, Category catego
 				new Module("antibait", "Anti Bait", "Hides chests that appear in bulk, and new spawners, in chunks you already had loaded, like admin-placed bait stashes.", Category.RENDER, true),
 				new Module("diagnostics", "Diagnostics", "Overlay and optional log of per-tick velocity, turn and packet values against their limits, for finding which check a test server reacts to.", Category.RENDER, true),
 				new Module("autotool", "Auto Tool", "Switches to the fastest hotbar tool for the block you are mining, then switches back.", Category.WORLD, true),
-				new Module("tracers", "Tracers", "Lines from your crosshair to every entity ESP shows, in the ESP category colours.", Category.RENDER, true),
+				new Module("tracers", "Tracers", "Lines to the nearest targets of the modules that are on: ESP entities, Chest ESP blocks, Portal Finder.", Category.RENDER, true),
 				new Module("zoom", "Zoom", "Narrows your field of view for a closer look. Restores it when switched off.", Category.RENDER, true),
 				new Module("waypoints", "Waypoints", "Shows saved positions and your last death point as beams through walls, with distance and direction on screen.", Category.RENDER, true),
 				new Module("autototem", "Auto Totem", "Moves a totem of undying into your offhand when it is empty or your health is low.", Category.COMBAT, true),

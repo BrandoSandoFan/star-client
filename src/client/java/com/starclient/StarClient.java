@@ -104,7 +104,7 @@ public class StarClient implements ClientModInitializer {
 		}
 
 		while (menuKey.consumeClick()) {
-			if (mc.screen == null) mc.setScreen(new ModulesScreen());
+			if (mc.gui.screen() == null) mc.gui.setScreen(new ModulesScreen());
 		}
 		KeyMapping[] keys = keys();
 		for (int i = 0; i < keys.length; i++) {
@@ -291,12 +291,12 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < Module.ALL.size(); i++) {
 			if (i != Module.PANIC && isOn(i)) toggle(mc, i);
 		}
-		if (Settings.on("panic.close")) mc.setScreen(null);
-		mc.gui.setOverlayMessage(Component.literal("Panic: all modules off").withStyle(ChatFormatting.RED), false);
+		if (Settings.on("panic.close")) mc.gui.setScreen(null);
+		mc.gui.hud.setOverlayMessage(Component.literal("Panic: all modules off").withStyle(ChatFormatting.RED), false);
 	}
 
 	private static void status(Minecraft mc, String name, boolean on) {
 		Component state = Component.literal(on ? "ON" : "OFF").withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED);
-		mc.gui.setOverlayMessage(Component.literal(name + ": ").withStyle(ChatFormatting.WHITE).append(state), false);
+		mc.gui.hud.setOverlayMessage(Component.literal(name + ": ").withStyle(ChatFormatting.WHITE).append(state), false);
 	}
 }

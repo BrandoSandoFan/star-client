@@ -160,6 +160,6 @@ public final class PickerScreen extends PixelScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 }

@@ -61,14 +61,14 @@ public final class Utility {
 	private static void autoEat(Minecraft mc) {
 		var p = mc.player;
 		if (eating) {
-			if (p.isUsingItem() && mc.screen == null) {
+			if (p.isUsingItem() && mc.gui.screen() == null) {
 				mc.options.keyUse.setDown(true);
 				return;
 			}
 			finishEating(mc);
 			return;
 		}
-		if (mc.screen != null || p.isUsingItem() || mc.gameMode == null) return;
+		if (mc.gui.screen() != null || p.isUsingItem() || mc.gameMode == null) return;
 		var food = p.getFoodData();
 		if (!food.needsFood() || food.getFoodLevel() > Settings.getI("autoeat.hunger")) return;
 
@@ -114,7 +114,7 @@ public final class Utility {
 		}
 		Vec3 pos = p.position();
 		boolean moved = afkLastPos == null || pos.distanceToSqr(afkLastPos) > 0.0004 || Math.abs(p.getYRot() - afkLastYaw) > 0.01f;
-		afkIdle = moved || mc.screen != null ? 0 : afkIdle + 1;
+		afkIdle = moved || mc.gui.screen() != null ? 0 : afkIdle + 1;
 		if (afkIdle >= Settings.getI("antiafk.seconds") * 20) {
 			afkIdle = 0;
 			afkFlip = !afkFlip;
@@ -208,7 +208,7 @@ public final class Utility {
 		}
 		if (sortOps.isEmpty()) {
 			StarClient.sorterOn = false;
-			mc.gui.setOverlayMessage(Component.literal("Sorter: already sorted").withStyle(ChatFormatting.GRAY), false);
+			mc.gui.hud.setOverlayMessage(Component.literal("Sorter: already sorted").withStyle(ChatFormatting.GRAY), false);
 		}
 	}
 
@@ -225,7 +225,7 @@ public final class Utility {
 		}
 		if (sortOps.isEmpty()) {
 			StarClient.sorterOn = false;
-			mc.gui.setOverlayMessage(Component.literal("Sorter: done").withStyle(ChatFormatting.GREEN), false);
+			mc.gui.hud.setOverlayMessage(Component.literal("Sorter: done").withStyle(ChatFormatting.GREEN), false);
 		}
 	}
 

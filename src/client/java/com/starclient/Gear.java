@@ -128,12 +128,12 @@ public final class Gear {
 		for (int i = 0; i < 9; i++) {
 			ItemStack st = mc.player.getInventory().getItem(i);
 			if (!st.isEmpty()) lastHotbar[i] = st.getItem();
-			else if (mc.screen != null) lastHotbar[i] = null;
+			else if (mc.gui.screen() != null) lastHotbar[i] = null;
 		}
 	}
 
 	private static void autoReplenish(Minecraft mc) {
-		if (mc.screen != null) return;
+		if (mc.gui.screen() != null) return;
 		var p = mc.player;
 		int threshold = Settings.getI("autoreplenish.threshold");
 		for (int i = 0; i < 9; i++) {
@@ -164,7 +164,7 @@ public final class Gear {
 	}
 
 	private static void autoRespawn(Minecraft mc) {
-		if (mc.screen instanceof DeathScreen && mc.player.isDeadOrDying()) {
+		if (mc.gui.screen() instanceof DeathScreen && mc.player.isDeadOrDying()) {
 			if (++respawnWait > Settings.getI("autorespawn.delay")) {
 				respawnWait = 0;
 				mc.player.respawn();
@@ -183,7 +183,7 @@ public final class Gear {
 	private static void autoTool(Minecraft mc) {
 		var p = mc.player;
 		Inventory inv = p.getInventory();
-		boolean mining = mc.screen == null && mc.options.keyAttack.isDown() && !p.isUsingItem() && !Utility.isEating()
+		boolean mining = mc.gui.screen() == null && mc.options.keyAttack.isDown() && !p.isUsingItem() && !Utility.isEating()
 				&& !p.getAbilities().instabuild && mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
 		if (!mining) {
 			autoToolOff(mc);

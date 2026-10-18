@@ -126,7 +126,7 @@ public final class Diagnostics {
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!StarClient.diagnosticsOn || !Settings.on("diag.overlay") || mc.player == null || mc.options.hideGui) return;
+		if (!StarClient.diagnosticsOn || !Settings.on("diag.overlay") || mc.player == null || mc.gui.hud.isHidden()) return;
 		int x = 6;
 		int y = mc.getWindow().getGuiScaledHeight() / 2 - N * LINE / 2;
 		graphics.fill(x - 3, y - 14, x + 168, y + N * LINE + 2, 0x90101216);

@@ -96,7 +96,7 @@ public final class Movement {
 		}
 
 		boolean grounded = mc.player.onGround();
-		boolean controllable = mc.screen == null && !mc.player.isFallFlying() && !mc.player.getAbilities().flying
+		boolean controllable = mc.gui.screen() == null && !mc.player.isFallFlying() && !mc.player.getAbilities().flying
 				&& !mc.player.isInWater() && !mc.player.isInLava() && !mc.player.isPassenger();
 
 		// Softfall: once a fall is long enough to hurt, keep telling the server we are on the ground
@@ -127,7 +127,7 @@ public final class Movement {
 			}
 		}
 
-		if (StarClient.autoWalkOn && mc.screen == null) {
+		if (StarClient.autoWalkOn && mc.gui.screen() == null) {
 			boolean pause = (Settings.on("autowalk.sneak") && mc.player.isShiftKeyDown())
 					|| mc.player.getHealth() < Settings.getF("autowalk.minhealth");
 			mc.options.keyUp.setDown(!pause);
@@ -137,7 +137,7 @@ public final class Movement {
 			mc.player.setSprinting(true);
 		}
 
-		if (StarClient.elytraFlyOn && mc.screen == null && mc.player.isFallFlying()) {
+		if (StarClient.elytraFlyOn && mc.gui.screen() == null && mc.player.isFallFlying()) {
 			double speed = mc.player.getDeltaMovement().length();
 			if (Settings.on("elytrafly.rockets")) autoRocket(mc, speed);
 			if (climbing && speed < Settings.get("elytrafly.climbend")) climbing = false;

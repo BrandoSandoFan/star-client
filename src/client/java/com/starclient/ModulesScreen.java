@@ -88,7 +88,7 @@ public final class ModulesScreen extends PixelScreen {
 		}).bounds(left, y, PANEL_WIDTH, 20).build());
 		y += 24;
 
-		addRenderableWidget(PixelButton.builder(Component.literal("Profiles..."), b -> minecraft.setScreen(new ProfilesScreen(this)))
+		addRenderableWidget(PixelButton.builder(Component.literal("Profiles..."), b -> minecraft.gui.setScreen(new ProfilesScreen(this)))
 				.bounds(left, y, PANEL_WIDTH, 20).build());
 		y += 26;
 
@@ -105,7 +105,7 @@ public final class ModulesScreen extends PixelScreen {
 		PixelButton toggle = PixelButton.builder(moduleLabel(idx, m), b -> {
 			StarClient.toggle(minecraft, idx);
 			rebuildWidgets();
-		}).outline(StarClient.isOn(idx) ? Theme.GOLD : 0).stripe(m.category().colour.getColor()).bounds(left, y, toggleWidth, 20).build();
+		}).outline(StarClient.isOn(idx) ? Theme.GOLD : 0).stripe(m.category().rgb).bounds(left, y, toggleWidth, 20).build();
 		toggle.setTooltip(Tooltip.create(Component.literal(m.description())));
 		addRenderableWidget(toggle);
 
@@ -120,7 +120,7 @@ public final class ModulesScreen extends PixelScreen {
 		addRenderableWidget(keyButton);
 
 		if (hasGear) {
-			PixelButton gear = PixelButton.builder(Component.literal("⚙"), b -> minecraft.setScreen(idx == Module.ESP
+			PixelButton gear = PixelButton.builder(Component.literal("⚙"), b -> minecraft.gui.setScreen(idx == Module.ESP
 					? new EspScreen(this) : new ModuleSettingsScreen(this, idx)))
 					.bounds(left + PANEL_WIDTH - gearWidth, y, gearWidth, 20).build();
 			gear.setTooltip(Tooltip.create(Component.literal("Module settings")));
@@ -161,6 +161,6 @@ public final class ModulesScreen extends PixelScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreen(null);
+		minecraft.gui.setScreen(null);
 	}
 }

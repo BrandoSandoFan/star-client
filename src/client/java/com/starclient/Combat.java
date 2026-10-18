@@ -28,7 +28,7 @@ public final class Combat {
 	}
 
 	public static void tick(Minecraft mc) {
-		if (mc.screen != null || Freecam.isOn() || mc.gameMode == null || Utility.isEating()) return;
+		if (mc.gui.screen() != null || Freecam.isOn() || mc.gameMode == null || Utility.isEating()) return;
 		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn) return;
 
 		if (StarClient.aimBotOn) {
@@ -75,7 +75,7 @@ public final class Combat {
 	 * nearest entity whose inflated bounding box the view ray crosses (unless a block is closer).
 	 */
 	public static void expandHitboxes(Minecraft mc) {
-		if (!StarClient.hitboxesOn || mc.player == null || mc.level == null || mc.screen != null || Freecam.isOn()) return;
+		if (!StarClient.hitboxesOn || mc.player == null || mc.level == null || mc.gui.screen() != null || Freecam.isOn()) return;
 		double reach = mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
 		float grow = Settings.getF("hitboxes.expand");
 		Vec3 eye = mc.player.getEyePosition();
