@@ -217,7 +217,7 @@ public final class Settings {
 				toggle("maceaura.players", "Target players", true),
 				toggle("maceaura.hostiles", "Target hostile mobs", true));
 		add(Module.CLIPPER,
-				toggle("clipper.record", "Keep recording in the background", true),
+				toggle("clipper.record", "Keep recording in the background", false),
 				slider("clipper.seconds", "Clip length", 5, 60, 5, 30, "s"),
 				slider("clipper.interval", "Capture every", 1, 20, 1, 4, "ticks"),
 				slider("clipper.width", "Frame width", 240, 960, 80, 480, "px"),

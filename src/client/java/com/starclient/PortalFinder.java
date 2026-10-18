@@ -29,10 +29,12 @@ public final class PortalFinder {
 	private static final Map<Long, Integer> SCANNED = new HashMap<>();
 	private static int ticks;
 	private static int cursor;
+	private static List<Hit> cached;
 
 	private PortalFinder() { }
 
 	public static void clear() {
+		cached = null;
 		HITS.clear();
 		SCANNED.clear();
 		ticks = 0;
@@ -40,9 +42,12 @@ public final class PortalFinder {
 	}
 
 	public static List<Hit> hits() {
-		List<Hit> out = new ArrayList<>();
-		for (List<Hit> chunk : HITS.values()) out.addAll(chunk);
-		return out;
+		if (cached == null) {
+			List<Hit> out = new ArrayList<>();
+			for (List<Hit> chunk : HITS.values()) out.addAll(chunk);
+			cached = out;
+		}
+		return cached;
 	}
 
 	public static void tick(Minecraft mc) {
@@ -50,6 +55,7 @@ public final class PortalFinder {
 
 		ChunkPos center = mc.player.chunkPosition();
 		int radius = Math.min(mc.options.getEffectiveRenderDistance(), Settings.getI("portalfinder.radius"));
+		cached = null;
 		HITS.keySet().removeIf(k -> outOfRange(k, center, radius));
 		SCANNED.keySet().removeIf(k -> outOfRange(k, center, radius));
 

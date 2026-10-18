@@ -51,10 +51,13 @@ public final class BaseFinder {
 	private static final Map<Long, Integer> SCANNED = new HashMap<>();
 	private static int ticks;
 	private static int cursor;
+	private static List<Hit> cached;
+	private static int cachedStamp;
 
 	private BaseFinder() { }
 
 	public static void clear() {
+		cached = null;
 		HITS.clear();
 		SCANNED.clear();
 		ticks = 0;
@@ -62,17 +65,23 @@ public final class BaseFinder {
 	}
 
 	public static List<Hit> hits() {
-		List<Hit> out = new ArrayList<>();
-		for (Map.Entry<Long, Hit> e : HITS.entrySet()) {
-			if (!AntiBait.hidesChunk(e.getKey())) out.add(e.getValue());
+		int stamp = AntiBait.stamp();
+		if (stamp != cachedStamp || cached == null) {
+			List<Hit> out = new ArrayList<>();
+			for (Map.Entry<Long, Hit> e : HITS.entrySet()) {
+				if (!AntiBait.hidesChunk(e.getKey())) out.add(e.getValue());
+			}
+			cached = out;
+			cachedStamp = stamp;
 		}
-		return out;
+		return cached;
 	}
 
 	public static void tick(Minecraft mc) {
 		ticks++;
 		if (ticks % SCAN_INTERVAL_TICKS != 0) return;
 
+		cached = null;
 		ClientLevel level = mc.level;
 		ChunkPos center = mc.player.chunkPosition();
 		int radius = mc.options.getEffectiveRenderDistance();
