@@ -62,6 +62,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoMineOn;
 	public static boolean chatMacroOn;
 	public static boolean autoTpaOn;
+	public static boolean maceAuraOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -201,6 +202,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_MINE -> autoMineOn;
 			case Module.CHAT_MACRO -> chatMacroOn;
 			case Module.AUTO_TPA -> autoTpaOn;
+			case Module.MACE_AURA -> maceAuraOn;
 			default -> false;
 		};
 	}
@@ -322,6 +324,7 @@ public class StarClient implements ClientModInitializer {
 				autoTpaOn = !autoTpaOn;
 				Automation.tpaReset();
 			}
+			case Module.MACE_AURA -> maceAuraOn = !maceAuraOn;
 			case Module.CLIPPER -> Clipper.save(mc);
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
