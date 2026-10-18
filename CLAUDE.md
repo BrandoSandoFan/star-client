@@ -47,7 +47,7 @@ Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-
 |---|---|---|
 | ESP | unbound | Boxes through walls. Categories (Players, Hostile, Animals, Items) indexed as in `Config.ESP_NAMES`. Mob filter (`Config.espMobMode`: all / only selected / hide selected, `Config.espMobs` entity ids) applies to Hostile and Animals; 'Only selected' ignores the category toggles for mobs |
 | Base Finder | unbound | Scans loaded chunks for marker blocks (`BaseFinder.MARKERS`), needs 10+ per chunk |
-| Freecam | unbound | Client-only armor stand camera, 10 blocks/s moved per frame (not per tick), sprint x2.5, disables `smartCull` so terrain stays visible |
+| Freecam | unbound | Client-only armor stand camera, 10 blocks/s moved per tick and interpolated by the renderer (partial tick); view rotation reads the player's live rotation (`Freecam.Camera` overrides `getViewYRot/getViewXRot`), sprint x2.5, disables `smartCull` so terrain stays visible |
 | Chest ESP | unbound | Boxes on the blocks listed in `Config.chestBlocks` (default: chests, barrels, shulkers, hoppers, droppers, furnaces, crafters, brewing stands, beacons, amethyst) within `chestesp.radius` chunks. Block entities are read every pass; other blocks via section scans. Presets and a block picker in its settings |
 | Fullbright | unbound | Applies a hidden client-side night vision effect |
 | Auto Sprint | unbound | Sets sprint while forward is held |
@@ -61,7 +61,7 @@ Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-
 | Crits | unbound | Combat tab; before Hit Bot/Kill Aura attacks (not manual clicks) sends two fake `ServerboundMovePlayerPacket.Pos` hops (+0.0625 y, off-ground) so the server counts a crit. Server ignores crits while you are sprinting |
 | Hitboxes | unbound | Combat tab; enlarges every entity hitbox by `hitboxes.expand` blocks per side (0-2, default 0.3). At the start of each tick `Combat.expandHitboxes` re-picks the crosshair entity against the inflated boxes (no mixin), so clicks, Hit Bot and Kill Aura use it; server still validates real reach |
 | Speed | unbound | Movement tab; sets horizontal velocity to 0.45 b/t along held WASD keys (skipped when gliding, flying, swimming or riding). Servers with movement checks rubber-band |
-| High Jump | unbound | Movement tab; on take-off with jump held, sets upward velocity to 0.9 b/t (vanilla 0.42) |
+| High Jump | unbound | Movement tab; on take-off with jump held, sets upward velocity to 0.9 b/t (vanilla 0.42) via `ProtocolSanitizer.requestJump`, which skips the vanilla clamp unless `highjump.vanilla` is on |
 | Softfall | unbound | Movement tab; while `fallDistance` > 2 and airborne (not gliding/flying) sends `ServerboundMovePlayerPacket.StatusOnly(onGround=true)` each tick so the server resets fall damage |
 | Trajectories | unbound | Render tab; `Trajectories.compute` simulates the held bow (draw-scaled), crossbow, trident, pearl, snowball, egg or potion (gravity/drag per item, block clip each tick, 200 steps max); `StarRenderer` draws small boxes along the path and a red box at the impact |
 | Jesus | unbound | Movement tab; in water without sneak/jump, sets vertical velocity to hold you at the surface (0.2 b/t up when submerged, 0.1 below the fluid height, 0 on top). Water only; lava still burns |

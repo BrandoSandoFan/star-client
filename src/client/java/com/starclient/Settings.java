@@ -103,7 +103,9 @@ public final class Settings {
 		add(Module.CRITS, slider("crits.hop", "Fake hop height", 0.02, 0.25, 0.01, 0.06, "blocks"));
 		add(Module.HITBOXES, slider("hitboxes.expand", "Expansion per side", 0, 2, 0.05, 0.3, "blocks"));
 		add(Module.SPEED, slider("speed.speed", "Speed", 0.1, 1.5, 0.05, 0.45, "b/t"));
-		add(Module.HIGH_JUMP, slider("highjump.velocity", "Jump velocity", 0.5, 2, 0.05, 0.9, "b/t"));
+		add(Module.HIGH_JUMP,
+				slider("highjump.velocity", "Jump velocity", 0.5, 2, 0.05, 0.9, "b/t"),
+				toggle("highjump.vanilla", "Clamp to vanilla jump (anti-cheat)", false));
 		add(Module.SOFT_FALL, slider("softfall.distance", "Start after falling", 1, 10, 0.5, 2, "blocks"));
 		add(Module.TRAJECTORIES,
 				slider("trajectories.steps", "Max simulation steps", 50, 400, 10, 200, ""),

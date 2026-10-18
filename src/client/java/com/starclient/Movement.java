@@ -107,7 +107,7 @@ public final class Movement {
 
 		if (StarClient.highJumpOn && controllable && mc.options.keyJump.isDown() && wasOnGround && !grounded) {
 			Vec3 v = mc.player.getDeltaMovement();
-			if (v.y > 0) mc.player.setDeltaMovement(v.x, ProtocolSanitizer.clampJump(mc.player, Settings.get("highjump.velocity")), v.z);
+			if (v.y > 0) mc.player.setDeltaMovement(v.x, ProtocolSanitizer.requestJump(mc.player, Settings.get("highjump.velocity"), Settings.on("highjump.vanilla")), v.z);
 		}
 		wasOnGround = grounded;
 
