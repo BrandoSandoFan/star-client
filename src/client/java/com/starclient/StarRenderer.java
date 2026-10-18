@@ -81,7 +81,6 @@ public final class StarRenderer {
 
 	private static void extract(LevelExtractionContext context) {
 		Minecraft mc = Minecraft.getInstance();
-		Freecam.frame(mc);
 		if (mc.level == null || mc.player == null) {
 			boxes = List.of();
 			lines = List.of();

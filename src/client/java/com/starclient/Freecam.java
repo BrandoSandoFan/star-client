@@ -11,14 +11,36 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class Freecam {
 	private static final double ACCEL = 14.0; // velocity easing rate, 1/s
+	private static final double TICK = 1.0 / 20.0;
 
 	private static ArmorStand cam;
 	private static boolean smartCull = true;
-	private static long lastNanos = System.nanoTime();
-	private static double smoothDt = 1.0 / 60.0;
 	private static double velX, velY, velZ;
 
 	private Freecam() { }
+
+	/**
+	 * Camera entity whose view rotation is the player's current rotation. Mouse look turns the real
+	 * player every frame, and the camera reads this when it is set up, so turning has no lag or steps.
+	 */
+	private static final class Camera extends ArmorStand {
+		private final Player player;
+
+		Camera(Player player) {
+			super(player.level(), player.getX(), player.getEyeY(), player.getZ());
+			this.player = player;
+		}
+
+		@Override
+		public float getViewYRot(float partialTick) {
+			return player.getYRot();
+		}
+
+		@Override
+		public float getViewXRot(float partialTick) {
+			return player.getXRot();
+		}
+	}
 
 	public static boolean isOn() {
 		return cam != null;
@@ -34,7 +56,7 @@ public final class Freecam {
 
 	private static void enable(Minecraft mc) {
 		Player p = mc.player;
-		cam = new ArmorStand(mc.level, p.getX(), p.getEyeY(), p.getZ());
+		cam = new Camera(p);
 		cam.noPhysics = true;
 		cam.setInvisible(true);
 		cam.setPos(p.getX(), p.getEyeY() - cam.getEyeHeight(), p.getZ());
@@ -58,29 +80,21 @@ public final class Freecam {
 		cam = null;
 	}
 
-	/** Per-tick safety check: drop state if something else took the camera. */
-	public static void tick(Minecraft mc) {
-		if (cam != null && mc.getCameraEntity() != cam) cam = null;
-	}
-
 	/**
-	 * Per-frame update (called from render extraction). Moving by frame time and
-	 * resetting the old position/rotation each frame avoids tick-rate stutter
-	 * because there is nothing left for the renderer to interpolate.
+	 * Per-tick move. The camera position is interpolated between the previous and current tick
+	 * position with the frame's partial tick, like any entity, so motion is even at every frame rate.
 	 */
-	public static void frame(Minecraft mc) {
-		long now = System.nanoTime();
-		double rawDt = Math.min((now - lastNanos) / 1.0e9, 0.1);
-		lastNanos = now;
-		if (cam == null || mc.player == null || mc.getCameraEntity() != cam) return;
-
-		// Frame times vary; low-pass them so spikes do not become visible position steps.
-		smoothDt += (rawDt - smoothDt) * 0.2;
-		double dt = smoothDt;
+	public static void tick(Minecraft mc) {
+		if (cam == null) return;
+		if (mc.getCameraEntity() != cam) { // something else took the camera
+			cam = null;
+			return;
+		}
 
 		float yaw = mc.player.getYRot();
 		cam.setYRot(yaw);
 		cam.setXRot(mc.player.getXRot());
+		cam.setOldPosAndRot();
 
 		double fwd = (mc.options.keyUp.isDown() ? 1 : 0) - (mc.options.keyDown.isDown() ? 1 : 0);
 		double side = (mc.options.keyLeft.isDown() ? 1 : 0) - (mc.options.keyRight.isDown() ? 1 : 0);
@@ -100,13 +114,12 @@ public final class Freecam {
 		}
 
 		// Ease velocity toward the target so starting and stopping are not abrupt.
-		double k = 1.0 - Math.exp(-dt * ACCEL);
+		double k = 1.0 - Math.exp(-TICK * ACCEL);
 		velX += (tx - velX) * k;
 		velY += (ty - velY) * k;
 		velZ += (tz - velZ) * k;
 		if (len == 0 && Math.abs(velX) + Math.abs(velY) + Math.abs(velZ) < 0.01) velX = velY = velZ = 0;
 
-		cam.setPos(cam.getX() + velX * dt, cam.getY() + velY * dt, cam.getZ() + velZ * dt);
-		cam.setOldPosAndRot();
+		cam.setPos(cam.getX() + velX * TICK, cam.getY() + velY * TICK, cam.getZ() + velZ * TICK);
 	}
 }

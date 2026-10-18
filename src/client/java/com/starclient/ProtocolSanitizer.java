@@ -57,6 +57,15 @@ public final class ProtocolSanitizer {
 		return enabled() ? Math.min(vy, jumpLimit(p)) : vy;
 	}
 
+	/**
+	 * Take-off velocity for a module whose purpose is to exceed the vanilla jump (High Jump). Reported to
+	 * Diagnostics like {@link #clampJump}, but only clamped when {@code vanilla} is set.
+	 */
+	public static double requestJump(LocalPlayer p, double vy, boolean vanilla) {
+		Diagnostics.report(Diagnostics.REQ_JUMP, vy, jumpLimit(p));
+		return vanilla && enabled() ? Math.min(vy, jumpLimit(p)) : vy;
+	}
+
 	/** Clamps a step-height request to {@link #MAX_STEP}. */
 	public static double clampStep(double height) {
 		return enabled() ? Math.min(height, MAX_STEP) : height;
