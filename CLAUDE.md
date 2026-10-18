@@ -103,6 +103,8 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
 - Screens use `keyPressed(KeyEvent)` with `event.key()`. Custom widgets override `extractWidgetRenderState`/`extractContents`; mouse events carry `event.x()`/`event.y()` (`MouseButtonEvent`)
+- 26.2: current screen is `mc.gui.screen()` / `mc.gui.setScreen(...)` (not `mc.screen`/`mc.setScreen`); overlay message is `mc.gui.hud.setOverlayMessage`; hidden HUD is `mc.gui.hud.isHidden()`; `ChatFormatting.getColor` is gone (`Module.Category.rgb` holds the RGB); the main render target is `mc.gameRenderer.mainRenderTarget()`
+- 26.2 through-walls boxes: `StarRenderer` uses `StagedVertexBuffer` (`appendDraw`, `getVertexBuilder`, `upload`, `getExecuteInfo`, `endFrame`) and `RenderPass.drawIndexed(indexCount, 1, firstIndex, baseVertex, 0)`, following the Fabric docs `CustomRenderPipeline` example
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions

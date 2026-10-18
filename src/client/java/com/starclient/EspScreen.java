@@ -48,7 +48,7 @@ public final class EspScreen extends PixelScreen {
 		y += 30;
 
 		addRenderableWidget(PixelButton.builder(Component.literal("Mob filter... (" + Config.ESP_MOB_MODES[cfg.espMobMode] + ")"),
-				b -> minecraft.setScreen(new ModuleSettingsScreen.MobFilter(this))).bounds(cx - 100, y, 200, 20).build());
+				b -> minecraft.gui.setScreen(new ModuleSettingsScreen.MobFilter(this))).bounds(cx - 100, y, 200, 20).build());
 		y += 24;
 
 		addRenderableWidget(PixelButton.builder(Component.literal("Reset to defaults"), b -> {
@@ -84,6 +84,6 @@ public final class EspScreen extends PixelScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 }

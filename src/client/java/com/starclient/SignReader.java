@@ -94,7 +94,7 @@ public final class SignReader {
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!StarClient.signReaderOn || mc.player == null || mc.level == null || mc.options.hideGui) return;
+		if (!StarClient.signReaderOn || mc.player == null || mc.level == null || mc.gui.hud.isHidden()) return;
 		int y = MARGIN;
 		for (Entry e : entries) {
 			Component line = Component.literal(Waypoints.arrow(mc, e.pos().getX() + 0.5, e.pos().getZ() + 0.5) + " " + Math.round(e.distance()) + "m  " + e.text());

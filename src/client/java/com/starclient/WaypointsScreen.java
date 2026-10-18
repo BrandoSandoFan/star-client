@@ -85,6 +85,6 @@ public final class WaypointsScreen extends PixelScreen {
 
 	@Override
 	public void onClose() {
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 }

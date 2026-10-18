@@ -6,27 +6,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import org.lwjgl.system.MemoryUtil;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MappableRingBuffer;
+import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
@@ -59,7 +56,7 @@ public final class StarRenderer {
 					.withDepthStencilState(Optional.empty())
 					.build());
 
-	private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
+	private static final StagedVertexBuffer STAGED = new StagedVertexBuffer(() -> StarClient.ID + " boxes", RenderType.SMALL_BUFFER_SIZE);
 	private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
 	private static final Vector3f MODEL_OFFSET = new Vector3f();
 	private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
@@ -68,8 +65,6 @@ public final class StarRenderer {
 
 	private static volatile List<Box> boxes = List.of();
 	private static volatile List<Line> lines = List.of();
-	private static BufferBuilder buffer;
-	private static MappableRingBuffer vertexBuffer;
 
 	private StarRenderer() { }
 
@@ -238,9 +233,11 @@ public final class StarRenderer {
 		matrices.pushPose();
 		matrices.translate(-camera.x, -camera.y, -camera.z);
 
-		if (buffer == null) {
-			buffer = new BufferBuilder(ALLOCATOR, FILLED_THROUGH_WALLS.getVertexFormatMode(), FILLED_THROUGH_WALLS.getVertexFormat());
-		}
+		VertexFormat format = FILLED_THROUGH_WALLS.getVertexFormatBinding(0);
+		PrimitiveTopology topology = FILLED_THROUGH_WALLS.getPrimitiveTopology();
+		StagedVertexBuffer.Draw draw = STAGED.appendDraw(format, topology,
+				topology == PrimitiveTopology.QUADS ? RenderSystem.getProjectionType().vertexSorting() : null);
+		VertexConsumer buffer = STAGED.getVertexBuilder(draw);
 
 		Matrix4fc pose = matrices.last().pose();
 		for (Box b : snapshot) {
@@ -251,10 +248,13 @@ public final class StarRenderer {
 
 		matrices.popPose();
 
-		draw(Minecraft.getInstance());
+		STAGED.upload();
+		StagedVertexBuffer.ExecuteInfo info = STAGED.getExecuteInfo(draw);
+		if (info != null) draw(Minecraft.getInstance(), info);
+		STAGED.endFrame();
 	}
 
-	private static void addLine(Matrix4fc m, BufferBuilder buf, Line l) {
+	private static void addLine(Matrix4fc m, VertexConsumer buf, Line l) {
 		float ax = (float) l.ax();
 		float ay = (float) l.ay();
 		float az = (float) l.az();
@@ -276,7 +276,7 @@ public final class StarRenderer {
 		buf.addVertex(m, ax + l.px(), ay + l.py(), az + l.pz()).setColor(r, g, b, a);
 	}
 
-	private static void addBox(Matrix4fc m, BufferBuilder buf, float x0, float y0, float z0, float x1, float y1, float z1, float r, float g, float b, float a) {
+	private static void addBox(Matrix4fc m, VertexConsumer buf, float x0, float y0, float z0, float x1, float y1, float z1, float r, float g, float b, float a) {
 		// Front
 		buf.addVertex(m, x0, y0, z1).setColor(r, g, b, a);
 		buf.addVertex(m, x1, y0, z1).setColor(r, g, b, a);
@@ -309,61 +309,26 @@ public final class StarRenderer {
 		buf.addVertex(m, x0, y0, z1).setColor(r, g, b, a);
 	}
 
-	private static void draw(Minecraft client) {
-		RenderPipeline pipeline = FILLED_THROUGH_WALLS;
-
-		MeshData built = buffer.buildOrThrow();
-		MeshData.DrawState state = built.drawState();
-		VertexFormat format = state.format();
-
-		GpuBuffer vertices = upload(state, format, built);
-
-		GpuBuffer indices;
-		VertexFormat.IndexType indexType;
-		built.sortQuads(ALLOCATOR, RenderSystem.getProjectionType().vertexSorting());
-		indices = pipeline.getVertexFormat().uploadImmediateIndexBuffer(built.indexBuffer());
-		indexType = built.drawState().indexType();
-
+	private static void draw(Minecraft client, StagedVertexBuffer.ExecuteInfo info) {
 		GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
-				.writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
+				.writeTransform(RenderSystem.getModelViewMatrixCopy(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
+
+		RenderTarget target = client.gameRenderer.mainRenderTarget();
+		GpuTextureView colour = target.getColorTextureView();
+		if (colour == null) return;
 
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-				() -> StarClient.ID + " boxes",
-				client.getMainRenderTarget().getColorTextureView(), OptionalInt.empty(),
-				client.getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty())) {
-			pass.setPipeline(pipeline);
+				() -> StarClient.ID + " boxes", colour, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
+			pass.setPipeline(FILLED_THROUGH_WALLS);
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", dynamicTransforms);
-			pass.setVertexBuffer(0, vertices);
-			pass.setIndexBuffer(indices, indexType);
-			pass.drawIndexed(0, 0, state.indexCount(), 1);
+			pass.setVertexBuffer(0, info.vertexBuffer().slice());
+			pass.setIndexBuffer(info.indexBuffer(), info.indexType());
+			pass.drawIndexed(info.indexCount(), 1, info.firstIndex(), info.baseVertex(), 0);
 		}
-
-		built.close();
-		vertexBuffer.rotate();
-		buffer = null;
-	}
-
-	private static GpuBuffer upload(MeshData.DrawState state, VertexFormat format, MeshData built) {
-		int size = state.vertexCount() * format.getVertexSize();
-
-		if (vertexBuffer == null || vertexBuffer.size() < size) {
-			if (vertexBuffer != null) vertexBuffer.close();
-			vertexBuffer = new MappableRingBuffer(() -> StarClient.ID + " vertices", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, size);
-		}
-
-		CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-		try (GpuBuffer.MappedView view = encoder.mapBuffer(vertexBuffer.currentBuffer().slice(0, built.vertexBuffer().remaining()), false, true)) {
-			MemoryUtil.memCopy(built.vertexBuffer(), view.data());
-		}
-		return vertexBuffer.currentBuffer();
 	}
 
 	public static void close() {
-		ALLOCATOR.close();
-		if (vertexBuffer != null) {
-			vertexBuffer.close();
-			vertexBuffer = null;
-		}
+		STAGED.close();
 	}
 }

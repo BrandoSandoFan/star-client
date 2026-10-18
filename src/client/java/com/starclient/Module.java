@@ -7,18 +7,21 @@ import net.minecraft.ChatFormatting;
 /** Static module metadata. Index in {@link #ALL} is the module id used across the client. */
 public record Module(String id, String name, String description, Category category, boolean hasSettings) {
 	public enum Category {
-		RENDER("Render", ChatFormatting.AQUA),
-		MOVEMENT("Movement", ChatFormatting.GREEN),
-		WORLD("World", ChatFormatting.LIGHT_PURPLE),
-		COMBAT("Combat", ChatFormatting.RED),
-		BASE_FINDING("Bases", ChatFormatting.YELLOW);
+		RENDER("Render", ChatFormatting.AQUA, 0x55FFFF),
+		MOVEMENT("Movement", ChatFormatting.GREEN, 0x55FF55),
+		WORLD("World", ChatFormatting.LIGHT_PURPLE, 0xFF55FF),
+		COMBAT("Combat", ChatFormatting.RED, 0xFF5555),
+		BASE_FINDING("Bases", ChatFormatting.YELLOW, 0xFFFF55);
 
 		public final String label;
 		public final ChatFormatting colour;
+		/** RGB of {@link #colour}; ChatFormatting no longer exposes it in 26.2. */
+		public final int rgb;
 
-		Category(String label, ChatFormatting colour) {
+		Category(String label, ChatFormatting colour, int rgb) {
 			this.label = label;
 			this.colour = colour;
+			this.rgb = rgb;
 		}
 	}
 

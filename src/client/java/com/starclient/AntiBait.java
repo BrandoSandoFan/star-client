@@ -113,7 +113,7 @@ public final class AntiBait {
 		if (bait.isEmpty()) return;
 		for (BlockPos p : bait) CHUNKS.get(ChunkPos.pack(p.getX() >> 4, p.getZ() >> 4)).bait.add(p);
 		BlockPos at = bait.get(0);
-		mc.gui.setOverlayMessage(Component.literal("Anti Bait: hid " + bait.size() + " new block" + (bait.size() == 1 ? "" : "s")
+		mc.gui.hud.setOverlayMessage(Component.literal("Anti Bait: hid " + bait.size() + " new block" + (bait.size() == 1 ? "" : "s")
 				+ " near " + at.getX() + " " + at.getY() + " " + at.getZ()).withStyle(ChatFormatting.GOLD), false);
 	}
 

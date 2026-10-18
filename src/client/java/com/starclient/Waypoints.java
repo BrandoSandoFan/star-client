@@ -94,7 +94,7 @@ public final class Waypoints {
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!StarClient.waypointsOn || !Settings.on("waypoints.hud") || mc.player == null || mc.level == null || mc.options.hideGui) return;
+		if (!StarClient.waypointsOn || !Settings.on("waypoints.hud") || mc.player == null || mc.level == null || mc.gui.hud.isHidden()) return;
 		List<Config.Waypoint> list = visible(mc);
 		int centre = mc.getWindow().getGuiScaledWidth() / 2;
 		int y = 4;
