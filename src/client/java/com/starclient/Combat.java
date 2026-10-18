@@ -13,9 +13,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-/** Aim Bot (smooth rotation toward the nearest target) and Hit Bot (attacks the entity under the crosshair when the cooldown is ready). */
+/** Aim Bot (smooth rotation toward the nearest target) and Trigger Bot (attacks the entity under the crosshair when the cooldown is ready). */
 public final class Combat {
-	/** Game time of the last Hit Bot / Kill Aura attack, for the configured minimum delay. */
+	/** Game time of the last Trigger Bot / Kill Aura attack, for the configured minimum delay. */
 	private static long lastAttack = Long.MIN_VALUE / 2;
 	private static final AimSpring yawSpring = new AimSpring();
 	private static final AimSpring pitchSpring = new AimSpring();
@@ -39,7 +39,7 @@ public final class Combat {
 
 		float charge = mc.player.getAttackStrengthScale(0.0f);
 
-		// Hit Bot only attacks what the crosshair is on
+		// Trigger Bot only attacks what the crosshair is on
 		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && delayElapsed(mc, "hitbot.delay") && mc.hitResult instanceof EntityHitResult hit
 				&& hit.getEntity() instanceof LivingEntity target
 				&& isValid(mc, target, Settings.on("hitbot.players"), Settings.on("hitbot.hostiles"))) {
@@ -66,7 +66,7 @@ public final class Combat {
 		long now = mc.level.getGameTime();
 		Diagnostics.attack(now, Settings.getI(delayKey));
 		lastAttack = now;
-		mc.gameMode.attack(p, target);
+		AttributeSwap.around(mc, () -> mc.gameMode.attack(p, target));
 		p.swing(InteractionHand.MAIN_HAND);
 	}
 
