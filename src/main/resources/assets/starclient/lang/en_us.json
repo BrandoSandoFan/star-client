@@ -48,5 +48,6 @@
   "key.starclient.automine": "Toggle Automine",
   "key.starclient.chatmacro": "Toggle Chat Macro",
   "key.starclient.autotpa": "Toggle Auto TPA",
-  "key.starclient.clipper": "Save clip"
+  "key.starclient.clipper": "Save clip",
+  "key.starclient.maceaura": "Toggle Mace Aura"
 }

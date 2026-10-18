@@ -8,6 +8,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -29,7 +30,7 @@ public final class Combat {
 
 	public static void tick(Minecraft mc) {
 		if (mc.gui.screen() != null || Freecam.isOn() || mc.gameMode == null || Utility.isEating()) return;
-		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn) return;
+		if (!StarClient.aimBotOn && !StarClient.hitBotOn && !StarClient.killAuraOn && !StarClient.maceAuraOn) return;
 
 		if (StarClient.aimBotOn) {
 			LivingEntity target = nearest(mc, "aimbot", Settings.get("aimbot.range"), Settings.getF("aimbot.fov"));
@@ -38,6 +39,9 @@ public final class Combat {
 		}
 
 		float charge = mc.player.getAttackStrengthScale(0.0f);
+
+		// Mace Aura: a smash attack needs a real fall, so this only fires while falling with a mace in the hotbar
+		if (StarClient.maceAuraOn && maceAura(mc, charge)) return;
 
 		// Trigger Bot only attacks what the crosshair is on
 		if (StarClient.hitBotOn && charge >= Settings.getF("hitbot.charge") && delayElapsed(mc, "hitbot.delay") && mc.hitResult instanceof EntityHitResult hit
@@ -54,6 +58,27 @@ public final class Combat {
 			LivingEntity target = nearest(mc, "killaura", range, 360.0f);
 			if (target != null) attack(mc, target, "killaura.delay");
 		}
+	}
+
+	private static boolean maceAura(Minecraft mc, float charge) {
+		var p = mc.player;
+		if (charge < Settings.getF("maceaura.charge") || !delayElapsed(mc, "maceaura.delay")) return false;
+		if (p.onGround() || p.isFallFlying() || p.getAbilities().flying || p.isInWater() || p.onClimbable() || p.isPassenger()) return false;
+		if (p.fallDistance < Settings.get("maceaura.fall")) return false;
+		var inv = p.getInventory();
+		int mace = -1;
+		if (p.getMainHandItem().is(Items.MACE)) mace = inv.getSelectedSlot();
+		else for (int i = 0; i < 9 && mace < 0; i++) if (inv.getItem(i).is(Items.MACE)) mace = i;
+		if (mace < 0) return false;
+		double range = Settings.get("maceaura.range");
+		if (range <= 0) range = p.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+		LivingEntity target = nearest(mc, "maceaura", range, 360.0f);
+		if (target == null) return false;
+		int previous = inv.getSelectedSlot();
+		inv.setSelectedSlot(mace);
+		attack(mc, target, "maceaura.delay");
+		inv.setSelectedSlot(previous);
+		return true;
 	}
 
 	/** Attacks and swings; with Crits on, first reports a tiny hop so the server counts the hit as a critical. */

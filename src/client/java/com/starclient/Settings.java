@@ -209,6 +209,13 @@ public final class Settings {
 				slider("autotpa.cooldown", "Cooldown between requests", 1, 300, 1, 30, "s"),
 				toggle("autotpa.here", "Use /tpahere instead of /tpa", false));
 		addTexts(Module.AUTO_TPA, new TextDef("autotpa.player", "Username", "", 32));
+		add(Module.MACE_AURA,
+				slider("maceaura.range", "Range (0 = Reach)", 0, 12, 0.5, 0, "blocks"),
+				slider("maceaura.fall", "Min fall distance", 1.5, 10, 0.5, 1.5, "blocks"),
+				slider("maceaura.charge", "Min attack charge", 0.5, 1, 0.05, 0.95, ""),
+				slider("maceaura.delay", "Min ticks between attacks", 0, 20, 1, 0, "ticks"),
+				toggle("maceaura.players", "Target players", true),
+				toggle("maceaura.hostiles", "Target hostile mobs", true));
 		add(Module.CLIPPER,
 				toggle("clipper.record", "Keep recording in the background", true),
 				slider("clipper.seconds", "Clip length", 5, 60, 5, 30, "s"),
