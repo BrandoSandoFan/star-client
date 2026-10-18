@@ -29,7 +29,7 @@ Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-
   - `Combat` - Aim Bot (smooth turn to nearest player/hostile within 6 blocks, 90° FOV, line of sight) and Hit Bot (attacks the crosshair target at >=95% attack charge)
   - `BaseFinder`, `Freecam` - feature logic
   - `AntiBait` - per-tick diff of block entities in already-loaded chunks; bursts and new spawners are flagged and filtered out of `ChestEsp.hits()` and `BaseFinder.hits()`
-  - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
+  - `ModulesScreen` - module menu: category tabs (All/Render/Movement/World/Combat/Bases; All groups rows under category headings), module list scrolls with the mouse wheel (rows outside the viewport are not added; footer stays below it), toggle each module, rebind its key, tooltips, open ESP settings, rebind the menu key
   - `Settings` - registry of per-module numeric/toggle settings (`Settings.Def`), stored in `Config.values`; read with `Settings.get/getI/getF/on(key)`. Add a module setting by adding a `Def` in the static block; `ModuleSettingsScreen` builds the page automatically
   - `ModuleSettingsScreen` - generic settings page for every module with `hasSettings` (except ESP, which uses `EspScreen`); Chest ESP adds block presets + picker; nested `MobFilter` is the ESP mob filter page
   - `PickerScreen` - searchable paged multi-select (mobs, blocks)
