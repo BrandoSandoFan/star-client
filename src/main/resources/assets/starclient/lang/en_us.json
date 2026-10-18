@@ -11,7 +11,7 @@
   "key.starclient.fly": "Toggle Fly",
   "key.starclient.reach": "Toggle Reach",
   "key.starclient.aimbot": "Toggle Aim Bot",
-  "key.starclient.hitbot": "Toggle Hit Bot",
+  "key.starclient.hitbot": "Toggle Trigger Bot",
   "key.starclient.elytrafly": "Toggle Elytra Fly",
   "key.starclient.killaura": "Toggle Kill Aura",
   "key.starclient.crits": "Toggle Crits",
@@ -41,5 +41,12 @@
   "key.starclient.noslow": "Toggle No Slow",
   "key.starclient.velocity": "Toggle Velocity",
   "key.starclient.portalfinder": "Toggle Portal Finder",
-  "key.starclient.signreader": "Toggle Sign Reader"
+  "key.starclient.signreader": "Toggle Sign Reader",
+  "key.starclient.autolog": "Toggle Auto Log",
+  "key.starclient.attrswap": "Toggle Attribute Swap",
+  "key.starclient.autowater": "Toggle Auto Water",
+  "key.starclient.automine": "Toggle Automine",
+  "key.starclient.chatmacro": "Toggle Chat Macro",
+  "key.starclient.autotpa": "Toggle Auto TPA",
+  "key.starclient.clipper": "Save clip"
 }

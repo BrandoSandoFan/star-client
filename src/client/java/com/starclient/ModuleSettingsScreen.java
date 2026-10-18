@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -45,6 +47,16 @@ public final class ModuleSettingsScreen extends PixelScreen {
 						v -> Settings.set(d.key(), d.snap(v))));
 			}
 			y += 24;
+		}
+
+		for (Settings.TextDef t : Settings.texts(module)) {
+			EditBox box = new EditBox(font, left, y + 10, 300, 20, Component.literal(t.label()));
+			box.setMaxLength(t.maxLength());
+			box.setValue(Settings.text(t.key()));
+			box.setResponder(v -> Settings.setText(t.key(), v));
+			addRenderableWidget(new StringWidget(left, y, 300, 9, Component.literal(t.label()), font));
+			addRenderableWidget(box);
+			y += 36;
 		}
 
 		if (module == Module.CHEST_ESP) y = addChestWidgets(left, y);

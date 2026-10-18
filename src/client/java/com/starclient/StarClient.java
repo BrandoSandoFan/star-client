@@ -56,6 +56,12 @@ public class StarClient implements ClientModInitializer {
 	public static boolean velocityOn;
 	public static boolean portalFinderOn;
 	public static boolean signReaderOn;
+	public static boolean autoLogOn;
+	public static boolean attributeSwapOn;
+	public static boolean autoWaterOn;
+	public static boolean autoMineOn;
+	public static boolean chatMacroOn;
+	public static boolean autoTpaOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -73,6 +79,8 @@ public class StarClient implements ClientModInitializer {
 
 		Config.load();
 		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
+		ClientTickEvents.START_CLIENT_TICK.register(AttributeSwap::start);
+		ClientTickEvents.END_CLIENT_TICK.register(AttributeSwap::end);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			Zoom.off(client);
@@ -100,6 +108,10 @@ public class StarClient implements ClientModInitializer {
 			Waypoints.reset();
 			PortalFinder.clear();
 			SignReader.clear();
+			AttributeSwap.reset();
+			AutoSafety.reset();
+			Automation.reset();
+			Clipper.reset();
 			return;
 		}
 
@@ -110,7 +122,7 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < keys.length; i++) {
 			while (keys[i].consumeClick()) {
 				toggle(mc, i);
-				if (i != Module.PANIC) status(mc, Module.ALL.get(i).name(), isOn(i));
+				if (i != Module.PANIC && i != Module.CLIPPER) status(mc, Module.ALL.get(i).name(), isOn(i));
 			}
 		}
 
@@ -127,6 +139,9 @@ public class StarClient implements ClientModInitializer {
 		Gear.tick(mc);
 		Zoom.tick(mc);
 		Waypoints.tick(mc);
+		AutoSafety.tick(mc);
+		Automation.tick(mc);
+		Clipper.tick(mc);
 	}
 
 	/** Module keybinds in {@link Module#ALL} order. */
@@ -180,6 +195,12 @@ public class StarClient implements ClientModInitializer {
 			case Module.VELOCITY -> velocityOn;
 			case Module.PORTAL_FINDER -> portalFinderOn;
 			case Module.SIGN_READER -> signReaderOn;
+			case Module.AUTO_LOG -> autoLogOn;
+			case Module.ATTRIBUTE_SWAP -> attributeSwapOn;
+			case Module.AUTO_WATER -> autoWaterOn;
+			case Module.AUTO_MINE -> autoMineOn;
+			case Module.CHAT_MACRO -> chatMacroOn;
+			case Module.AUTO_TPA -> autoTpaOn;
 			default -> false;
 		};
 	}
@@ -277,6 +298,31 @@ public class StarClient implements ClientModInitializer {
 				signReaderOn = !signReaderOn;
 				if (!signReaderOn) SignReader.clear();
 			}
+			case Module.AUTO_LOG -> {
+				autoLogOn = !autoLogOn;
+				AutoSafety.logReset();
+			}
+			case Module.ATTRIBUTE_SWAP -> {
+				attributeSwapOn = !attributeSwapOn;
+				AttributeSwap.reset();
+			}
+			case Module.AUTO_WATER -> {
+				autoWaterOn = !autoWaterOn;
+				AutoSafety.waterReset();
+			}
+			case Module.AUTO_MINE -> {
+				autoMineOn = !autoMineOn;
+				if (!autoMineOn) Automation.mineOff(mc);
+			}
+			case Module.CHAT_MACRO -> {
+				chatMacroOn = !chatMacroOn;
+				Automation.macroReset();
+			}
+			case Module.AUTO_TPA -> {
+				autoTpaOn = !autoTpaOn;
+				Automation.tpaReset();
+			}
+			case Module.CLIPPER -> Clipper.save(mc);
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;

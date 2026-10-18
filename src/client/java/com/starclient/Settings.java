@@ -29,6 +29,12 @@ public final class Settings {
 	private static final Map<String, Double> ELYTRA_INFINITE = Map.of(
 			"elytrafly.dive", 35.0, "elytrafly.climb", 40.0, "elytrafly.diveend", 2.2, "elytrafly.climbend", 0.7, "elytrafly.step", 6.0);
 
+	/** A free-text setting (stored in {@link Config#texts}), edited in a text box on the module's settings page. */
+	public record TextDef(String key, String label, String def, int maxLength) { }
+
+	private static final Map<Integer, List<TextDef>> TEXTS = new HashMap<>();
+	private static final Map<String, TextDef> TEXT_BY_KEY = new HashMap<>();
+
 	private static final Map<Integer, List<Def>> BY_MODULE = new HashMap<>();
 	private static final Map<String, Def> BY_KEY = new HashMap<>();
 
@@ -43,6 +49,11 @@ public final class Settings {
 	private static void add(int module, Def... defs) {
 		BY_MODULE.put(module, List.of(defs));
 		for (Def d : defs) BY_KEY.put(d.key(), d);
+	}
+
+	private static void addTexts(int module, TextDef... defs) {
+		TEXTS.put(module, List.of(defs));
+		for (TextDef d : defs) TEXT_BY_KEY.put(d.key(), d);
 	}
 
 	/** Global settings with no module page. */
@@ -173,6 +184,37 @@ public final class Settings {
 				slider("signreader.range", "Range", 8, 128, 8, 48, "blocks"),
 				slider("signreader.max", "Signs listed", 1, 10, 1, 5, ""),
 				toggle("signreader.highlight", "Highlight signs", true));
+		add(Module.AUTO_LOG,
+				slider("autolog.health", "Log out at health", 1, 19, 1, 6, ""),
+				toggle("autolog.predict", "Predict incoming damage", true),
+				slider("autolog.window", "Recent damage window", 5, 40, 5, 20, "ticks"),
+				toggle("autolog.fall", "Count fall damage", true),
+				toggle("autolog.totem", "Stay if holding a totem", true));
+		add(Module.ATTRIBUTE_SWAP,
+				slider("attrswap.main", "Main slot", 1, 9, 1, 1, ""),
+				slider("attrswap.second", "Second slot", 1, 9, 1, 2, ""),
+				slider("attrswap.back", "Swap back after", 1, 10, 1, 1, "ticks"),
+				toggle("attrswap.manual", "Also on manual clicks", true));
+		add(Module.AUTO_WATER,
+				slider("autowater.fall", "Trigger after falling", 2, 20, 1, 3, "blocks"),
+								toggle("autowater.pickup", "Pick the water up again", true));
+		add(Module.AUTO_MINE,
+				slider("automine.minhealth", "Pause below health", 0, 20, 1, 0, ""));
+		add(Module.CHAT_MACRO,
+				slider("chatmacro.interval", "Interval", 1, 600, 1, 30, "s"),
+				slider("chatmacro.jitter", "Random variation", 0, 100, 5, 20, "%"),
+				toggle("chatmacro.random", "Random order", false));
+		addTexts(Module.CHAT_MACRO, new TextDef("chatmacro.messages", "Messages (separate with |)", "", 256));
+		add(Module.AUTO_TPA,
+				slider("autotpa.cooldown", "Cooldown between requests", 1, 300, 1, 30, "s"),
+				toggle("autotpa.here", "Use /tpahere instead of /tpa", false));
+		addTexts(Module.AUTO_TPA, new TextDef("autotpa.player", "Username", "", 32));
+		add(Module.CLIPPER,
+				toggle("clipper.record", "Keep recording in the background", true),
+				slider("clipper.seconds", "Clip length", 5, 60, 5, 30, "s"),
+				slider("clipper.interval", "Capture every", 1, 20, 1, 4, "ticks"),
+				slider("clipper.width", "Frame width", 240, 960, 80, 480, "px"),
+				toggle("clipper.ffmpeg", "Encode mp4 if ffmpeg is installed", true));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */
@@ -215,11 +257,27 @@ public final class Settings {
 		return get(key) >= 0.5;
 	}
 
+	public static List<TextDef> texts(int module) {
+		return TEXTS.getOrDefault(module, List.of());
+	}
+
+	public static String text(String key) {
+		String v = Config.get().texts.get(key);
+		if (v != null) return v;
+		TextDef d = TEXT_BY_KEY.get(key);
+		return d == null ? "" : d.def();
+	}
+
+	public static void setText(String key, String value) {
+		Config.get().texts.put(key, value);
+	}
+
 	public static void set(String key, double value) {
 		Config.get().values.put(key, value);
 	}
 
 	public static void reset(int module) {
 		for (Def d : defs(module)) Config.get().values.remove(d.key());
+		for (TextDef d : texts(module)) Config.get().texts.remove(d.key());
 	}
 }

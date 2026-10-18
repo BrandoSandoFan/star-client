@@ -66,6 +66,13 @@ public record Module(String id, String name, String description, Category catego
 	public static final int VELOCITY = 38;
 	public static final int PORTAL_FINDER = 39;
 	public static final int SIGN_READER = 40;
+	public static final int AUTO_LOG = 41;
+	public static final int ATTRIBUTE_SWAP = 42;
+	public static final int AUTO_WATER = 43;
+	public static final int AUTO_MINE = 44;
+	public static final int CHAT_MACRO = 45;
+	public static final int AUTO_TPA = 46;
+	public static final int CLIPPER = 47;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -78,11 +85,11 @@ public record Module(String id, String name, String description, Category catego
 			new Module("fly", "Fly", "Creative-style flight. Servers without flight permission will kick you.", Category.MOVEMENT, true),
 			new Module("reach", "Reach", "Extends block and entity interaction range. Most servers reject far hits.", Category.WORLD, true),
 			new Module("aimbot", "Aim Bot", "Smoothly turns toward the nearest player or hostile mob within 6 blocks.", Category.COMBAT, true),
-			new Module("hitbot", "Hit Bot", "Attacks whatever your crosshair is on once your attack is fully charged.", Category.COMBAT, true),
+			new Module("hitbot", "Trigger Bot", "Attacks whatever your crosshair is on once your attack is fully charged.", Category.COMBAT, true),
 				new Module("elytrafly", "Elytra Fly", "While gliding, alternates dive and climb angles to keep flying without fireworks.", Category.MOVEMENT, true),
 				new Module("killaura", "Kill Aura", "Attacks the nearest player or hostile mob in reach with line of sight, no aiming needed.", Category.COMBAT, true),
-				new Module("crits", "Crits", "Makes Hit Bot and Kill Aura hits critical by sending fake fall packets first. Anticheats flag this.", Category.COMBAT, true),
-				new Module("hitboxes", "Hitboxes", "Enlarges the area that counts as hitting an entity, for aiming, Hit Bot and Kill Aura. Servers still check real reach.", Category.COMBAT, true),
+				new Module("crits", "Crits", "Makes Trigger Bot and Kill Aura hits critical by sending fake fall packets first. Anticheats flag this.", Category.COMBAT, true),
+				new Module("hitboxes", "Hitboxes", "Enlarges the area that counts as hitting an entity, for aiming, Trigger Bot and Kill Aura. Servers still check real reach.", Category.COMBAT, true),
 				new Module("speed", "Speed", "Moves faster on the ground and in the air. Servers with movement checks will rubber-band you.", Category.MOVEMENT, true),
 				new Module("highjump", "High Jump", "Jumps much higher. Landing still hurts.", Category.MOVEMENT, true),
 				new Module("softfall", "Softfall", "Cancels fall damage by reporting that you are on the ground. Anticheats may flag it.", Category.MOVEMENT, true),
@@ -108,5 +115,12 @@ public record Module(String id, String name, String description, Category catego
 				new Module("noslow", "No Slow", "Cancels the slowdown while eating, drawing a bow or using a shield. Servers with movement checks may flag it.", Category.MOVEMENT, true),
 				new Module("velocity", "Velocity", "Reduces the knockback you take when hit.", Category.MOVEMENT, true),
 				new Module("portalfinder", "Portal Finder", "Marks nether portals, end portals and end portal frames in loaded chunks.", Category.BASE_FINDING, true),
-				new Module("signreader", "Sign Reader", "Lists the text of nearby signs on screen and highlights them.", Category.BASE_FINDING, true));
+				new Module("signreader", "Sign Reader", "Lists the text of nearby signs on screen and highlights them.", Category.BASE_FINDING, true),
+				new Module("autolog", "Auto Log", "Disconnects when your health drops to the set level, or when recent damage and a fall would take you there.", Category.COMBAT, true),
+				new Module("attrswap", "Attribute Swap", "Attacks with the main slot's item selected, then swaps to the second slot for the hit and back.", Category.COMBAT, true),
+				new Module("autowater", "Auto Water", "Places a water bucket just before you land from a long fall, then picks it up.", Category.MOVEMENT, true),
+				new Module("automine", "Automine", "Holds the attack key while you look at a block.", Category.WORLD, true),
+				new Module("chatmacro", "Chat Macro", "Sends your messages in chat on an interval with random variation.", Category.WORLD, true),
+				new Module("autotpa", "Auto TPA", "Repeats /tpa (or /tpahere) to a chosen player every time the cooldown ends. Built for DonutSMP.", Category.WORLD, true),
+				new Module("clipper", "Clipper", "Press the key to save the last seconds of gameplay as a frame sequence (mp4 if ffmpeg is installed).", Category.RENDER, true));
 }

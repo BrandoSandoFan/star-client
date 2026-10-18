@@ -49,6 +49,8 @@ public final class Config {
 
 	/** Per-module settings, keyed as in {@link Settings}. Missing keys use the registered default. */
 	public Map<String, Double> values = new HashMap<>();
+	/** Per-module free-text settings (usernames, chat messages), keyed as in {@link Settings.TextDef}. */
+	public Map<String, String> texts = new HashMap<>();
 
 	public boolean hasMob(String id) {
 		if (espMobSet == null) espMobSet = new HashSet<>(espMobs);
@@ -151,7 +153,7 @@ public final class Config {
 
 		/** One-shot actions are not part of a profile. */
 		private static boolean isSaved(int module) {
-			return module != Module.SORTER && module != Module.PANIC;
+			return module != Module.SORTER && module != Module.PANIC && module != Module.CLIPPER;
 		}
 	}
 
@@ -186,7 +188,7 @@ public final class Config {
 	private boolean valid() {
 		return espEnabled != null && espEnabled.length == ESP_NAMES.length
 				&& espColor != null && espColor.length == ESP_NAMES.length
-				&& espMobs != null && chestBlocks != null && values != null
+				&& espMobs != null && chestBlocks != null && values != null && texts != null
 				&& profiles != null && profiles.length == PROFILE_SLOTS;
 	}
 }
