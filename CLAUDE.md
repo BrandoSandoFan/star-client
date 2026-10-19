@@ -1,6 +1,6 @@
 # Star Client
 
-Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-game module menu.
+Client-side Fabric mod for Minecraft 26.3: ESP, base finder, freecam, and an in-game module menu.
 
 ## Stack
 - Java 25, Fabric Loom `1.17-SNAPSHOT` (resolves to 1.17.x, requires Gradle >= 9.5.0), Gradle wrapper 9.5.0
@@ -107,7 +107,7 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - CI: `.github/workflows/build.yml` builds on every push/PR and uploads the jar as artifact `star-client`
 - The sandbox cannot reach Fabric/Mojang Maven, so it cannot compile locally; push and read the failing job log from the Actions run
 
-## 26.2 API notes (learned from compile errors)
+## 26.x API notes (learned from compile errors, first on 26.2)
 - Rendering: `Screen.extractBackground/extractRenderState(GuiGraphicsExtractor, mx, my, a)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents` (abstract) and `onPress(InputWithModifiers)`. `GuiGraphicsExtractor`: `fill(x1,y1,x2,y2,argb)`, `outline(x,y,w,h,argb)`, `text(font, Component, x, y, argb, shadow)`
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
@@ -117,7 +117,7 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions
-- Mojang-mapped names (Minecraft 26.2 is unobfuscated)
+- Mojang-mapped names (Minecraft 26.3 is unobfuscated)
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
 - New module: append to `Module.ALL` (+ index constant), extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`
