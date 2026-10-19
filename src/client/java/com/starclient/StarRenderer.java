@@ -67,6 +67,16 @@ public final class StarRenderer {
 
 	private static final Map<EntityType<?>, String> TYPE_IDS = new HashMap<>();
 
+	// Block-based boxes only change when a finder publishes a new list, so they are rebuilt then, not every frame.
+	private static List<PortalFinder.Hit> portalSrc;
+	private static List<Box> portalBoxes = List.of();
+	private static float portalAlpha;
+	private static List<BaseFinder.Hit> baseSrc;
+	private static List<Box> baseBoxes = List.of();
+	private static List<ChestEsp.Hit> chestSrc;
+	private static List<Box> chestBoxes = List.of();
+	private static float chestAlpha;
+
 	private static volatile List<Box> boxes = List.of();
 	private static volatile List<Line> lines = List.of();
 
@@ -92,13 +102,18 @@ public final class StarRenderer {
 		Config cfg = Config.get();
 		Vec3 origin = context.levelState().cameraRenderState.pos;
 
+		List<Target> targets = new ArrayList<>();
 		if (StarClient.espOn) {
+			boolean tracers = StarClient.tracersOn;
 			for (Entity e : mc.level.entitiesForRendering()) {
 				int rgb = espColour(mc, cfg, e, origin);
 				if (rgb < 0) continue;
+				float r = ((rgb >> 16) & 0xFF) / 255f;
+				float g = ((rgb >> 8) & 0xFF) / 255f;
+				float b = (rgb & 0xFF) / 255f;
 				AABB bb = e.getBoundingBox();
-				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ,
-						((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, cfg.espAlpha));
+				out.add(new Box(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, r, g, b, cfg.espAlpha));
+				if (tracers) targets.add(new Target(bb.getCenter(), r, g, b));
 			}
 		}
 
@@ -111,14 +126,6 @@ public final class StarRenderer {
 			float alpha = Settings.getF("tracers.alpha");
 			float width = Settings.getF("tracers.width");
 			// Only what is switched on gets a tracer: entities need ESP, blocks need Chest ESP / Portal Finder.
-			List<Target> targets = new ArrayList<>();
-			if (StarClient.espOn) {
-				for (Entity e : mc.level.entitiesForRendering()) {
-					int rgb = espColour(mc, cfg, e, origin);
-					if (rgb < 0) continue;
-					targets.add(new Target(e.getBoundingBox().getCenter(), ((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f));
-				}
-			}
 			if (StarClient.chestEspOn) {
 				for (ChestEsp.Hit hit : ChestEsp.hits()) targets.add(new Target(Vec3.atCenterOf(hit.pos()), hit.r(), hit.g(), hit.b()));
 			}
@@ -148,11 +155,16 @@ public final class StarRenderer {
 		}
 
 		if (StarClient.portalFinderOn) {
+			List<PortalFinder.Hit> src = PortalFinder.hits();
 			float alpha = Settings.getF("portalfinder.alpha");
-			for (PortalFinder.Hit hit : PortalFinder.hits()) {
-				BlockPos p = hit.pos();
-				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), alpha));
+			if (src != portalSrc || alpha != portalAlpha) {
+				List<Box> built = new ArrayList<>(src.size());
+				for (PortalFinder.Hit hit : src) built.add(block(hit.pos(), hit.r(), hit.g(), hit.b(), alpha));
+				portalBoxes = built;
+				portalSrc = src;
+				portalAlpha = alpha;
 			}
+			out.addAll(portalBoxes);
 		}
 
 		if (StarClient.signReaderOn && Settings.on("signreader.highlight")) {
@@ -163,21 +175,33 @@ public final class StarRenderer {
 		}
 
 		if (StarClient.baseFinderOn) {
-			for (BaseFinder.Hit hit : BaseFinder.hits()) {
-				double x = hit.pos().getX() + 0.5;
-				double y = hit.pos().getY();
-				double z = hit.pos().getZ() + 0.5;
-				// Tall beacon-style column so it is visible from far away.
-				out.add(new Box(x - 1.5, y - 8, z - 1.5, x + 1.5, y + 40, z + 1.5, 0.7f, 0.2f, 1.0f, 0.4f));
+			List<BaseFinder.Hit> src = BaseFinder.hits();
+			if (src != baseSrc) {
+				List<Box> built = new ArrayList<>(src.size());
+				for (BaseFinder.Hit hit : src) {
+					double x = hit.pos().getX() + 0.5;
+					double y = hit.pos().getY();
+					double z = hit.pos().getZ() + 0.5;
+					// Tall beacon-style column so it is visible from far away.
+					built.add(new Box(x - 1.5, y - 8, z - 1.5, x + 1.5, y + 40, z + 1.5, 0.7f, 0.2f, 1.0f, 0.4f));
+				}
+				baseBoxes = built;
+				baseSrc = src;
 			}
+			out.addAll(baseBoxes);
 		}
 
 		if (StarClient.chestEspOn) {
+			List<ChestEsp.Hit> src = ChestEsp.hits();
 			float alpha = Settings.getF("chestesp.alpha");
-			for (ChestEsp.Hit hit : ChestEsp.hits()) {
-				BlockPos p = hit.pos();
-				out.add(new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, hit.r(), hit.g(), hit.b(), alpha));
+			if (src != chestSrc || alpha != chestAlpha) {
+				List<Box> built = new ArrayList<>(src.size());
+				for (ChestEsp.Hit hit : src) built.add(block(hit.pos(), hit.r(), hit.g(), hit.b(), alpha));
+				chestBoxes = built;
+				chestSrc = src;
+				chestAlpha = alpha;
 			}
+			out.addAll(chestBoxes);
 		}
 
 		if (StarClient.trajectoriesOn && !Freecam.isOn()) {
@@ -199,6 +223,10 @@ public final class StarRenderer {
 
 		boxes = out;
 		lines = strips;
+	}
+
+	private static Box block(BlockPos p, float r, float g, float b, float a) {
+		return new Box(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 1, p.getZ() + 1, r, g, b, a);
 	}
 
 	/** Colour (RGB) ESP would draw {@code e} in, or -1 when ESP filters it out. Shared by the ESP boxes and Tracers. */
