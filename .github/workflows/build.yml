@@ -23,6 +23,20 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
 
+      - name: Inspect Minecraft API (temporary)
+        if: always()
+        run: |
+          JAR=$(find ~/.gradle/caches/fabric-loom -name 'minecraft-*.jar' -not -name '*sources*' 2>/dev/null | head -5)
+          echo "JARS: $JAR"
+          for J in $JAR; do
+            echo "== $J"
+            jar tf "$J" | grep -E 'renderpearl|blaze3d/(PrimitiveTopology|pipeline/RenderPipeline|systems/RenderPass|vertex/VertexFormat|textures/GpuTextureView|buffers/GpuBufferSlice)|InputConstants|SwingAnimation|SignText|SignBlockEntity' | head -150
+          done
+          J=$(echo "$JAR" | head -1)
+          for C in com.mojang.blaze3d.platform.InputConstants\$Type net.minecraft.world.level.block.entity.SignBlockEntity net.minecraft.world.entity.LivingEntity; do
+            echo "== javap $C"; javap -cp "$J" -public "$C" 2>&1 | grep -Ei 'class|enum|KEY|MOUSE|SCANCODE|Text|swing' | head -60
+          done
+
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
