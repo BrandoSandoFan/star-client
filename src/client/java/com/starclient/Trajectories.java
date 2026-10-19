@@ -16,6 +16,9 @@ public final class Trajectories {
 	/** Points along the flight path; {@code landing} is the block impact point, or null if nothing was hit. */
 	public record Path(List<Vec3> points, Vec3 landing) { }
 
+	private static Path cached;
+	private static Object cachedKey;
+
 	private Trajectories() { }
 
 	public static Path compute(Minecraft mc) {
@@ -30,6 +33,9 @@ public final class Trajectories {
 		Vec3 vel = mc.player.getViewVector(1.0f).scale(speed);
 
 		int maxSteps = Settings.getI("trajectories.steps");
+		// Up to 200 block raycasts: reuse the last path while its inputs are unchanged (this runs every frame).
+		Object key = List.of(pos, vel, gravity, drag, maxSteps, mc.level, mc.level.getGameTime());
+		if (key.equals(cachedKey)) return cached;
 		List<Vec3> points = new ArrayList<>();
 		Vec3 landing = null;
 		for (int i = 0; i < maxSteps; i++) {
@@ -44,7 +50,9 @@ public final class Trajectories {
 			vel = vel.scale(drag).subtract(0, gravity, 0);
 			if (pos.y < mc.level.getMinY() - 16) break;
 		}
-		return new Path(points, landing);
+		cached = new Path(points, landing);
+		cachedKey = key;
+		return cached;
 	}
 
 	/** {speed, gravity, drag} in blocks/tick terms for the held item, or null if it is not a projectile launcher. */
