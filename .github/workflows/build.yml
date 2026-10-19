@@ -23,6 +23,18 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
 
+      - name: API dump (temporary)
+        if: always()
+        run: |
+          J=$(find ~/.gradle .gradle -name 'minecraft-*.jar' ! -name '*sources*' 2>/dev/null | head -3)
+          echo "$J"
+          for j in $J; do
+            for c in net.minecraft.world.entity.LivingEntity net.minecraft.world.level.block.entity.SignBlockEntity net.minecraft.world.level.block.entity.SignText net.minecraft.client.renderer.StagedVertexBuffer net.minecraft.client.renderer.StagedVertexBuffer\$ExecuteInfo net.minecraft.client.renderer.RenderPipelines com.mojang.blaze3d.systems.RenderSystem com.mojang.blaze3d.pipeline.RenderTarget com.mojang.renderpearl.frontend.FrontendRenderPass com.mojang.renderpearl.api.pipeline.RenderPipeline com.mojang.renderpearl.api.commands.CommandEncoder com.mojang.renderpearl.api.devices.GpuDevice com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline; do
+              echo "=== $c ($j)"; javap -public -cp "$j" "$c" 2>&1 | head -150
+            done
+          done
+          for j in $J; do unzip -l "$j" | grep -i -E 'SignTextSlot|SwingAnimation|CompiledRenderPipeline|DynamicGpuData|CommandEncoder|GpuDevice' | head -30; done
+
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:

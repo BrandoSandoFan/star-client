@@ -198,7 +198,7 @@ public final class ModulesScreen extends PixelScreen {
 	public boolean keyPressed(KeyEvent event) {
 		if (listening != null) {
 			if (event.key() != InputConstants.KEY_ESCAPE) {
-				listening.setKey(InputConstants.Type.KEYSYM.getOrCreate(event.key()));
+				listening.setKey(InputConstants.Type.KEYBOARD.getOrCreate(event.key()));
 				KeyMapping.resetMapping();
 				minecraft.options.save();
 			}
