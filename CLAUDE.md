@@ -115,7 +115,7 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - 26.2: current screen is `mc.gui.screen()` / `mc.gui.setScreen(...)` (not `mc.screen`/`mc.setScreen`); overlay message is `mc.gui.hud.setOverlayMessage`; hidden HUD is `mc.gui.hud.isHidden()`; `ChatFormatting.getColor` is gone (`Module.Category.rgb` holds the RGB); the main render target is `mc.gameRenderer.mainRenderTarget()`
 - 26.2 through-walls boxes: `StarRenderer` uses `StagedVertexBuffer` (`appendDraw`, `getVertexBuilder`, `upload`, `getExecuteInfo`, `endFrame`) and `RenderPass.drawIndexed(indexCount, 1, firstIndex, baseVertex, 0)`, following the Fabric docs `CustomRenderPipeline` example
 - 26.3: render classes moved to `com.mojang.renderpearl.api.*` (`buffers.GpuBufferSlice`, `commands.RenderPass`, `pipeline.{RenderPipeline,PrimitiveTopology,CompiledRenderPipeline}`, `textures.GpuTextureView`, `vertex.VertexFormat`); `RenderPass.setPipeline` takes `RenderSystem.getCompiledPipelineNullable(pipeline)` (null while compiling, skip the draw); `InputConstants.Type.KEYBOARD` replaces `KEYSYM`; `SignBlockEntity.getText(SignTextSlot.FRONT/BACK)`; `LivingEntity.swing(hand, stack.getAttackAnimation(), true)`
-- Branches: `main` and `clipper-gif-fallback` target 26.2, `mc-26.3` targets 26.3 (one jar per Minecraft version; port fixes between them by hand)
+- Branches: `main` and `mc-26.3` target 26.3; `clipper-gif-fallback` is the last 26.2 build (one jar per Minecraft version; port fixes between them by hand)
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions
