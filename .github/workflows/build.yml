@@ -26,14 +26,12 @@ jobs:
       - name: API dump (temporary)
         if: always()
         run: |
-          J=$(find ~/.gradle .gradle -name 'minecraft-*.jar' ! -name '*sources*' 2>/dev/null | head -3)
-          echo "$J"
-          for j in $J; do
-            for c in net.minecraft.world.entity.LivingEntity net.minecraft.world.level.block.entity.SignBlockEntity net.minecraft.world.level.block.entity.SignText net.minecraft.client.renderer.StagedVertexBuffer net.minecraft.client.renderer.StagedVertexBuffer\$ExecuteInfo net.minecraft.client.renderer.RenderPipelines com.mojang.blaze3d.systems.RenderSystem com.mojang.blaze3d.pipeline.RenderTarget com.mojang.renderpearl.frontend.FrontendRenderPass com.mojang.renderpearl.api.pipeline.RenderPipeline com.mojang.renderpearl.api.commands.CommandEncoder com.mojang.renderpearl.api.devices.GpuDevice com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline; do
-              echo "=== $c ($j)"; javap -public -cp "$j" "$c" 2>&1 | head -150
-            done
+          find ~/.gradle .gradle -name '*.jar' \( -path '*26.3*' -o -iname '*renderpearl*' -o -iname 'minecraft-*' \) 2>/dev/null | head -20
+          CP=$(find ~/.gradle .gradle -name '*.jar' \( -path '*26.3*' -o -iname '*renderpearl*' \) ! -name '*sources*' 2>/dev/null | tr '\n' ':')
+          for c in net.minecraft.world.entity.LivingEntity net.minecraft.world.level.block.entity.SignBlockEntity net.minecraft.world.level.block.entity.SignText net.minecraft.client.renderer.StagedVertexBuffer 'net.minecraft.client.renderer.StagedVertexBuffer$ExecuteInfo' com.mojang.blaze3d.systems.RenderSystem com.mojang.blaze3d.pipeline.RenderTarget com.mojang.renderpearl.frontend.FrontendRenderPass com.mojang.renderpearl.api.pipeline.RenderPipeline 'com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder' com.mojang.renderpearl.api.commands.CommandEncoder com.mojang.renderpearl.api.devices.GpuDevice com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline net.minecraft.client.renderer.DynamicGpuData; do
+            echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | grep -v -E '^\s+public static final .*RenderPipeline [A-Z_]+;' | head -120
           done
-          for j in $J; do unzip -l "$j" | grep -i -E 'SignTextSlot|SwingAnimation|CompiledRenderPipeline|DynamicGpuData|CommandEncoder|GpuDevice' | head -30; done
+          for j in $(echo $CP | tr ':' ' '); do unzip -l "$j" | grep -E 'SignTextSlot|SwingAnimation\.class|DynamicGpuData|CompiledRenderPipeline' | head; done
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
