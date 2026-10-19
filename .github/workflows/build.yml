@@ -23,15 +23,6 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
 
-      - name: Inspect Minecraft API (temporary)
-        if: always()
-        run: |
-          JAR=$(find ~/.gradle/caches/fabric-loom/26.3 -name 'minecraft-client*.jar' -not -name '*sources*' | tr '\n' ':')
-          for J in $(echo "$JAR" | tr ':' ' '); do jar tf "$J"; done | grep -E '(CompiledRenderPipeline|GpuDevice|CommandEncoder)\.class$' | sort -u
-          for C in $(for J in $(echo "$JAR" | tr ':' ' '); do jar tf "$J"; done | grep -E '/(CompiledRenderPipeline|GpuDevice|CommandEncoder)\.class$' | sed 's#/#.#g; s#\.class$##' | sort -u) com.mojang.blaze3d.systems.RenderSystem; do
-            echo "== javap $C"; javap -cp "$JAR" -public "$C" 2>&1 | grep -Ei 'Compiled|class |interface |getDevice|createRenderPass' | head -30
-          done
-
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
