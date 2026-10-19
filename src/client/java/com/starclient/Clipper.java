@@ -1,6 +1,7 @@
 package com.starclient;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,7 +15,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.ImageOutputStream;
 
 import com.mojang.blaze3d.platform.NativeImage;
 
@@ -28,7 +36,8 @@ import net.fabricmc.loader.api.FabricLoader;
 /**
  * Clipper: keeps the last {@code clipper.seconds} of gameplay as small PNG frames in memory and writes them to
  * {@code clips/<time>/} when the module key is pressed. Frames are taken every {@code clipper.interval} ticks
- * and scaled to {@code clipper.width}. If ffmpeg is on the PATH the frames are encoded to {@code clip.mp4}.
+ * and scaled to {@code clipper.width}. If ffmpeg is on the PATH the frames are encoded to {@code clip.mp4},
+ * otherwise to a looping {@code clip.gif} written in pure Java.
  */
 public final class Clipper {
 	private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
@@ -110,7 +119,10 @@ public final class Clipper {
 			try {
 				Files.createDirectories(dir);
 				for (int i = 0; i < snapshot.size(); i++) Files.write(dir.resolve(String.format("frame_%04d.png", i)), snapshot.get(i));
-				result = ffmpeg && encodeVideo(dir, fps) ? "clips/" + dir.getFileName() + "/clip.mp4" : "clips/" + dir.getFileName();
+				String base = "clips/" + dir.getFileName();
+				if (ffmpeg && encodeVideo(dir, fps)) result = base + "/clip.mp4";
+				else if (encodeGif(dir, snapshot, fps)) result = base + "/clip.gif";
+				else result = base;
 			} catch (IOException e) {
 				result = null;
 			}
@@ -131,9 +143,7 @@ public final class Clipper {
 				proc.destroyForcibly();
 				return false;
 			}
-			try (var files = Files.list(dir)) {
-				for (Path f : (Iterable<Path>) files.filter(f -> f.getFileName().toString().endsWith(".png"))::iterator) Files.delete(f);
-			}
+			deleteFrames(dir);
 			return true;
 		} catch (IOException e) {
 			return false;
@@ -141,6 +151,61 @@ public final class Clipper {
 			Thread.currentThread().interrupt();
 			return false;
 		}
+	}
+
+	private static void deleteFrames(Path dir) throws IOException {
+		try (var files = Files.list(dir)) {
+			for (Path f : (Iterable<Path>) files.filter(f -> f.getFileName().toString().endsWith(".png"))::iterator) Files.delete(f);
+		}
+	}
+
+	/** Pure-Java fallback: writes a looping animated GIF with the JDK's GIF writer. True on success, in which case the frames are deleted. */
+	private static boolean encodeGif(Path dir, List<byte[]> frames, double fps) {
+		ImageWriter writer = ImageIO.getImageWritersByFormatName("gif").next();
+		try (ImageOutputStream out = ImageIO.createImageOutputStream(dir.resolve("clip.gif").toFile())) {
+			writer.setOutput(out);
+			writer.prepareWriteSequence(null);
+			String delay = String.valueOf(Math.max(2, Math.round(100 / fps)));
+			for (int i = 0; i < frames.size(); i++) {
+				BufferedImage img = ImageIO.read(new ByteArrayInputStream(frames.get(i)));
+				ImageWriteParam param = writer.getDefaultWriteParam();
+				IIOMetadata meta = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(img), param);
+				String format = meta.getNativeMetadataFormatName();
+				IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree(format);
+				IIOMetadataNode gce = node(root, "GraphicControlExtension");
+				gce.setAttribute("disposalMethod", "none");
+				gce.setAttribute("userInputFlag", "FALSE");
+				gce.setAttribute("transparentColorFlag", "FALSE");
+				gce.setAttribute("delayTime", delay);
+				gce.setAttribute("transparentColorIndex", "0");
+				if (i == 0) {
+					IIOMetadataNode loop = new IIOMetadataNode("ApplicationExtension");
+					loop.setAttribute("applicationID", "NETSCAPE");
+					loop.setAttribute("authenticationCode", "2.0");
+					loop.setUserObject(new byte[] {1, 0, 0});
+					node(root, "ApplicationExtensions").appendChild(loop);
+				}
+				meta.setFromTree(format, root);
+				writer.writeToSequence(new IIOImage(img, null, meta), param);
+			}
+			writer.endWriteSequence();
+			out.flush();
+			deleteFrames(dir);
+			return true;
+		} catch (IOException | RuntimeException e) {
+			return false;
+		} finally {
+			writer.dispose();
+		}
+	}
+
+	private static IIOMetadataNode node(IIOMetadataNode root, String name) {
+		for (int i = 0; i < root.getLength(); i++) {
+			if (root.item(i).getNodeName().equalsIgnoreCase(name)) return (IIOMetadataNode) root.item(i);
+		}
+		IIOMetadataNode created = new IIOMetadataNode(name);
+		root.appendChild(created);
+		return created;
 	}
 
 	public static void reset() {

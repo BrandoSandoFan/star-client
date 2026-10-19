@@ -221,7 +221,7 @@ public final class Settings {
 				slider("clipper.seconds", "Clip length", 5, 60, 5, 30, "s"),
 				slider("clipper.interval", "Capture every", 1, 20, 1, 4, "ticks"),
 				slider("clipper.width", "Frame width", 240, 960, 80, 480, "px"),
-				toggle("clipper.ffmpeg", "Encode mp4 if ffmpeg is installed", true));
+				toggle("clipper.ffmpeg", "Use ffmpeg for mp4 if installed (else GIF)", true));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */
