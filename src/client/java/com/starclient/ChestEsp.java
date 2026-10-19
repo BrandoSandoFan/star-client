@@ -33,6 +33,9 @@ public final class ChestEsp {
 	private static final int BLOCK_RESCAN_TICKS = 100;
 
 	private static volatile List<Hit> hits = List.of();
+	private static List<Hit> filtered = List.of();
+	private static List<Hit> filteredFrom;
+	private static int filteredStamp = -1;
 	private static final Map<Long, List<Hit>> BLOCK_HITS = new HashMap<>();
 	private static final Map<Long, Integer> BLOCK_SCANNED = new HashMap<>();
 	private static final Map<Block, float[]> COLORS = new HashMap<>();
@@ -44,9 +47,16 @@ public final class ChestEsp {
 
 	public static List<Hit> hits() {
 		if (!StarClient.antiBaitOn) return hits;
-		List<Hit> out = new ArrayList<>(hits.size());
-		for (Hit h : hits) if (!AntiBait.hidesBlock(h.pos())) out.add(h);
-		return out;
+		List<Hit> source = hits;
+		int stamp = AntiBait.stamp();
+		if (source != filteredFrom || stamp != filteredStamp) {
+			List<Hit> out = new ArrayList<>(source.size());
+			for (Hit h : source) if (!AntiBait.hidesBlock(h.pos())) out.add(h);
+			filtered = out;
+			filteredFrom = source;
+			filteredStamp = stamp;
+		}
+		return filtered;
 	}
 
 	public static void clear() {

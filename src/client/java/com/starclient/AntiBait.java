@@ -50,6 +50,11 @@ public final class AntiBait {
 		level = null;
 	}
 
+	/** Changes every tick, so callers can cache a filtered list for the tick. */
+	static int stamp() {
+		return ticks;
+	}
+
 	public static boolean hidesBlock(BlockPos pos) {
 		if (!StarClient.antiBaitOn) return false;
 		Tracked t = CHUNKS.get(ChunkPos.pack(pos.getX() >> 4, pos.getZ() >> 4));
@@ -68,6 +73,8 @@ public final class AntiBait {
 			clear();
 			level = mc.level;
 		}
+		// A burst stays in the diff for the next pass, so every other tick is enough.
+		if ((ticks & 1) != 0) return;
 
 		ChunkPos center = mc.player.chunkPosition();
 		int radius = mc.options.getEffectiveRenderDistance() + 2;
@@ -89,9 +96,10 @@ public final class AntiBait {
 					t = new Tracked();
 					t.known.addAll(now.keySet());
 					CHUNKS.put(key, t);
-				} else {
+				} else if (now.size() != t.known.size()) {
+					// Same count as last pass: nothing was added, so the set diff is skipped.
 					t.known.retainAll(now.keySet());
-					t.bait.retainAll(now.keySet());
+					if (!t.bait.isEmpty()) t.bait.retainAll(now.keySet());
 					for (Map.Entry<BlockPos, BlockEntity> e : now.entrySet()) {
 						if (!t.known.add(e.getKey())) continue;
 						if (isSpawner(e.getValue())) spawners.add(e.getKey());
