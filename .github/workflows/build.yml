@@ -27,13 +27,10 @@ jobs:
         if: always()
         run: |
           JAR=$(find ~/.gradle/caches/fabric-loom/26.3 -name 'minecraft-client*.jar' -not -name '*sources*' | tr '\n' ':')
-          CP="$JAR"
-          for J in $(echo "$JAR" | tr ':' ' '); do jar tf "$J"; done | grep -E '/(GpuBufferSlice|PrimitiveTopology|RenderPipeline|RenderPass|VertexFormat|GpuTextureView|RenderTarget|SwingAnimation|SignTextSlot|CommandEncoder|RenderPassDescriptor)\.class$' | sort -u
-          for C in net.minecraft.world.item.component.SwingAnimation net.minecraft.world.level.block.entity.SignTextSlot net.minecraft.client.player.LocalPlayer; do
-            echo "== javap $C"; javap -cp "$CP" -public "$C" 2>&1 | grep -Ei 'class |enum |static final|swing|DEFAULT' | head -40
+          for J in $(echo "$JAR" | tr ':' ' '); do jar tf "$J"; done | grep -E '(CompiledRenderPipeline|GpuDevice|CommandEncoder)\.class$' | sort -u
+          for C in $(for J in $(echo "$JAR" | tr ':' ' '); do jar tf "$J"; done | grep -E '/(CompiledRenderPipeline|GpuDevice|CommandEncoder)\.class$' | sed 's#/#.#g; s#\.class$##' | sort -u) com.mojang.blaze3d.systems.RenderSystem; do
+            echo "== javap $C"; javap -cp "$JAR" -public "$C" 2>&1 | grep -Ei 'Compiled|class |interface |getDevice|createRenderPass' | head -30
           done
-          echo "== SWING_ANIMATION"; javap -cp "$CP" -public net.minecraft.core.component.DataComponents 2>&1 | grep -i swing
-          echo "== ItemStack swing"; javap -cp "$CP" -public net.minecraft.world.item.ItemStack 2>&1 | grep -i swing
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
