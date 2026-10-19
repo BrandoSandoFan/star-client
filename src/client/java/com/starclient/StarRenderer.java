@@ -12,7 +12,7 @@ import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.renderpearl.frontend.FrontendRenderPass;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -336,9 +336,9 @@ public final class StarRenderer {
 		GpuTextureView colour = target.getColorTextureView();
 		if (colour == null) return;
 
-		try (FrontendRenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
 				() -> StarClient.ID + " boxes", colour, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
-			pass.setPipeline(FILLED_THROUGH_WALLS);
+			pass.setPipeline(RenderSystem.getCompiledPipeline(FILLED_THROUGH_WALLS));
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", dynamicTransforms);
 			pass.setVertexBuffer(0, info.vertexBuffer().slice());

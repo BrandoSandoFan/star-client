@@ -26,12 +26,14 @@ jobs:
       - name: API dump (temporary)
         if: always()
         run: |
-          find ~/.gradle .gradle -name '*.jar' \( -path '*26.3*' -o -iname '*renderpearl*' -o -iname 'minecraft-*' \) 2>/dev/null | head -20
           CP=$(find ~/.gradle .gradle -name '*.jar' \( -path '*26.3*' -o -iname '*renderpearl*' \) ! -name '*sources*' 2>/dev/null | tr '\n' ':')
-          for c in net.minecraft.world.entity.LivingEntity net.minecraft.world.level.block.entity.SignBlockEntity net.minecraft.world.level.block.entity.SignText net.minecraft.client.renderer.StagedVertexBuffer 'net.minecraft.client.renderer.StagedVertexBuffer$ExecuteInfo' com.mojang.blaze3d.systems.RenderSystem com.mojang.blaze3d.pipeline.RenderTarget com.mojang.renderpearl.frontend.FrontendRenderPass com.mojang.renderpearl.api.pipeline.RenderPipeline 'com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder' com.mojang.renderpearl.api.commands.CommandEncoder com.mojang.renderpearl.api.devices.GpuDevice com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline net.minecraft.client.renderer.DynamicGpuData; do
-            echo "=== $c"; javap -public -cp "$CP" "$c" 2>&1 | grep -v -E '^\s+public static final .*RenderPipeline [A-Z_]+;' | head -120
-          done
-          for j in $(echo $CP | tr ':' ' '); do unzip -l "$j" | grep -E 'SignTextSlot|SwingAnimation\.class|DynamicGpuData|CompiledRenderPipeline' | head; done
+          javap -public -cp "$CP" net.minecraft.world.entity.LivingEntity 2>&1 | grep -i swing
+          javap -public -cp "$CP" net.minecraft.world.entity.Mob 2>&1 | grep -i swing
+          javap -public -cp "$CP" net.minecraft.world.item.ItemStack 2>&1 | grep -i -E 'animation|swing'
+          javap -public -cp "$CP" net.minecraft.world.entity.player.Player 2>&1 | grep -i swing
+          javap -public -cp "$CP" net.minecraft.client.multiplayer.MultiPlayerGameMode 2>&1 | grep -i -E 'attack|swing'
+          javap -public -cp "$CP" net.minecraft.world.item.component.SwingAnimation 2>&1
+          javap -public -cp "$CP" net.minecraft.world.level.block.entity.SignTextSlot 2>&1
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
