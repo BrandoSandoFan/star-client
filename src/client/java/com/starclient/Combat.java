@@ -92,7 +92,7 @@ public final class Combat {
 		Diagnostics.attack(now, Settings.getI(delayKey));
 		lastAttack = now;
 		AttributeSwap.around(mc, () -> mc.gameMode.attack(p, target));
-		p.swing(InteractionHand.MAIN_HAND);
+		p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
 	}
 
 	/**

@@ -23,18 +23,6 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
 
-      - name: API dump (temporary)
-        if: always()
-        run: |
-          CP=$(find ~/.gradle .gradle -name '*.jar' \( -path '*26.3*' -o -iname '*renderpearl*' \) ! -name '*sources*' 2>/dev/null | tr '\n' ':')
-          javap -public -cp "$CP" net.minecraft.world.entity.LivingEntity 2>&1 | grep -i swing
-          javap -public -cp "$CP" net.minecraft.world.entity.Mob 2>&1 | grep -i swing
-          javap -public -cp "$CP" net.minecraft.world.item.ItemStack 2>&1 | grep -i -E 'animation|swing'
-          javap -public -cp "$CP" net.minecraft.world.entity.player.Player 2>&1 | grep -i swing
-          javap -public -cp "$CP" net.minecraft.client.multiplayer.MultiPlayerGameMode 2>&1 | grep -i -E 'attack|swing'
-          javap -public -cp "$CP" net.minecraft.world.item.component.SwingAnimation 2>&1
-          javap -public -cp "$CP" net.minecraft.world.level.block.entity.SignTextSlot 2>&1
-
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
