@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -334,11 +335,12 @@ public final class StarRenderer {
 
 		RenderTarget target = client.gameRenderer.mainRenderTarget();
 		GpuTextureView colour = target.getColorTextureView();
-		if (colour == null) return;
+		CompiledRenderPipeline compiled = RenderSystem.getCompiledPipelineNullable(FILLED_THROUGH_WALLS);
+		if (colour == null || compiled == null) return;
 
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
 				() -> StarClient.ID + " boxes", colour, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
-			pass.setPipeline(FILLED_THROUGH_WALLS);
+			pass.setPipeline(compiled);
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", dynamicTransforms);
 			pass.setVertexBuffer(0, info.vertexBuffer().slice());
