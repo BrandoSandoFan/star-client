@@ -1,6 +1,6 @@
 # Star Client
 
-Client-side Fabric mod for Minecraft 26.2: ESP, base finder, freecam, and an in-game module menu.
+Client-side Fabric mod for Minecraft 26.3: ESP, base finder, freecam, and an in-game module menu.
 
 ## Stack
 - Java 25, Fabric Loom `1.17-SNAPSHOT` (resolves to 1.17.x, requires Gradle >= 9.5.0), Gradle wrapper 9.5.0
@@ -107,17 +107,18 @@ Module order is fixed by `Module.ALL`: 0 ESP, 1 Base Finder, 2 Freecam, 3 Chest 
 - CI: `.github/workflows/build.yml` builds on every push/PR and uploads the jar as artifact `star-client`
 - The sandbox cannot reach Fabric/Mojang Maven, so it cannot compile locally; push and read the failing job log from the Actions run
 
-## 26.2 API notes (learned from compile errors)
+## 26.2-26.3 API notes (learned from compile errors)
 - Rendering: `Screen.extractBackground/extractRenderState(GuiGraphicsExtractor, mx, my, a)`, `AbstractWidget.extractWidgetRenderState`, `AbstractButton.extractContents` (abstract) and `onPress(InputWithModifiers)`. `GuiGraphicsExtractor`: `fill(x1,y1,x2,y2,argb)`, `outline(x,y,w,h,argb)`, `text(font, Component, x, y, argb, shadow)`
 - No `LocalPlayer.displayClientMessage`; use `mc.gui.setOverlayMessage(Component, false)`
 - No `StringWidget.alignCenter()`; position the widget manually using `font.width(title)`
 - Screens use `keyPressed(KeyEvent)` with `event.key()`. Custom widgets override `extractWidgetRenderState`/`extractContents`; mouse events carry `event.x()`/`event.y()` (`MouseButtonEvent`)
 - 26.2: current screen is `mc.gui.screen()` / `mc.gui.setScreen(...)` (not `mc.screen`/`mc.setScreen`); overlay message is `mc.gui.hud.setOverlayMessage`; hidden HUD is `mc.gui.hud.isHidden()`; `ChatFormatting.getColor` is gone (`Module.Category.rgb` holds the RGB); the main render target is `mc.gameRenderer.mainRenderTarget()`
 - 26.2 through-walls boxes: `StarRenderer` uses `StagedVertexBuffer` (`appendDraw`, `getVertexBuilder`, `upload`, `getExecuteInfo`, `endFrame`) and `RenderPass.drawIndexed(indexCount, 1, firstIndex, baseVertex, 0)`, following the Fabric docs `CustomRenderPipeline` example
+- 26.3: the render API moved from `com.mojang.blaze3d` to `com.mojang.renderpearl` (`api.pipeline.RenderPipeline/PrimitiveTopology`, `api.buffers.GpuBufferSlice`, `api.textures.GpuTextureView`, `api.vertex.VertexFormat`, `api.commands.RenderPass`); `RenderPass.setPipeline` takes `RenderSystem.getCompiledPipeline(pipeline)`. `InputConstants.Type.KEYSYM` is `KEYBOARD`. `SignBlockEntity.getText(SignTextSlot)` replaces `getFrontText/getBackText`. `LivingEntity.swing(hand, SwingAnimation, boolean)`; use `stack.getAttackAnimation()`
 - These names change between Minecraft versions, so when bumping `minecraft_version` expect compile errors in `StarClient`, `StarRenderer` and the screens first
 
 ## Conventions
-- Mojang-mapped names (Minecraft 26.2 is unobfuscated)
+- Mojang-mapped names (Minecraft 26.3 is unobfuscated)
 - When bumping Loom, check the required Gradle version and update `gradle/wrapper/gradle-wrapper.properties`
 - Mod id, package and lang keys must stay in sync (`starclient`)
 - New module: append to `Module.ALL` (+ index constant), extend `isOn`/`toggle`, add a lang entry `key.starclient.<id>`

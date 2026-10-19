@@ -14,6 +14,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -77,7 +78,8 @@ public final class SignReader {
 
 	private static String text(SignBlockEntity sign) {
 		StringBuilder sb = new StringBuilder();
-		for (SignText side : new SignText[] {sign.getFrontText(), sign.getBackText()}) {
+		for (SignTextSlot slot : SignTextSlot.values()) {
+			SignText side = sign.getText(slot);
 			StringBuilder line = new StringBuilder();
 			for (Component c : side.getMessages(false)) {
 				String s = c.getString().trim();

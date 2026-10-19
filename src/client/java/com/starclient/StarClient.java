@@ -74,9 +74,9 @@ public class StarClient implements ClientModInitializer {
 		moduleKeys = new KeyMapping[Module.ALL.size()];
 		for (int i = 0; i < moduleKeys.length; i++) {
 			moduleKeys[i] = KeyMappingHelper.registerKeyMapping(
-					new KeyMapping("key.starclient." + Module.ALL.get(i).id(), InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), category));
+					new KeyMapping("key.starclient." + Module.ALL.get(i).id(), InputConstants.Type.KEYBOARD, InputConstants.UNKNOWN.getValue(), category));
 		}
-		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
+		menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.starclient.menu", InputConstants.Type.KEYBOARD, InputConstants.KEY_RSHIFT, category));
 
 		Config.load();
 		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);

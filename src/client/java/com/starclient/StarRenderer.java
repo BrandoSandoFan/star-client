@@ -8,16 +8,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
@@ -338,7 +338,7 @@ public final class StarRenderer {
 
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
 				() -> StarClient.ID + " boxes", colour, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
-			pass.setPipeline(FILLED_THROUGH_WALLS);
+			pass.setPipeline(RenderSystem.getCompiledPipeline(FILLED_THROUGH_WALLS));
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", dynamicTransforms);
 			pass.setVertexBuffer(0, info.vertexBuffer().slice());
