@@ -78,7 +78,8 @@ public final class SignReader {
 
 	private static String text(SignBlockEntity sign) {
 		StringBuilder sb = new StringBuilder();
-		for (SignText side : new SignText[] {sign.getText(SignTextSlot.FRONT), sign.getText(SignTextSlot.BACK)}) {
+		for (SignTextSlot slot : SignTextSlot.values()) {
+			SignText side = sign.getText(slot);
 			StringBuilder line = new StringBuilder();
 			for (Component c : side.getMessages(false)) {
 				String s = c.getString().trim();
