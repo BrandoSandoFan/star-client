@@ -63,6 +63,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean chatMacroOn;
 	public static boolean autoTpaOn;
 	public static boolean maceAuraOn;
+	public static boolean xrayOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -108,6 +109,7 @@ public class StarClient implements ClientModInitializer {
 			Zoom.off(mc);
 			Waypoints.reset();
 			PortalFinder.clear();
+			Xray.clear();
 			SignReader.clear();
 			AttributeSwap.reset();
 			AutoSafety.reset();
@@ -133,6 +135,7 @@ public class StarClient implements ClientModInitializer {
 		if (chestEspOn) ChestEsp.tick(mc);
 		if (portalFinderOn) PortalFinder.tick(mc);
 		if (signReaderOn) SignReader.tick(mc);
+		if (xrayOn) Xray.tick(mc);
 		Movement.tick(mc);
 		Utility.tick(mc);
 		Combat.tick(mc);
@@ -203,6 +206,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.CHAT_MACRO -> chatMacroOn;
 			case Module.AUTO_TPA -> autoTpaOn;
 			case Module.MACE_AURA -> maceAuraOn;
+			case Module.XRAY -> xrayOn;
 			default -> false;
 		};
 	}
@@ -325,6 +329,11 @@ public class StarClient implements ClientModInitializer {
 				Automation.tpaReset();
 			}
 			case Module.MACE_AURA -> maceAuraOn = !maceAuraOn;
+			case Module.XRAY -> {
+				xrayOn = !xrayOn;
+				if (!xrayOn) Xray.clear();
+				Xray.reload(mc);
+			}
 			case Module.CLIPPER -> Clipper.save(mc);
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {

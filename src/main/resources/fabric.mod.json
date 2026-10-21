@@ -8,6 +8,12 @@
   "entrypoints": {
     "client": ["com.starclient.StarClient"]
   },
+  "mixins": [
+    {
+      "config": "starclient.mixins.json",
+      "environment": "client"
+    }
+  ],
   "depends": {
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.3",

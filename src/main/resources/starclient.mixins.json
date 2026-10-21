@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "com.starclient.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["BlockMixin"],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
