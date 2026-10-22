@@ -18,8 +18,8 @@ public final class ModulesScreen extends PixelScreen {
 	private static final int PANEL_WIDTH = 320;
 	private static final int ROW_HEIGHT = 22;
 	private static final int SECTION_HEIGHT = 12;
-	/** Space below the module list: gap, menu key and profiles buttons, Done, panel padding and screen margin. */
-	private static final int FOOTER_HEIGHT = 8 + 24 + 26 + 28 + 6;
+	/** Space below the module list: gap, menu key and profiles buttons (one row), Done, panel padding and screen margin. */
+	private static final int FOOTER_HEIGHT = 8 + 24 + 28 + 6;
 
 	/** -1 shows every module, otherwise an index into {@link Module.Category#values()}. */
 	private static int tab = -1;
@@ -36,7 +36,7 @@ public final class ModulesScreen extends PixelScreen {
 	protected void init() {
 		int cx = width / 2;
 		int left = cx - PANEL_WIDTH / 2;
-		int y = 18;
+		int y = 12;
 
 		Component heading = Component.literal("Star Client").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
 		heading(heading, y);
@@ -45,7 +45,7 @@ public final class ModulesScreen extends PixelScreen {
 		int enabled = 0;
 		for (int i = 0; i < Module.ALL.size(); i++) if (StarClient.isOn(i)) enabled++;
 		addCentred(Component.literal(enabled + " of " + Module.ALL.size() + " modules enabled").withStyle(ChatFormatting.GRAY), cx, y);
-		y += 18;
+		y += 16;
 
 		// Tabs
 		Module.Category[] cats = Module.Category.values();
@@ -67,7 +67,7 @@ public final class ModulesScreen extends PixelScreen {
 			}).outline(selected ? Theme.GOLD : 0).bounds(left + t * (tabWidth + gap), y, tabWidth, 20).build();
 			addRenderableWidget(b);
 		}
-		y += 30;
+		y += 26;
 
 		// Module rows, in a viewport that scrolls when they do not fit above the footer.
 		// In the All view, modules are grouped under a heading per category.
@@ -119,15 +119,14 @@ public final class ModulesScreen extends PixelScreen {
 		y += 8;
 		KeyMapping menuKey = StarClient.menuKey();
 		Component menuKeyLabel = listening == menuKey ? listeningLabel() : menuKey.getTranslatedKeyMessage();
+		int half = (PANEL_WIDTH - 4) / 2;
 		addRenderableWidget(PixelButton.builder(Component.literal("Menu key: ").withStyle(ChatFormatting.GRAY).append(menuKeyLabel), b -> {
 			listening = menuKey;
 			rebuildWidgets();
-		}).bounds(left, y, PANEL_WIDTH, 20).build());
-		y += 24;
-
+		}).bounds(left, y, half, 20).build());
 		addRenderableWidget(PixelButton.builder(Component.literal("Profiles..."), b -> minecraft.gui.setScreen(new ProfilesScreen(this)))
-				.bounds(left, y, PANEL_WIDTH, 20).build());
-		y += 26;
+				.bounds(left + half + 4, y, half, 20).build());
+		y += 24;
 
 		addRenderableWidget(PixelButton.builder(Component.literal("Done"), b -> onClose()).gold()
 				.bounds(cx - 100, y, 200, 20).build());
