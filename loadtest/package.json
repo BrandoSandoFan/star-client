@@ -1,0 +1,15 @@
+{
+  "name": "star-client-loadtest",
+  "version": "1.0.0",
+  "description": "Minecraft server load testing toolkit",
+  "main": "loadtest.js",
+  "scripts": {
+    "start": "node loadtest.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
