@@ -153,7 +153,8 @@ public final class Config {
 
 		/** One-shot actions are not part of a profile. */
 		private static boolean isSaved(int module) {
-			return module != Module.SORTER && module != Module.PANIC && module != Module.CLIPPER;
+			return module != Module.SORTER && module != Module.PANIC && module != Module.CLIPPER
+					&& module != Module.CREATIVE_MENU;
 		}
 	}
 

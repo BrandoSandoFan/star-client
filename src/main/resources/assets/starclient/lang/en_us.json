@@ -50,5 +50,6 @@
   "key.starclient.autotpa": "Toggle Auto TPA",
   "key.starclient.clipper": "Save clip",
   "key.starclient.maceaura": "Toggle Mace Aura",
-  "key.starclient.xray": "Toggle X-Ray"
+  "key.starclient.xray": "Toggle X-Ray",
+  "key.starclient.creativemenu": "Open creative menu"
 }

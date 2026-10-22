@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -125,7 +126,7 @@ public class StarClient implements ClientModInitializer {
 		for (int i = 0; i < keys.length; i++) {
 			while (keys[i].consumeClick()) {
 				toggle(mc, i);
-				if (i != Module.PANIC && i != Module.CLIPPER) status(mc, Module.ALL.get(i).name(), isOn(i));
+				if (i != Module.PANIC && i != Module.CLIPPER && i != Module.CREATIVE_MENU) status(mc, Module.ALL.get(i).name(), isOn(i));
 			}
 		}
 
@@ -335,6 +336,11 @@ public class StarClient implements ClientModInitializer {
 				Xray.reload(mc);
 			}
 			case Module.CLIPPER -> Clipper.save(mc);
+			case Module.CREATIVE_MENU -> {
+				if (mc.player != null) {
+					mc.gui.setScreen(new CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), mc.options.operatorItemsTab().get()));
+				}
+			}
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
