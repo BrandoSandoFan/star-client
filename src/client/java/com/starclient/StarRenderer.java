@@ -71,6 +71,9 @@ public final class StarRenderer {
 	private static List<PortalFinder.Hit> portalSrc;
 	private static List<Box> portalBoxes = List.of();
 	private static float portalAlpha;
+	private static List<Xray.Hit> xraySrc;
+	private static List<Box> xrayBoxes = List.of();
+	private static float xrayAlpha;
 	private static List<BaseFinder.Hit> baseSrc;
 	private static List<Box> baseBoxes = List.of();
 	private static List<ChestEsp.Hit> chestSrc;
@@ -165,6 +168,19 @@ public final class StarRenderer {
 				portalAlpha = alpha;
 			}
 			out.addAll(portalBoxes);
+		}
+
+		if (StarClient.xrayOn && Settings.on("xray.highlight")) {
+			List<Xray.Hit> src = Xray.hits();
+			float alpha = Settings.getF("xray.alpha");
+			if (src != xraySrc || alpha != xrayAlpha) {
+				List<Box> built = new ArrayList<>(src.size());
+				for (Xray.Hit hit : src) built.add(block(hit.pos(), hit.r(), hit.g(), hit.b(), alpha));
+				xrayBoxes = built;
+				xraySrc = src;
+				xrayAlpha = alpha;
+			}
+			out.addAll(xrayBoxes);
 		}
 
 		if (StarClient.signReaderOn && Settings.on("signreader.highlight")) {

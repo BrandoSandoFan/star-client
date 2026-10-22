@@ -74,6 +74,7 @@ public record Module(String id, String name, String description, Category catego
 	public static final int AUTO_TPA = 46;
 	public static final int CLIPPER = 47;
 	public static final int MACE_AURA = 48;
+	public static final int XRAY = 49;
 
 	public static final List<Module> ALL = List.of(
 			new Module("esp", "ESP", "Boxes around players, mobs, animals and items through walls.", Category.RENDER, true),
@@ -124,5 +125,6 @@ public record Module(String id, String name, String description, Category catego
 				new Module("chatmacro", "Chat Macro", "Sends your messages in chat on an interval with random variation.", Category.WORLD, true),
 				new Module("autotpa", "Auto TPA", "Repeats /tpa (or /tpahere) to a chosen player every time the cooldown ends. Built for DonutSMP.", Category.WORLD, true),
 				new Module("clipper", "Clipper", "Press the key to save the last seconds of gameplay as a frame sequence (mp4 if ffmpeg is installed).", Category.RENDER, true),
-				new Module("maceaura", "Mace Aura", "While falling with a mace in your hotbar, swaps to it and smashes the nearest player or hostile mob in reach, then swaps back.", Category.COMBAT, true));
+				new Module("maceaura", "Mace Aura", "While falling with a mace in your hotbar, swaps to it and smashes the nearest player or hostile mob in reach, then swaps back.", Category.COMBAT, true),
+					new Module("xray", "X-Ray", "Makes stone invisible so ores show through the rock, with optional boxes around them.", Category.RENDER, true));
 }

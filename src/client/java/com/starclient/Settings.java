@@ -216,6 +216,11 @@ public final class Settings {
 				slider("maceaura.delay", "Min ticks between attacks", 0, 20, 1, 0, "ticks"),
 				toggle("maceaura.players", "Target players", true),
 				toggle("maceaura.hostiles", "Target hostile mobs", true));
+		add(Module.XRAY,
+				toggle("xray.hideall", "Hide every block except ores", false),
+				toggle("xray.highlight", "Box around ores", true),
+				slider("xray.radius", "Box radius", 1, 8, 1, 4, "chunks"),
+				slider("xray.alpha", "Box opacity", 0.1, 1, 0.05, 0.4, ""));
 		add(Module.CLIPPER,
 				toggle("clipper.record", "Keep recording in the background", false),
 				slider("clipper.seconds", "Clip length", 5, 60, 5, 30, "s"),
