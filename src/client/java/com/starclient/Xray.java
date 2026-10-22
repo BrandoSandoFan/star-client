@@ -41,7 +41,8 @@ public final class Xray {
 	private static int ticks;
 	private static int cursor;
 	private static List<Hit> cached;
-	private static boolean hideAllApplied;
+	/** Read per face on the mesh threads, so it is a cached copy of the setting, not a lookup. */
+	private static volatile boolean hideAllApplied;
 
 	private Xray() { }
 
@@ -49,7 +50,7 @@ public final class Xray {
 	public static Boolean faceOverride(BlockState state) {
 		if (!StarClient.xrayOn) return null;
 		if (oreColour(state) != 0) return Boolean.TRUE;
-		if (Settings.on("xray.hideall") || isStone(state)) return Boolean.FALSE;
+		if (hideAllApplied || isStone(state)) return Boolean.FALSE;
 		return null;
 	}
 
