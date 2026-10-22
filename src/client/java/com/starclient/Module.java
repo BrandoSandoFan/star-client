@@ -128,5 +128,5 @@ public record Module(String id, String name, String description, Category catego
 				new Module("clipper", "Clipper", "Press the key to save the last seconds of gameplay as a frame sequence (mp4 if ffmpeg is installed).", Category.RENDER, true),
 				new Module("maceaura", "Mace Aura", "While falling with a mace in your hotbar, swaps to it and smashes the nearest player or hostile mob in reach, then swaps back.", Category.COMBAT, true),
 					new Module("xray", "X-Ray", "Makes stone invisible so ores show through the rock, with optional boxes around them.", Category.RENDER, true),
-					new Module("creativemenu", "Creative Menu", "Opens the creative inventory screen. Items only appear for real if the server has you in creative mode.", Category.WORLD, false));
+					new Module("creativemenu", "Creative Menu", "Opens the creative inventory and sends item picks to the server as if you were in creative. Only works on servers that do not check your game mode.", Category.WORLD, false));
 }

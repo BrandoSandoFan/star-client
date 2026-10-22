@@ -7,6 +7,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.GameType;
 import net.minecraft.resources.Identifier;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -97,8 +98,11 @@ public class StarClient implements ClientModInitializer {
 		SortButton.init();
 	}
 
+	private static GameType creativeRestore;
+
 	private void tick(Minecraft mc) {
 		if (mc.player == null || mc.level == null) {
+			creativeRestore = null;
 			Freecam.reset();
 			BaseFinder.clear();
 			ChestEsp.clear();
@@ -117,6 +121,11 @@ public class StarClient implements ClientModInitializer {
 			Automation.reset();
 			Clipper.reset();
 			return;
+		}
+
+		if (creativeRestore != null && !(mc.gui.screen() instanceof CreativeModeInventoryScreen)) {
+			mc.gameMode.setLocalMode(creativeRestore);
+			creativeRestore = null;
 		}
 
 		while (menuKey.consumeClick()) {
@@ -337,7 +346,13 @@ public class StarClient implements ClientModInitializer {
 			}
 			case Module.CLIPPER -> Clipper.save(mc);
 			case Module.CREATIVE_MENU -> {
-				if (mc.player != null) {
+				if (mc.player != null && mc.gameMode != null) {
+					// Item picks only send ServerboundSetCreativeModeSlotPacket while the client thinks it is in creative
+					GameType cur = mc.gameMode.getPlayerMode();
+					if (cur != GameType.CREATIVE && creativeRestore == null) {
+						creativeRestore = cur;
+						mc.gameMode.setLocalMode(GameType.CREATIVE);
+					}
 					mc.gui.setScreen(new CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), mc.options.operatorItemsTab().get()));
 				}
 			}
