@@ -26,6 +26,8 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 public final class Xray {
 	public record Hit(BlockPos pos, float r, float g, float b) { }
 
+	private static final String[] REBUILD_NAMES = {"allChanged", "needsUpdate", "reload"};
+
 	private static final int INTERVAL_TICKS = 20;
 	private static final int CHUNKS_PER_PASS = 6;
 	private static final int RESCAN_TICKS = 20 * 10;
@@ -54,7 +56,17 @@ public final class Xray {
 	/** Rebuilds every chunk mesh so the new culling takes effect. */
 	public static void reload(Minecraft mc) {
 		hideAllApplied = Settings.on("xray.hideall");
-		if (mc.level != null) mc.levelRenderer.allChanged();
+		if (mc.level == null) return;
+		// The "rebuild every chunk" method was renamed across versions and cannot be checked at build time here.
+		for (String name : REBUILD_NAMES) {
+			try {
+				mc.levelRenderer.getClass().getMethod(name).invoke(mc.levelRenderer);
+				return;
+			} catch (ReflectiveOperationException | RuntimeException e) {
+				// Try the next name.
+			}
+		}
+		StarClient.LOGGER.warn("X-Ray: no chunk rebuild method found; chunks update as they reload");
 	}
 
 	public static void clear() {
