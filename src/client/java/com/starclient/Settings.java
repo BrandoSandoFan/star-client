@@ -227,6 +227,18 @@ public final class Settings {
 				slider("clipper.interval", "Capture every", 1, 20, 1, 4, "ticks"),
 				slider("clipper.width", "Frame width", 240, 960, 80, 480, "px"),
 				toggle("clipper.ffmpeg", "Use ffmpeg for mp4 if installed (else GIF)", true));
+		add(Module.PATHFINDER,
+				toggle("pathfinder.break", "Break blocks in the way", true),
+				toggle("pathfinder.place", "Place blocks (bridge, pillar)", true),
+				toggle("pathfinder.sprint", "Sprint", true),
+				slider("pathfinder.fall", "Max fall onto land", 1, 10, 1, 3, "blocks"),
+				slider("pathfinder.timeout", "Max search time", 0.5, 10, 0.5, 2, "s"),
+				slider("pathfinder.mineradius", "Mine scan radius", 1, 16, 1, 6, "chunks"),
+				toggle("pathfinder.pickup", "Pick up drops when mining", true),
+				toggle("pathfinder.show", "Show path and status", true));
+		addTexts(Module.PATHFINDER,
+				new TextDef("pathfinder.mine", "Blocks the key mines (space separated)", "diamond", 256),
+				new TextDef("pathfinder.throwaway", "Blocks it may place", "dirt cobblestone cobbled_deepslate netherrack stone andesite diorite granite tuff", 256));
 	}
 
 	/** Named value sets a module's settings page offers as one-click presets. Keys are setting keys. */

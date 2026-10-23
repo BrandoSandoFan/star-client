@@ -159,6 +159,14 @@ public final class StarRenderer {
 			}
 		}
 
+		if (StarClient.pathfinderOn && Settings.on("pathfinder.show")) {
+			List<Vec3> points = Pathing.renderPath();
+			for (int i = 0; i + 1 < points.size(); i++) addLine(strips, origin, points.get(i), points.get(i + 1), 0.02f, 0.3f, 0.8f, 1f, 0.9f);
+			for (Pathing.Mark m : Pathing.marks()) {
+				out.add(block(m.pos(), ((m.rgb() >> 16) & 0xFF) / 255f, ((m.rgb() >> 8) & 0xFF) / 255f, (m.rgb() & 0xFF) / 255f, 0.35f));
+			}
+		}
+
 		if (StarClient.portalFinderOn) {
 			List<PortalFinder.Hit> src = PortalFinder.hits();
 			float alpha = Settings.getF("portalfinder.alpha");

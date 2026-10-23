@@ -64,6 +64,7 @@ public class StarClient implements ClientModInitializer {
 	public static boolean autoTpaOn;
 	public static boolean maceAuraOn;
 	public static boolean xrayOn;
+	public static boolean pathfinderOn;
 
 	private static KeyMapping[] moduleKeys;
 	private static KeyMapping menuKey;
@@ -93,6 +94,7 @@ public class StarClient implements ClientModInitializer {
 		SignReader.init();
 		Diagnostics.init();
 		SortButton.init();
+		Pathing.init();
 	}
 
 	private void tick(Minecraft mc) {
@@ -114,6 +116,7 @@ public class StarClient implements ClientModInitializer {
 			AutoSafety.reset();
 			Automation.reset();
 			Clipper.reset();
+			Pathing.reset();
 			return;
 		}
 
@@ -145,6 +148,7 @@ public class StarClient implements ClientModInitializer {
 		AutoSafety.tick(mc);
 		Automation.tick(mc);
 		Clipper.tick(mc);
+		Pathing.tick(mc);
 	}
 
 	/** Module keybinds in {@link Module#ALL} order. */
@@ -206,6 +210,7 @@ public class StarClient implements ClientModInitializer {
 			case Module.AUTO_TPA -> autoTpaOn;
 			case Module.MACE_AURA -> maceAuraOn;
 			case Module.XRAY -> xrayOn;
+			case Module.PATHFINDER -> pathfinderOn;
 			default -> false;
 		};
 	}
@@ -334,6 +339,7 @@ public class StarClient implements ClientModInitializer {
 				Xray.reload(mc);
 			}
 			case Module.CLIPPER -> Clipper.save(mc);
+			case Module.PATHFINDER -> Pathing.toggle(mc);
 			case Module.PANIC -> panic(mc);
 			case Module.ELYTRA_FLY -> {
 				elytraFlyOn = !elytraFlyOn;
