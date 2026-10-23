@@ -1,6 +1,7 @@
 package com.starclient;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,9 +12,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -23,12 +26,21 @@ import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 
-import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuTexture;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 
 import net.fabricmc.loader.api.FabricLoader;
@@ -47,56 +59,151 @@ public final class Clipper {
 	});
 	private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
+	/** Deflate level about 2 (the JDK PNG writer maps quality q to level 9 * (1 - q)): several times faster than the default for a slightly bigger frame. */
+	private static final float PNG_QUALITY = 0.75f;
+	/** Frames queued for the worker. Capture is skipped while this many wait, so a slow encoder never piles up work. */
+	private static final int MAX_PENDING = 3;
+	private static final AtomicInteger PENDING = new AtomicInteger();
+
 	private static final ArrayDeque<byte[]> frames = new ArrayDeque<>();
 	private static int ticks;
 	private static boolean capturing;
 
+	// Render thread: the small texture the frame is scaled into on the GPU and the mappable buffer it is read back through.
+	// Kept between captures and recreated only when the window or the width setting changes.
+	private static GpuTexture small;
+	private static GpuTextureView smallView;
+	private static GpuBuffer readBuffer;
+	private static int width;
+	private static int height;
+
+	// Worker thread only.
+	private static BufferedImage image;
+	private static ImageWriter png;
+
 	private Clipper() { }
 
+	/**
+	 * Same path as vanilla's Tracy frame capture: a linear GPU blit into a small texture, then an async copy to a
+	 * buffer. {@code Screenshot.takeScreenshot} instead reads the full-resolution frame into a fresh buffer and
+	 * converts it pixel by pixel on the render thread, which stalled every capture.
+	 */
 	public static void tick(Minecraft mc) {
-		if (!Settings.on("clipper.record") || capturing || ++ticks < Settings.getI("clipper.interval")) return;
-		ticks = 0;
-		capturing = true;
-		Screenshot.takeScreenshot(mc.gameRenderer.mainRenderTarget(), image -> {
-			try {
-				int[] pixels = scale(image, Settings.getI("clipper.width"));
-				int w = pixels[0];
-				int h = pixels[1];
-				WORKER.execute(() -> encode(pixels, w, h));
-			} finally {
-				image.close();
-				capturing = false;
-			}
-		});
-	}
-
-	/** Nearest-neighbour downscale to an even width and height. Element 0 and 1 of the result are width and height, the pixels follow. */
-	private static int[] scale(NativeImage image, int targetWidth) {
-		int w = Math.max(2, Math.min(targetWidth, image.getWidth()) & ~1);
-		int h = Math.max(2, (int) ((long) image.getHeight() * w / image.getWidth()) & ~1);
-		int[] out = new int[2 + w * h];
-		out[0] = w;
-		out[1] = h;
-		for (int y = 0; y < h; y++) {
-			int sy = y * image.getHeight() / h;
-			for (int x = 0; x < w; x++) out[2 + y * w + x] = image.getPixel(x * image.getWidth() / w, sy);
+		if (!Settings.on("clipper.record")) {
+			if (!capturing && small != null) close();
+			return;
 		}
-		return out;
+		if (capturing || ++ticks < Settings.getI("clipper.interval")) return;
+		ticks = 0;
+		if (PENDING.get() >= MAX_PENDING) return;
+		RenderTarget target = mc.gameRenderer.mainRenderTarget();
+		if (target.getColorTexture() == null || target.getColorTextureView() == null) return;
+
+		capturing = true;
+		try {
+			resize(target.width, target.height, Settings.getI("clipper.width"));
+			CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+			try (RenderPass pass = encoder.createRenderPass(() -> StarClient.ID + " clipper blit", smallView, Optional.empty())) {
+				RenderSystem.bindDefaultUniforms(pass);
+				pass.setPipeline(RenderSystem.getCompiledPipeline(RenderPipelines.TRACY_BLIT));
+				pass.setUniform("InSampler", target.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+				pass.draw(3, 1, 0, 0);
+			}
+			GpuBuffer buffer = readBuffer;
+			int w = width;
+			int h = height;
+			encoder.copyTextureToBuffer(small, buffer, 0, () -> readBack(buffer, w, h), 0);
+		} catch (RuntimeException e) {
+			capturing = false;
+			StarClient.LOGGER.warn("Clipper: frame capture failed", e);
+		}
 	}
 
-	private static void encode(int[] pixels, int w, int h) {
-		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		img.setRGB(0, 0, w, h, pixels, 2, w);
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream(w * h / 4);
+	/** Runs on the render thread once the GPU copy is done: one bulk copy out of the mapped buffer, the rest on the worker. */
+	private static void readBack(GpuBuffer buffer, int w, int h) {
 		try {
-			ImageIO.write(img, "png", bytes);
-		} catch (IOException e) {
+			byte[] rgba = new byte[w * h * 4];
+			try (var view = buffer.map(true, false)) {
+				view.data().get(0, rgba);
+			}
+			PENDING.incrementAndGet();
+			WORKER.execute(() -> {
+				try {
+					encode(rgba, w, h);
+				} finally {
+					PENDING.decrementAndGet();
+				}
+			});
+		} catch (RuntimeException e) {
+			StarClient.LOGGER.warn("Clipper: frame read-back failed", e);
+		} finally {
+			capturing = false;
+		}
+	}
+
+	/** Even width and height (ffmpeg's yuv420p needs them), at most {@code targetWidth} wide, same aspect as the window. */
+	private static void resize(int srcW, int srcH, int targetWidth) {
+		int w = Math.max(2, Math.min(targetWidth, srcW) & ~1);
+		int h = Math.max(2, (int) ((long) srcH * w / srcW) & ~1);
+		if (small != null && w == width && h == height) return;
+		close();
+		var device = RenderSystem.getDevice();
+		small = device.createTexture(StarClient.ID + " clipper", GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT, GpuFormat.RGBA8_UNORM, w, h, 1, 1);
+		smallView = device.createTextureView(small);
+		readBuffer = device.createBuffer(() -> StarClient.ID + " clipper read-back", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, (long) w * h * 4);
+		width = w;
+		height = h;
+	}
+
+	/** Frees the GPU texture and buffer. Only called while no copy is in flight. */
+	private static void close() {
+		if (smallView != null) smallView.close();
+		if (small != null) small.close();
+		if (readBuffer != null) readBuffer.close();
+		smallView = null;
+		small = null;
+		readBuffer = null;
+	}
+
+	private static void encode(byte[] rgba, int w, int h) {
+		if (image == null || image.getWidth() != w || image.getHeight() != h) image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		int[] out = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		// RGBA8 bytes; GPU rows run bottom-up.
+		for (int y = 0; y < h; y++) {
+			int src = (h - 1 - y) * w * 4;
+			int dst = y * w;
+			for (int x = 0; x < w; x++, src += 4) {
+				out[dst + x] = (rgba[src] & 0xFF) << 16 | (rgba[src + 1] & 0xFF) << 8 | rgba[src + 2] & 0xFF;
+			}
+		}
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream(w * h);
+		try {
+			writePng(bytes);
+		} catch (IOException | RuntimeException e) {
 			return;
 		}
 		int max = Math.max(1, Settings.getI("clipper.seconds") * 20 / Math.max(1, Settings.getI("clipper.interval")));
 		synchronized (frames) {
 			frames.addLast(bytes.toByteArray());
 			while (frames.size() > max) frames.pollFirst();
+		}
+	}
+
+	/** Writes {@link #image} as PNG with a fast deflate level. In-memory stream: {@code ImageIO.write} may cache through a temp file. */
+	private static void writePng(ByteArrayOutputStream bytes) throws IOException {
+		if (png == null) png = ImageIO.getImageWritersByFormatName("png").next();
+		ImageWriteParam param = png.getDefaultWriteParam();
+		if (param.canWriteCompressed()) {
+			param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+			String[] types = param.getCompressionTypes();
+			if (types != null && types.length > 0) param.setCompressionType(types[0]);
+			param.setCompressionQuality(PNG_QUALITY);
+		}
+		try (ImageOutputStream out = new MemoryCacheImageOutputStream(bytes)) {
+			png.setOutput(out);
+			png.write(null, new IIOImage(image, null, null), param);
+		} finally {
+			png.setOutput(null);
 		}
 	}
 
