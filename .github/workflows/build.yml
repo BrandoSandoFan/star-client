@@ -30,3 +30,15 @@ jobs:
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar
+
+      - name: Probe API (temporary)
+        if: always()
+        run: |
+          JARS=$(find ~/.gradle/caches .gradle -name '*.jar' 2>/dev/null | grep -Ei 'minecraft|mojang|blaze3d|renderpearl' | grep -v sources)
+          echo "$JARS"
+          CP=$(echo "$JARS" | tr '\n' ':')
+          CLASSES=$(for j in $JARS; do unzip -Z1 "$j" 2>/dev/null; done | grep -E '(^|/)(Screenshot|GpuDevice|CommandEncoder|GpuBuffer|GpuTexture|RenderTarget|TextureTarget|NativeImage|TextureFormat|GpuFence)(\$MappedView)?\.class$' | sort -u | sed 's/\.class$//; s#/#.#g')
+          echo "$CLASSES"
+          for c in $CLASSES; do echo "===== $c"; javap -cp "$CP" -p "$c" || true; done
+          echo "===== Screenshot bytecode"
+          javap -cp "$CP" -c -p net.minecraft.client.Screenshot | grep -v '^ *[0-9]*: *\(aload\|iload\|astore\|istore\|dup\|pop\|iconst\|ldc\)' | head -400 || true
