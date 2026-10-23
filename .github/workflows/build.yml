@@ -34,11 +34,13 @@ jobs:
       - name: Probe API (temporary)
         if: always()
         run: |
-          JARS=$(find ~/.gradle/caches .gradle -name '*.jar' 2>/dev/null | grep -Ei 'minecraft|mojang|blaze3d|renderpearl' | grep -v sources)
-          echo "$JARS"
+          JARS=$(find .gradle/loom-cache ~/.gradle/caches/modules-2 -name '*.jar' 2>/dev/null | grep -v sources | grep -Ei '26\.3|com\.mojang|renderpearl|lwjgl')
           CP=$(echo "$JARS" | tr '\n' ':')
-          CLASSES=$(for j in $JARS; do unzip -Z1 "$j" 2>/dev/null; done | grep -E '(^|/)(Screenshot|GpuDevice|CommandEncoder|GpuBuffer|GpuTexture|RenderTarget|TextureTarget|NativeImage|TextureFormat|GpuFence)(\$MappedView)?\.class$' | sort -u | sed 's/\.class$//; s#/#.#g')
-          echo "$CLASSES"
-          for c in $CLASSES; do echo "===== $c"; javap -cp "$CP" -p "$c" || true; done
-          echo "===== Screenshot bytecode"
-          javap -cp "$CP" -c -p net.minecraft.client.Screenshot | grep -v '^ *[0-9]*: *\(aload\|iload\|astore\|istore\|dup\|pop\|iconst\|ldc\)' | head -400 || true
+          for j in $JARS; do unzip -Z1 "$j" 2>/dev/null | grep -q 'renderpearl/api/device/GpuDevice.class' && echo "renderpearl in $j"; done
+          P() { echo "===== $1"; javap -cp "$CP" -p "$1" || true; }
+          C() { echo "===== CODE $1"; javap -cp "$CP" -c -p "$1" | grep -E 'invoke|getstatic|putstatic|new |^  [a-z]|Code:' || true; }
+          ALL=$(for j in $JARS; do unzip -Z1 "$j" 2>/dev/null; done | grep '\.class$' | sed 's/\.class$//; s#/#.#g' | sort -u)
+          echo "$ALL" | grep -Ei 'tracy|framecapture|Screenshot|GpuBufferSlice|GpuFormat$|RenderSystem$|RenderPass$|GpuSampler$|SamplerCache|FilterMode$|GpuTextureView$|RenderPipelines$|pipeline\.RenderTarget$|TextureTarget$'
+          for c in $(echo "$ALL" | grep -Ei 'GpuBufferSlice|api\.GpuFormat$|commands\.RenderPass$|SamplerCache$|pipeline\.RenderTarget$|systems\.RenderSystem$'); do P "$c"; done
+          for c in $(echo "$ALL" | grep -Ei 'tracy.*capture|framecapture|client\.Screenshot$'); do P "$c"; C "$c"; done
+          javap -cp "$CP" -p net.minecraft.client.renderer.RenderPipelines | grep -i 'blit\|tracy' || true
