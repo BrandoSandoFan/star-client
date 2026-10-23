@@ -1,15 +1,14 @@
 package com.starclient;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.EntityHitResult;
 
 /**
  * Attribute Swap: with the main slot selected, an attack is made with the second slot selected instead and the
- * selection goes back to the main slot afterwards. Manual clicks are caught at the start of the tick, before the
- * click is handled; Trigger Bot and Kill Aura attacks go through {@link #around}.
+ * selection goes back to the main slot afterwards. Manual clicks are caught by {@code MultiPlayerGameModeMixin} at
+ * the head of {@code MultiPlayerGameMode.attack}, before the carried item is sent; Trigger Bot and Kill Aura attacks
+ * go through {@link #around}.
  */
 public final class AttributeSwap {
-	private static boolean wasDown;
 	/** Slot to return to (-1 when idle) and ticks left before returning. */
 	private static int restoreSlot = -1;
 	private static int restoreIn;
@@ -29,13 +28,12 @@ public final class AttributeSwap {
 				&& !Freecam.isOn() && !Utility.isEating() && main() != second();
 	}
 
-	/** Start of tick: a fresh attack press on an entity swaps to the second slot before the click runs. */
-	public static void start(Minecraft mc) {
-		boolean down = mc.options.keyAttack.isDown();
-		boolean pressed = down && !wasDown;
-		wasDown = down;
-		if (!pressed || !ready(mc) || !Settings.on("attrswap.manual") || restoreSlot >= 0) return;
-		if (!(mc.hitResult instanceof EntityHitResult)) return;
+	/**
+	 * Head of every {@code gameMode.attack}: an attack with the main slot selected is made with the second slot. Module
+	 * attacks reach here with the second slot already selected by {@link #around}, so they pass through.
+	 */
+	public static void beforeAttack(Minecraft mc) {
+		if (!ready(mc) || !Settings.on("attrswap.manual") || restoreSlot >= 0) return;
 		var inv = mc.player.getInventory();
 		if (inv.getSelectedSlot() != main()) return;
 		inv.setSelectedSlot(second());
@@ -66,6 +64,5 @@ public final class AttributeSwap {
 
 	public static void reset() {
 		restoreSlot = -1;
-		wasDown = false;
 	}
 }

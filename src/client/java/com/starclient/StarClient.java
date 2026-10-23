@@ -81,7 +81,6 @@ public class StarClient implements ClientModInitializer {
 
 		Config.load();
 		ClientTickEvents.START_CLIENT_TICK.register(Combat::expandHitboxes);
-		ClientTickEvents.START_CLIENT_TICK.register(AttributeSwap::start);
 		ClientTickEvents.END_CLIENT_TICK.register(AttributeSwap::end);
 		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
