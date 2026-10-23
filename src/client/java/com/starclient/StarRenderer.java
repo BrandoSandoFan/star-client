@@ -87,7 +87,9 @@ public final class StarRenderer {
 
 	public static void init() {
 		LevelRenderEvents.END_EXTRACTION.register(StarRenderer::extract);
-		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(StarRenderer::render);
+		// END_MAIN, not AFTER_TRANSLUCENT_TERRAIN: on 26.3 that one fires while vanilla's translucent terrain pass is still open,
+		// so uploading or opening our own pass throws "Close the existing render pass".
+		LevelRenderEvents.END_MAIN.register(StarRenderer::render);
 	}
 
 	// ---- extraction ----
