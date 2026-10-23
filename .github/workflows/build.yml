@@ -34,13 +34,11 @@ jobs:
       - name: Probe API (temporary)
         if: always()
         run: |
-          JARS=$(find .gradle/loom-cache ~/.gradle/caches/modules-2 -name '*.jar' 2>/dev/null | grep -v sources | grep -Ei '26\.3|com\.mojang|renderpearl|lwjgl')
+          JARS=$(find .gradle/loom-cache ~/.gradle/caches/modules-2 -name '*.jar' 2>/dev/null | grep -v sources | grep -Ei '26\.3|com\.mojang|lwjgl')
           CP=$(echo "$JARS" | tr '\n' ':')
-          for j in $JARS; do unzip -Z1 "$j" 2>/dev/null | grep -q 'renderpearl/api/device/GpuDevice.class' && echo "renderpearl in $j"; done
-          P() { echo "===== $1"; javap -cp "$CP" -p "$1" || true; }
-          C() { echo "===== CODE $1"; javap -cp "$CP" -c -p "$1" | grep -E 'invoke|getstatic|putstatic|new |^  [a-z]|Code:' || true; }
-          ALL=$(for j in $JARS; do unzip -Z1 "$j" 2>/dev/null; done | grep '\.class$' | sed 's/\.class$//; s#/#.#g' | sort -u)
-          echo "$ALL" | grep -Ei 'tracy|framecapture|Screenshot|GpuBufferSlice|GpuFormat$|RenderSystem$|RenderPass$|GpuSampler$|SamplerCache|FilterMode$|GpuTextureView$|RenderPipelines$|pipeline\.RenderTarget$|TextureTarget$'
-          for c in $(echo "$ALL" | grep -Ei 'GpuBufferSlice|api\.GpuFormat$|commands\.RenderPass$|SamplerCache$|pipeline\.RenderTarget$|systems\.RenderSystem$'); do P "$c"; done
-          for c in $(echo "$ALL" | grep -Ei 'tracy.*capture|framecapture|client\.Screenshot$'); do P "$c"; C "$c"; done
-          javap -cp "$CP" -p net.minecraft.client.renderer.RenderPipelines | grep -i 'blit\|tracy' || true
+          echo "===== FULL TracyFrameCapture"
+          javap -cp "$CP" -c -p -constants com.mojang.blaze3d.TracyFrameCapture | grep -v '^ *[0-9]*: *\(aload\|astore\|dup\|pop\|areturn\|return\|athrow\|goto\)' || true
+          echo "===== FULL Screenshot.takeScreenshot"
+          javap -cp "$CP" -c -p -constants net.minecraft.client.Screenshot | sed -n '/takeScreenshot(com.mojang.blaze3d.pipeline.RenderTarget, int/,/lambda\$takeScreenshot\$0/p' || true
+          echo "===== GpuTexture/GpuBuffer constants"
+          javap -cp "$CP" -constants com.mojang.renderpearl.api.textures.GpuTexture com.mojang.renderpearl.api.buffers.GpuBuffer | grep 'static final' || true
