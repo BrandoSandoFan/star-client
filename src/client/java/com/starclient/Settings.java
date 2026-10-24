@@ -231,6 +231,7 @@ public final class Settings {
 				toggle("pathfinder.break", "Break blocks in the way", true),
 				toggle("pathfinder.place", "Place blocks (bridge, pillar)", true),
 				toggle("pathfinder.sprint", "Sprint", true),
+				toggle("pathfinder.underwater", "Swim under water", true),
 				slider("pathfinder.fall", "Max fall onto land", 1, 10, 1, 3, "blocks"),
 				slider("pathfinder.timeout", "Max search time", 0.5, 10, 0.5, 2, "s"),
 				slider("pathfinder.mineradius", "Mine scan radius", 1, 16, 1, 6, "chunks"),

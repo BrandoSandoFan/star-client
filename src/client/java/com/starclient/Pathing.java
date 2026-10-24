@@ -25,6 +25,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -90,6 +91,16 @@ public final class Pathing {
 	private static int stepTicks;
 	private static int replans;
 	private static int bridgeTicks;
+	/** Something was broken during the current step, so sand or gravel may still be falling into it. */
+	private static boolean dugThisStep;
+	private static int fallWait;
+	/** Ticks until the next door click, so a door is not toggled shut again before the client sees it open. */
+	private static int useCooldown;
+	/** Out of breath under water: rising until the air bar is full again. */
+	private static boolean surfacing;
+	private static boolean inLava;
+	/** Ticks spent trying to block lava; gives up after a while if no face to place against is in view. */
+	private static int plugTicks;
 	private static BlockPos breaking;
 	private static int breakTicks;
 	private static int breakLimit;
@@ -310,6 +321,12 @@ public final class Pathing {
 		stepTicks = 0;
 		replans = 0;
 		bridgeTicks = 0;
+		dugThisStep = false;
+		fallWait = 0;
+		useCooldown = 0;
+		surfacing = false;
+		inLava = false;
+		plugTicks = 0;
 		breaking = null;
 		avoid.clear();
 		mineBlocks = Set.of();
@@ -370,6 +387,8 @@ public final class Pathing {
 			return;
 		}
 		pollSearch(mc);
+		if (useCooldown > 0) useCooldown--;
+		if (emergency(mc)) return;
 		switch (mode) {
 			case GOTO -> {
 				if (goal.isGoal(feet(p).getX(), feet(p).getY(), feet(p).getZ()) && settled(p)) {
@@ -385,7 +404,7 @@ public final class Pathing {
 	}
 
 	private static boolean settled(LocalPlayer p) {
-		return p.onGround() || p.isInWater();
+		return p.onGround() || p.isInWater() || p.onClimbable();
 	}
 
 	/** The block the player stands in; lifted slightly so standing on soul sand or a path block counts as above it. */
@@ -398,8 +417,8 @@ public final class Pathing {
 		List<ItemStack> tools = new ArrayList<>(9);
 		for (int i = 0; i < 9; i++) tools.add(inv.getItem(i).copy());
 		boolean place = Settings.on("pathfinder.place") && throwawaySlot(mc.player) >= 0;
-		return new PathWorld(mc.level, Settings.on("pathfinder.break"), place, Settings.getI("pathfinder.fall"), Settings.on("pathfinder.sprint"),
-				tools, Settings.getI("autotool.protect"), Set.copyOf(avoid));
+		return new PathWorld(mc.level, Settings.on("pathfinder.break"), place, Settings.on("pathfinder.underwater"), Settings.getI("pathfinder.fall"),
+				Settings.on("pathfinder.sprint"), tools, Settings.getI("autotool.protect"), Set.copyOf(avoid));
 	}
 
 	// ---- planning ----
@@ -548,7 +567,8 @@ public final class Pathing {
 
 	private static boolean at(LocalPlayer p, BlockPos feet, BlockPos pos) {
 		if (feet.equals(pos)) return true;
-		return p.isInWater() && feet.getX() == pos.getX() && feet.getZ() == pos.getZ() && Math.abs(feet.getY() - pos.getY()) <= 1;
+		// bobbing at the surface moves the feet between the water cell and the air above it
+		return p.isInWater() && !p.isUnderWater() && feet.getX() == pos.getX() && feet.getZ() == pos.getZ() && Math.abs(feet.getY() - pos.getY()) <= 1;
 	}
 
 	private static void advance(int k) {
@@ -556,6 +576,8 @@ public final class Pathing {
 		stepTicks = 0;
 		replans = 0;
 		bridgeTicks = 0;
+		dugThisStep = false;
+		fallWait = 0;
 	}
 
 	private static void execute(Minecraft mc, PathWorld w) {
@@ -586,13 +608,30 @@ public final class Pathing {
 			return;
 		}
 
-		for (BlockPos c : clearCells(from.pos(), to)) {
+		BlockPos dest = to.pos();
+		Direction.Axis axis = dest.getX() != from.pos().getX() ? Direction.Axis.X : Direction.Axis.Z;
+		List<BlockPos> cells = clearCells(w, from.pos(), to);
+		for (BlockPos c : cells) {
+			if (to.move() == PathSearch.Move.WALK) {
+				double door = w.doorCost(c.getX(), c.getY(), c.getZ(), axis);
+				if (door == 0) continue;
+				if (door > 0) {
+					if (door >= PathWorld.INF) {
+						replan(mc, "door in the way");
+					} else {
+						state = "opening a door";
+						openDoor(mc, c);
+					}
+					return;
+				}
+			}
 			if (w.feetSpace(c.getX(), c.getY(), c.getZ())) continue;
 			if (w.breakCost(c.getX(), c.getY(), c.getZ()) >= PathWorld.INF) {
 				replan(mc, "path blocked");
 				return;
 			}
 			state = "breaking";
+			dugThisStep = true;
 			if (!dig(mc, w, c)) {
 				avoid.add(c.asLong());
 				replan(mc, "could not break a block");
@@ -603,8 +642,13 @@ public final class Pathing {
 			if (mc.gameMode.isDestroying()) mc.gameMode.stopDestroyBlock();
 			breaking = null;
 		}
+		// Sand or gravel over a cell just dug out falls in a moment later; never walk in under it.
+		if (dugThisStep && fallingAbove(mc, cells) && ++fallWait < 60) {
+			keys(mc, false, false, false, false, false, false, false);
+			state = "waiting for sand or gravel";
+			return;
+		}
 
-		BlockPos dest = to.pos();
 		if (to.move() == PathSearch.Move.BRIDGE && !w.standable(dest.getX(), dest.getY() - 1, dest.getZ())) {
 			state = "bridging";
 			bridge(mc, w, from.pos(), dest);
@@ -626,27 +670,57 @@ public final class Pathing {
 				if (flatDistance(p, c) > 0.2) steer(mc, c, false, false, false, 90.0f);
 				else keys(mc, false, false, false, false, false, false, false);
 			}
+			case CLIMB_UP, CLIMB_DOWN -> {
+				// Pushing into the ladder climbs it, so only steer when clearly off centre; jump climbs, nothing slides down.
+				Vec3 c = Vec3.atBottomCenterOf(dest);
+				boolean up = to.move() == PathSearch.Move.CLIMB_UP;
+				if (flatDistance(p, c) > 0.3) steer(mc, c, false, up, false, WALK_PITCH);
+				else keys(mc, false, false, false, false, up, false, false);
+			}
 			default -> {
 				Vec3 c = Vec3.atBottomCenterOf(dest);
-				boolean straight = to.move() == PathSearch.Move.WALK || to.move() == PathSearch.Move.DIAGONAL;
+				PathSearch.Move m = to.move();
+				boolean straight = m == PathSearch.Move.WALK || m == PathSearch.Move.DIAGONAL;
 				boolean sprint = straight && Settings.on("pathfinder.sprint") && index + 1 < last && p.getFoodData().getFoodLevel() > 6 && !p.isInWater();
-				boolean jump = p.isInWater() || (to.move() == PathSearch.Move.ASCEND && p.onGround());
-				steer(mc, c, sprint, jump, false, WALK_PITCH);
+				boolean jump = m == PathSearch.Move.ASCEND && (p.onGround() || p.onClimbable());
+				boolean sneak = false;
+				if (p.isInWater()) {
+					// Rise for SWIM_UP and climbing out, sink with sneak for SWIM_DOWN, otherwise hold the target height.
+					sneak = m == PathSearch.Move.SWIM_DOWN;
+					jump = !sneak && (m == PathSearch.Move.SWIM_UP || m == PathSearch.Move.ASCEND || p.getY() < dest.getY() + 0.1);
+				}
+				steer(mc, c, sprint, jump, sneak, WALK_PITCH);
 			}
 		}
 	}
 
-	/** Cells that must be open before the move, in breaking order (top first). */
-	private static List<BlockPos> clearCells(BlockPos from, PathSearch.Step to) {
+	/** Cells that must be open before the move, in breaking order (top first). A slab or carpet you step onto stays. */
+	private static List<BlockPos> clearCells(PathWorld w, BlockPos from, PathSearch.Step to) {
 		BlockPos d = to.pos();
-		return switch (to.move()) {
-			case WALK, DIAGONAL, SWIM, BRIDGE -> List.of(d.above(), d);
+		boolean tall = w.lowFloor(d.getX(), d.getY(), d.getZ()) > 0.2 || w.lowFloor(from.getX(), from.getY(), from.getZ()) > 0.2;
+		List<BlockPos> cells = switch (to.move()) {
+			case WALK, DIAGONAL, SWIM, BRIDGE -> tall ? List.of(d.above(2), d.above(), d) : List.of(d.above(), d);
 			case ASCEND -> List.of(from.above(2), d.above(), d);
 			case DESCEND -> List.of(d.above(2), d.above(), d);
-			case DOWN -> List.of(d);
-			case PILLAR -> List.of(d.above());
+			case DOWN, CLIMB_DOWN, SWIM_DOWN -> List.of(d);
+			case PILLAR, CLIMB_UP, SWIM_UP -> List.of(d.above());
 			default -> List.of();
 		};
+		if (w.lowFloor(d.getX(), d.getY(), d.getZ()) < 0) return cells;
+		List<BlockPos> out = new ArrayList<>(cells);
+		out.remove(d);
+		return out;
+	}
+
+	/** True while sand or gravel sits on top of one of {@code cells} or is falling into them. */
+	private static boolean fallingAbove(Minecraft mc, List<BlockPos> cells) {
+		if (cells.isEmpty()) return false;
+		AABB box = new AABB(cells.get(0));
+		for (BlockPos c : cells) {
+			box = box.minmax(new AABB(c));
+			if (!cells.contains(c.above()) && mc.level.getBlockState(c.above()).getBlock() instanceof FallingBlock) return true;
+		}
+		return !mc.level.getEntitiesOfClass(FallingBlockEntity.class, box.expandTowards(0, 3, 0), e -> true).isEmpty();
 	}
 
 	private static double segmentDistance(double px, double pz, BlockPos a, BlockPos b) {
@@ -821,16 +895,47 @@ public final class Pathing {
 		return -1;
 	}
 
-	/** Places a throwaway block at {@code target} against its neighbour in direction {@code support}, once the view is on that face. */
+	/**
+	 * What the crosshair is on with the rotation the server already has (set last tick): the same ray vanilla uses,
+	 * so a click only happens when the face is in view. Null when it is not a block.
+	 */
+	private static BlockHitResult crosshair(LocalPlayer p) {
+		HitResult h = p.pick(p.blockInteractionRange(), 1.0f, false);
+		return h instanceof BlockHitResult b && b.getType() == HitResult.Type.BLOCK ? b : null;
+	}
+
+	/**
+	 * Places a throwaway block at {@code target} against its neighbour in direction {@code support}. Clicks only when
+	 * the crosshair ray hits that exact face; otherwise turns toward the face centre and tries next tick.
+	 */
 	private static boolean placeAgainst(Minecraft mc, BlockPos target, Direction support, int slot) {
 		LocalPlayer p = mc.player;
 		BlockPos against = target.relative(support);
-		Vec3 hit = Vec3.atCenterOf(target).add(support.getStepX() * 0.5, support.getStepY() * 0.5, support.getStepZ() * 0.5);
-		if (!lookAt(p, hit, 15.0f) || !p.isShiftKeyDown()) return false;
-		p.getInventory().setSelectedSlot(slot);
-		var result = mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, new BlockHitResult(hit, support.getOpposite(), against, false));
-		if (result.consumesAction()) p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
-		return true;
+		Direction face = support.getOpposite();
+		BlockHitResult hit = crosshair(p);
+		if (p.isShiftKeyDown() && hit != null && hit.getBlockPos().equals(against) && hit.getDirection() == face) {
+			p.getInventory().setSelectedSlot(slot);
+			var result = mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, hit);
+			if (result.consumesAction()) p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
+			return true;
+		}
+		lookAt(p, Vec3.atCenterOf(target).add(support.getStepX() * 0.5, support.getStepY() * 0.5, support.getStepZ() * 0.5), 180.0f);
+		return false;
+	}
+
+	/** Right-clicks the door or gate in {@code pos} (either half) once the crosshair is on it, without sneaking. */
+	private static void openDoor(Minecraft mc, BlockPos pos) {
+		LocalPlayer p = mc.player;
+		keys(mc, false, false, false, false, false, false, false);
+		BlockHitResult hit = crosshair(p);
+		if (useCooldown == 0 && !p.isShiftKeyDown() && hit != null && hit.getBlockPos().getX() == pos.getX() && hit.getBlockPos().getZ() == pos.getZ()
+				&& Math.abs(hit.getBlockPos().getY() - pos.getY()) <= 1 && PathWorld.isDoor(mc.level.getBlockState(hit.getBlockPos()))) {
+			var result = mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, hit);
+			if (result.consumesAction()) p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
+			useCooldown = 10;
+			return;
+		}
+		lookAt(p, Vec3.atCenterOf(pos), 180.0f);
 	}
 
 	/** Sneaks to the edge facing {@code dest}, then places its floor against the block you stand on. */
@@ -848,7 +953,8 @@ public final class Pathing {
 		}
 		Vec3 c = Vec3.atBottomCenterOf(from);
 		double along = (p.getX() - c.x) * sx + (p.getZ() - c.z) * sz;
-		if (along < 0.5 && bridgeTicks++ < 40) {
+		// The side face of the block you stand on is only in view once your eyes are past its edge.
+		if (along < 0.62 && bridgeTicks++ < 40) {
 			steer(mc, Vec3.atBottomCenterOf(dest), false, false, true, 75.0f);
 			return;
 		}
@@ -919,7 +1025,7 @@ public final class Pathing {
 			scan(mc);
 			scanWait = targets.isEmpty() ? 100 : 200;
 		}
-		targets.removeIf(t -> failed.contains(t.asLong()) || !mineBlocks.contains(mc.level.getBlockState(t).getBlock()));
+		targets.removeIf(t -> failed.contains(t.asLong()) || !mineBlocks.contains(mc.level.getBlockState(t).getBlock()) || fluidNear(mc, t));
 		if (targets.isEmpty()) {
 			release(mc);
 			cancelSearch();
@@ -957,7 +1063,7 @@ public final class Pathing {
 		LocalPlayer p = mc.player;
 		Vec3 eye = p.getEyePosition();
 		Vec3 centre = Vec3.atCenterOf(t);
-		if (eye.distanceTo(centre) > p.blockInteractionRange() - 0.5) return false;
+		if (eye.distanceTo(centre) > p.blockInteractionRange() - 0.5 || fluidNear(mc, t)) return false;
 		BlockPos feet = feet(p);
 		// under you: only when there is floor below it
 		if (t.getY() < feet.getY() && Math.abs(t.getX() + 0.5 - p.getX()) < 0.8 && Math.abs(t.getZ() + 0.5 - p.getZ()) < 0.8
@@ -1047,7 +1153,7 @@ public final class Pathing {
 							for (int x = 0; x < 16; x++) {
 								if (!mineBlocks.contains(section.getBlockState(x, y, z).getBlock())) continue;
 								BlockPos pos = new BlockPos((cx << 4) + x, baseY + y, (cz << 4) + z);
-								if (!failed.contains(pos.asLong()) && !lavaNear(mc, pos)) found.add(pos);
+								if (!failed.contains(pos.asLong()) && !fluidNear(mc, pos)) found.add(pos);
 							}
 						}
 					}
@@ -1059,10 +1165,80 @@ public final class Pathing {
 		targets = new ArrayList<>(found.subList(0, Math.min(found.size(), MAX_TARGETS)));
 	}
 
-	private static boolean lavaNear(Minecraft mc, BlockPos pos) {
+	/** True when water or lava touches {@code pos}, so breaking it would let the fluid in. */
+	private static boolean fluidNear(Minecraft mc, BlockPos pos) {
 		for (Direction d : Direction.values()) {
-			if (mc.level.getFluidState(pos.relative(d)).is(FluidTags.LAVA)) return true;
+			if (!mc.level.getFluidState(pos.relative(d)).isEmpty()) return true;
 		}
+		return false;
+	}
+
+	// ---- safety ----
+
+	/**
+	 * Handles lava and air before anything else: climbs out of lava back the way it came, blocks lava that reaches
+	 * your feet or head with a throwaway block, and swims up for air when the air bar is a third full. True while busy.
+	 */
+	private static boolean emergency(Minecraft mc) {
+		LocalPlayer p = mc.player;
+		if (p.isInLava()) {
+			inLava = true;
+			state = "escaping lava";
+			if (breaking != null && mc.gameMode.isDestroying()) mc.gameMode.stopDestroyBlock();
+			breaking = null;
+			Vec3 back = path != null ? Vec3.atBottomCenterOf(path.get(Math.max(0, index - 1)).pos()) : p.position().subtract(p.getLookAngle().scale(2));
+			steer(mc, back, false, true, false, WALK_PITCH);
+			return true;
+		}
+		if (inLava) {
+			inLava = false;
+			cancelSearch();
+			release(mc);
+			path = null;
+		}
+		if (plugLava(mc)) return true;
+		if (!surfacing && p.isUnderWater() && p.getAirSupply() < p.getMaxAirSupply() / 3) {
+			surfacing = true;
+			cancelSearch();
+			release(mc);
+			path = null;
+		}
+		if (surfacing) {
+			if (p.getAirSupply() >= p.getMaxAirSupply() || !p.isInWater()) {
+				surfacing = false;
+			} else {
+				keys(mc, false, false, false, false, true, false, false);
+				state = "surfacing for air";
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Places a throwaway block into lava touching your feet or head cell, if there is one and a face to place against. */
+	private static boolean plugLava(Minecraft mc) {
+		LocalPlayer p = mc.player;
+		BlockPos f = feet(p);
+		BlockPos head = f.above();
+		BlockPos[] around = {f.north(), f.south(), f.east(), f.west(), head.north(), head.south(), head.east(), head.west(), head.above(), f.below()};
+		for (BlockPos c : around) {
+			if (!mc.level.getFluidState(c).is(FluidTags.LAVA)) continue;
+			int slot = throwawaySlot(p);
+			if (slot < 0 || ++plugTicks > 40) return false;
+			for (Direction d : Direction.values()) {
+				BlockPos n = c.relative(d);
+				if (n.equals(f) || n.equals(head)) continue;
+				BlockState s = mc.level.getBlockState(n);
+				if (!s.getFluidState().isEmpty() || s.getCollisionShape(mc.level, n).isEmpty()) continue;
+				if (breaking != null && mc.gameMode.isDestroying()) mc.gameMode.stopDestroyBlock();
+				breaking = null;
+				keys(mc, false, false, false, false, false, true, false);
+				state = "blocking lava";
+				placeAgainst(mc, c, d, slot);
+				return true;
+			}
+		}
+		plugTicks = 0;
 		return false;
 	}
 
