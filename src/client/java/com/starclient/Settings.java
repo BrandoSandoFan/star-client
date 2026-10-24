@@ -236,6 +236,7 @@ public final class Settings {
 				slider("pathfinder.timeout", "Max search time", 0.5, 10, 0.5, 2, "s"),
 				slider("pathfinder.mineradius", "Mine scan radius", 1, 16, 1, 6, "chunks"),
 				toggle("pathfinder.pickup", "Pick up drops when mining", true),
+				toggle("pathfinder.buildclear", "Build: break wrong and extra blocks", true),
 				toggle("pathfinder.show", "Show path and status", true));
 		addTexts(Module.PATHFINDER,
 				new TextDef("pathfinder.mine", "Blocks the key mines (space separated)", "diamond", 256),

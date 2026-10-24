@@ -53,7 +53,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
  * the movement keys, breaking and placing blocks where the plan says so. Turns go through {@link ProtocolSanitizer}.
  */
 public final class Pathing {
-	public enum Mode { IDLE, GOTO, MINE, FOLLOW }
+	public enum Mode { IDLE, GOTO, MINE, FOLLOW, BUILD }
 
 	/** A block highlighted by {@link StarRenderer}. */
 	public record Mark(BlockPos pos, int rgb) { }
@@ -75,15 +75,15 @@ public final class Pathing {
 	private static final String PREFIX = "#";
 
 	private static Mode mode = Mode.IDLE;
-	private static PathGoal goal;
-	private static String state = "";
+	static PathGoal goal;
+	static String state = "";
 	private static ClientLevel taskLevel;
 
-	private static List<PathSearch.Step> path;
+	static List<PathSearch.Step> path;
 	private static int index;
 	private static boolean partial;
 
-	private static Future<PathSearch.Result> pending;
+	static Future<PathSearch.Result> pending;
 	private static AtomicBoolean cancel;
 	private static boolean pendingAppend;
 
@@ -163,6 +163,7 @@ public final class Pathing {
 					begin(mc, Mode.GOTO, new PathGoal.XZ(x, z));
 					say(mc, "Going to " + x + " " + z, ChatFormatting.GREEN);
 				}
+				case "build" -> Builder.command(mc, args);
 				case "stop", "cancel" -> stop(mc, "Stopped");
 				case "", "help" -> help(mc);
 				default -> say(mc, "Unknown command '" + cmd + "'. " + prefix + "help lists them", ChatFormatting.RED);
@@ -180,10 +181,11 @@ public final class Pathing {
 		say(mc, "Commands:", ChatFormatting.AQUA);
 		say(mc, p + "goto <x> <y> <z>  |  " + p + "goto <x> <z>  |  " + p + "goto <waypoint>  (~ for relative)", ChatFormatting.WHITE);
 		say(mc, p + "mine [count] <blocks>  e.g. " + p + "mine diamond, " + p + "mine 32 iron coal", ChatFormatting.WHITE);
+		say(mc, p + "build <schematic> [x y z]  |  " + p + "build list  (.litematic files in .minecraft/schematics)", ChatFormatting.WHITE);
 		say(mc, p + "follow <player>  |  " + p + "thisway <blocks>  |  " + p + "stop", ChatFormatting.WHITE);
 	}
 
-	private static int coord(String s, int base) {
+	static int coord(String s, int base) {
 		if (s.startsWith("~")) return base + (s.length() > 1 ? Integer.parseInt(s.substring(1)) : 0);
 		return Mth.floor(Double.parseDouble(s));
 	}
@@ -277,14 +279,14 @@ public final class Pathing {
 		return b.defaultBlockState().isAir() ? null : b;
 	}
 
-	private static void say(Minecraft mc, String text, ChatFormatting colour) {
+	static void say(Minecraft mc, String text, ChatFormatting colour) {
 		if (mc.player == null) return;
 		mc.player.sendSystemMessage(Component.literal("[Pathfinder] ").withStyle(ChatFormatting.AQUA).append(Component.literal(text).withStyle(colour)));
 	}
 
 	// ---- task lifecycle ----
 
-	private static void begin(Minecraft mc, Mode m, PathGoal g) {
+	static void begin(Minecraft mc, Mode m, PathGoal g) {
 		clearTask(mc);
 		mode = m;
 		goal = g;
@@ -342,6 +344,7 @@ public final class Pathing {
 		ignoredItems.clear();
 		followName = null;
 		followWait = 0;
+		Builder.clear();
 	}
 
 	/** Called while disconnected. */
@@ -352,6 +355,12 @@ public final class Pathing {
 		path = null;
 		mode = Mode.IDLE;
 		StarClient.pathfinderOn = false;
+	}
+
+	/** Drops the current path and any search in flight (keys stay as they are). */
+	static void dropPath(Minecraft mc) {
+		cancelSearch();
+		path = null;
 	}
 
 	private static void cancelSearch() {
@@ -399,6 +408,7 @@ public final class Pathing {
 			}
 			case MINE -> mineTick(mc);
 			case FOLLOW -> followTick(mc);
+			case BUILD -> Builder.tick(mc);
 			default -> { }
 		}
 	}
@@ -412,13 +422,13 @@ public final class Pathing {
 		return BlockPos.containing(p.getX(), p.getY() + 0.2, p.getZ());
 	}
 
-	private static PathWorld world(Minecraft mc) {
+	static PathWorld world(Minecraft mc) {
 		var inv = mc.player.getInventory();
 		List<ItemStack> tools = new ArrayList<>(9);
 		for (int i = 0; i < 9; i++) tools.add(inv.getItem(i).copy());
 		boolean place = Settings.on("pathfinder.place") && throwawaySlot(mc.player) >= 0;
 		return new PathWorld(mc.level, Settings.on("pathfinder.break"), place, Settings.on("pathfinder.underwater"), Settings.getI("pathfinder.fall"),
-				Settings.on("pathfinder.sprint"), tools, Settings.getI("autotool.protect"), Set.copyOf(avoid));
+				Settings.on("pathfinder.sprint"), tools, Settings.getI("autotool.protect"), Set.copyOf(avoid), mode == Mode.BUILD ? Builder.plan() : null);
 	}
 
 	// ---- planning ----
@@ -507,6 +517,7 @@ public final class Pathing {
 				state = "no path";
 				followWait = 40;
 			}
+			case BUILD -> Builder.noPath(mc);
 			case MINE -> {
 				if (collectItem != null) {
 					ignoredItems.add(collectItem.getId());
@@ -530,6 +541,7 @@ public final class Pathing {
 			replans = 0;
 			switch (mode) {
 				case GOTO -> stop(mc, "Stuck (" + why + "), stopped");
+				case BUILD -> Builder.noPath(mc);
 				case MINE -> {
 					if (collectItem != null) {
 						ignoredItems.add(collectItem.getId());
@@ -547,7 +559,7 @@ public final class Pathing {
 	// ---- path driving ----
 
 	/** Follows the current path, planning a new one when there is none. */
-	private static void drive(Minecraft mc) {
+	static void drive(Minecraft mc) {
 		if (path == null) {
 			release(mc);
 			if (pending == null) plan(mc);
@@ -743,7 +755,7 @@ public final class Pathing {
 
 	// ---- controls ----
 
-	private static void keys(Minecraft mc, boolean fwd, boolean back, boolean left, boolean right, boolean jump, boolean sneak, boolean sprint) {
+	static void keys(Minecraft mc, boolean fwd, boolean back, boolean left, boolean right, boolean jump, boolean sneak, boolean sprint) {
 		var o = mc.options;
 		o.keyUp.setDown(fwd);
 		o.keyDown.setDown(back);
@@ -756,7 +768,7 @@ public final class Pathing {
 	}
 
 	/** Lets go of every key the executor holds and aborts a half-broken block. */
-	private static void release(Minecraft mc) {
+	static void release(Minecraft mc) {
 		if (controlling) {
 			keys(mc, false, false, false, false, false, false, false);
 			controlling = false;
@@ -766,7 +778,7 @@ public final class Pathing {
 	}
 
 	/** Eases the view toward (yaw, pitch) within the sanitizer's turn limit; returns the remaining error in degrees. */
-	private static float turn(LocalPlayer p, float yaw, float pitch) {
+	static float turn(LocalPlayer p, float yaw, float pitch) {
 		float ey = Mth.wrapDegrees(yaw - p.getYRot());
 		float ep = pitch - p.getXRot();
 		float dy = ProtocolSanitizer.limitTurn(Math.abs(ey) > 4 ? ey * 0.6f : ey);
@@ -811,7 +823,7 @@ public final class Pathing {
 	// ---- breaking and placing ----
 
 	/** Breaks {@code pos} a tick at a time; false once it has taken far longer than expected. */
-	private static boolean dig(Minecraft mc, PathWorld w, BlockPos pos) {
+	static boolean dig(Minecraft mc, PathWorld w, BlockPos pos) {
 		LocalPlayer p = mc.player;
 		if (!pos.equals(breaking)) {
 			breaking = pos;
@@ -899,7 +911,7 @@ public final class Pathing {
 	 * What the crosshair is on with the rotation the server already has (set last tick): the same ray vanilla uses,
 	 * so a click only happens when the face is in view. Null when it is not a block.
 	 */
-	private static BlockHitResult crosshair(LocalPlayer p) {
+	static BlockHitResult crosshair(LocalPlayer p) {
 		HitResult h = p.pick(p.blockInteractionRange(), 1.0f, false);
 		return h instanceof BlockHitResult b && b.getType() == HitResult.Type.BLOCK ? b : null;
 	}
@@ -1299,6 +1311,7 @@ public final class Pathing {
 		if (breaking != null) out.add(new Mark(breaking, 0xFF3030));
 		if (mineTarget != null && !mineTarget.equals(breaking)) out.add(new Mark(mineTarget, 0x33E6FF));
 		if (mode == Mode.GOTO && goal instanceof PathGoal.Block b) out.add(new Mark(new BlockPos(b.x(), b.y(), b.z()), 0x55FF55));
+		if (mode == Mode.BUILD) out.addAll(Builder.marks());
 		return out;
 	}
 
@@ -1307,6 +1320,7 @@ public final class Pathing {
 			case GOTO -> "going to " + (goal == null ? "?" : goal.describe());
 			case MINE -> "mining " + mineLabel + " (" + mined + (mineLimit > 0 ? "/" + mineLimit : "") + ")";
 			case FOLLOW -> "following " + followName;
+			case BUILD -> Builder.title();
 			default -> "idle";
 		};
 	}

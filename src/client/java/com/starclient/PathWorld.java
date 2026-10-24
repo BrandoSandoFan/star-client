@@ -55,6 +55,8 @@ public final class PathWorld {
 	private final int protect;
 	/** Cells the executor failed to break or reach; never broken again during this task. */
 	private final Set<Long> avoid;
+	/** The schematic being built, or null: its finished blocks are never broken and no throwaway block goes where it wants a block. */
+	private final Schematic.Placed build;
 
 	private final BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
 	private final Map<Long, ChunkAccess> chunks = new HashMap<>();
@@ -63,7 +65,7 @@ public final class PathWorld {
 	private final Map<BlockState, Double> breakTicks = new HashMap<>();
 
 	public PathWorld(ClientLevel level, boolean allowBreak, boolean allowPlace, boolean underwater, int maxFall, boolean sprint, List<ItemStack> tools, int protect,
-			Set<Long> avoid) {
+			Set<Long> avoid, Schematic.Placed build) {
 		this.level = level;
 		this.minY = level.getMinY();
 		this.maxY = level.getMinY() + level.getHeight();
@@ -75,6 +77,7 @@ public final class PathWorld {
 		this.tools = tools;
 		this.protect = protect;
 		this.avoid = avoid;
+		this.build = build;
 	}
 
 	/** Block at (x, y, z), air above the build limit, {@code null} below it or in an unloaded chunk. */
@@ -218,7 +221,7 @@ public final class PathWorld {
 		if (s == null) return INF;
 		if (s.getFluidState().isEmpty() && !harmful(s) && (s.is(BlockTags.CLIMBABLE) || shape(s, x, y, z).isEmpty())) return 0;
 		if (!allowBreak || !s.getFluidState().isEmpty() || s.hasBlockEntity() || isDoor(s) || s.getBlock() instanceof TrapDoorBlock
-				|| avoid.contains(BlockPos.asLong(x, y, z))) return INF;
+				|| avoid.contains(BlockPos.asLong(x, y, z)) || (build != null && build.keeps(x, y, z, s))) return INF;
 		double ticks = breakTicks(s, x, y, z);
 		if (ticks >= INF || fluidBeside(x, y, z)) return INF;
 		// Sand or gravel above falls into the gap one block at a time; each has to be broken again, and the cells
@@ -293,6 +296,10 @@ public final class PathWorld {
 		if (!allowPlace) return false;
 		BlockState s = get(x, y, z);
 		if (s == null || !s.canBeReplaced() || s.getFluidState().is(FluidTags.LAVA)) return false;
+		if (build != null) {
+			BlockState d = build.desired(x, y, z);
+			if (d != null && !d.isAir()) return false;
+		}
 		return support(x, y, z, null) != null;
 	}
 

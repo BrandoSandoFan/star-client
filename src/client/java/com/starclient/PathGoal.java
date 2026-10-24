@@ -113,6 +113,29 @@ public interface PathGoal {
 		}
 	}
 
+	/** Somewhere {@code target} is within {@code range} of the eyes, without standing in it (Builder). */
+	record Within(BlockPos target, double range) implements PathGoal {
+		@Override
+		public boolean isGoal(int px, int py, int pz) {
+			int dx = px - target.getX();
+			int dz = pz - target.getZ();
+			int dyFeet = target.getY() - py;
+			if (dx == 0 && dz == 0 && (dyFeet == 0 || dyFeet == 1)) return false;
+			double dy = py + 1.62 - (target.getY() + 0.5);
+			return dx * dx + dy * dy + dz * dz <= range * range;
+		}
+
+		@Override
+		public double heuristic(int px, int py, int pz) {
+			return Math.max(0, estimate(target.getX() - px, target.getY() - py, target.getZ() - pz) - range * PathSearch.WALK);
+		}
+
+		@Override
+		public String describe() {
+			return "near " + target.getX() + " " + target.getY() + " " + target.getZ();
+		}
+	}
+
 	/** Reached when any of the goals is (Mine: next to any of the nearest targets). */
 	record Any(List<PathGoal> goals, String label) implements PathGoal {
 		@Override
